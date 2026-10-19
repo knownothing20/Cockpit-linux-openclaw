@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="cockpit-shell" data-oc-skin="ops" data-oc-density="comfortable" data-oc-motion="standard">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OpenClaw Cockpit</title>
+  <script>(function(){
+  if(/^\/apps\/[^/]+/.test(window.location.pathname)){
+    document.documentElement.classList.add('shell-route-module');
+    /* v2.3.124: 方案 C — shell topbar 在 module view 仍显示 (作为统一工具栏),
+       不再注入 display:none 防闪烁. 子页面的 .oc-ph-side 由 cockpit-ui-polish.css
+       在 iframe mode 下隐藏. */
+  }
+})();</script>
+  <link rel="stylesheet" href="/unified-theme.css?v=20261010-fm-docs-real-pct">
+  <link rel="stylesheet" href="/cockpit-design-system.css?v=20261010-fm-docs-real-pct">
+  <link rel="stylesheet" href="/unified-components.css?v=20261010-fm-docs-real-pct">
+
+<link rel="stylesheet" href="/shell.css?v=20261010-fm-docs-real-pct">
+
+
+<link rel="stylesheet" href="/cockpit-ui-polish.css?v=20261010-fm-docs-real-pct">
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-left">
+          <span class="oc-brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 3.2a1.6 1.6 0 1 1-1.6 1.6A1.6 1.6 0 0 1 12 5.2zM7.4 9.4a1.6 1.6 0 1 1-1.6 1.6 1.6 1.6 0 0 1 1.6-1.6zm9.2 0a1.6 1.6 0 1 1-1.6 1.6 1.6 1.6 0 0 1 1.6-1.6zM12 14.4a3.2 3.2 0 0 1 3.2 3.2 3.2 3.2 0 0 1-6.4 0 3.2 3.2 0 0 1 3.2-3.2z"/></svg>
+          </span>
+          <div class="brand-text">
+            <h1>OpenClaw</h1>
+            <span class="version">Cockpit Shell</span>
+          </div>
+        </div>
+      </div>
+      <nav class="nav" id="nav"></nav>
+      <div class="status-bar" id="status-bar">
+        <span class="status-indicator" id="status-indicator"></span>
+        <span class="status-text" id="status-text">Checking...</span>
+      </div>
+    </aside>
+    <main class="main">
+      <header class="topbar">
+        <h2 id="module-title" data-i18n="nav.dashboard">Dashboard</h2>
+        <!-- v2.3.123: 右上角工具栏改成统一 .oc-ph-side + .oc-tool-btn 样式 (跟 robots / skill-manager 一致).
+             系统状态和模块状态信息在 sidebar 的 .status-bar 已经有, topbar 这里只保留语言/主题切换. -->
+        <div class="oc-ph-side oc-shell-tools" aria-label="页面工具">
+          <button class="oc-tool-btn refresh" id="refresh-btn" type="button" title="刷新数据">&#x21bb;</button>
+          <button class="oc-tool-btn lang" id="lang-toggle" type="button" title="切换语言">中/En</button>
+          <button class="oc-tool-btn theme" id="theme-toggle" type="button" title="切换主题">&#9790;</button>
+        </div>
+      </header>
+      <div class="content" id="content">
+        <div class="oc-welcome" id="welcome-state">
+          <div class="oc-welcome-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="34" height="34" fill="currentColor"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 3.2a1.6 1.6 0 1 1-1.6 1.6A1.6 1.6 0 0 1 12 5.2zM7.4 9.4a1.6 1.6 0 1 1-1.6 1.6 1.6 1.6 0 0 1 1.6-1.6zm9.2 0a1.6 1.6 0 1 1-1.6 1.6 1.6 1.6 0 0 1 1.6-1.6zM12 14.4a3.2 3.2 0 0 1 3.2 3.2 3.2 3.2 0 0 1-6.4 0 3.2 3.2 0 0 1 3.2-3.2z"/></svg>
+          </div>
+          <div>
+            <h2 data-i18n="welcome.title">Welcome to OpenClaw Cockpit</h2>
+            <p data-i18n="welcome.desc">Select a module from the sidebar to get started.</p>
+          </div>
+          <div class="oc-welcome-skel" aria-hidden="true">
+            <div class="oc-skel-line oc-skel-line short" style="background:var(--oc-bg-elevated);animation:oc-shimmer 1.5s infinite;background-size:200% 100%;background-image:linear-gradient(90deg,var(--oc-bg-elevated) 25%,var(--oc-bg-input) 50%,var(--oc-bg-elevated) 75%);"></div>
+            <div class="oc-skel-line oc-skel-line medium" style="background:var(--oc-bg-elevated);animation:oc-shimmer 1.5s infinite;background-size:200% 100%;background-image:linear-gradient(90deg,var(--oc-bg-elevated) 25%,var(--oc-bg-input) 50%,var(--oc-bg-elevated) 75%);"></div>
+            <div class="oc-skel-line oc-skel-line long" style="background:var(--oc-bg-elevated);animation:oc-shimmer 1.5s infinite;background-size:200% 100%;background-image:linear-gradient(90deg,var(--oc-bg-elevated) 25%,var(--oc-bg-input) 50%,var(--oc-bg-elevated) 75%);"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script defer src="/i18n.js"></script>
+  <script defer src="/profile-switcher.js"></script>
+  <script defer src="/cockpit-ui-polish.js?v=20261010-fm-docs-real-pct"></script>
+  <script defer src="/shell.js?v=20261010-fm-docs-real-pct"></script>
+</body>
+</html>

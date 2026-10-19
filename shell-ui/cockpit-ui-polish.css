@@ -1,0 +1,457 @@
+/* cockpit-design-tokens.css is already imported by unified-theme.css; no duplicate @import needed. */
+
+/* OpenClaw Cockpit UI Polish - DS-migrated compatibility layer.
+   Only layout-level fixes; component styles come from unified-components.css. */
+html.cockpit-shell,
+html.cockpit-embedded-module {
+  --cockpit-ui-polish-loaded: 1;
+}
+
+html.cockpit-shell.shell-route-module .main,
+html.cockpit-shell body.shell-module-view .main {
+  position: relative;
+}
+
+/* v2.3.125: 方案 C 修正 — module view 下 topbar 不再 absolute 浮在 iframe 上,
+   改成跟首页完全一样的 56px flex 顶栏 (background/border-bottom/高度/内边距都一致).
+   iframe 顶在 topbar 下方, 子页面顶部视觉跟仪表盘完全一致.
+   之前 absolute 浮层方案有两个问题:
+   1) 子页面 .oc-ph-main 头部被浮层 topbar 盖住 (图1)
+   2) 直访 /apps/* 后退回首页时 shell-route-module 残留, 仪表盘也变浮层 (图3)
+   现在通过让 module view 完全复用 home view 顶栏样式彻底解决. */
+html.cockpit-shell.shell-route-module .topbar,
+html.cockpit-shell body.shell-module-view .topbar {
+  height: 56px;
+  min-height: 56px;
+  padding: 0 24px;
+  border: 0;
+  border-bottom: 1px solid var(--border, var(--oc-border, #e2e8f0));
+  background: var(--bg-sidebar);
+  gap: 12px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+html.cockpit-shell.shell-route-module .topbar #module-title,
+html.cockpit-shell.shell-route-module .topbar h2,
+html.cockpit-shell body.shell-module-view .topbar #module-title,
+html.cockpit-shell body.shell-module-view .topbar h2 {
+  display: none;
+  visibility: hidden;
+  width: 0;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* v2.3.123: topbar 的 .module-status / .system-status 已经移除 (信息已迁到 sidebar status-bar),
+   保留兼容空规则, 防止老缓存 CSS 误报死规则. */
+
+/* ===== Embedded module layout fixes (DS-migrated) ===== */
+html.cockpit-embedded-module,
+html.cockpit-embedded-module body { width: 100%; max-width: 100%; min-width: 0; overflow-x: hidden; background: var(--oc-bg-canvas); color: var(--oc-text-primary); }
+html.cockpit-embedded-module body { margin: 0; font-family: var(--oc-font-sans); }
+html.cockpit-embedded-module body > .layout, html.cockpit-embedded-module body > .app, html.cockpit-embedded-module body > .page, html.cockpit-embedded-module body > .container, html.cockpit-embedded-module body > main, html.cockpit-embedded-module body .app-shell, html.cockpit-embedded-module body .module-shell { width: 100%; max-width: 100%; min-width: 0; overflow-x: hidden; background: var(--oc-bg-canvas); }
+html.cockpit-embedded-module body .page, html.cockpit-embedded-module body .main, html.cockpit-embedded-module body main, html.cockpit-embedded-module body .content, html.cockpit-embedded-module body .page-content, html.cockpit-embedded-module body .module-content, html.cockpit-embedded-module body .container { box-sizing: border-box; max-width: 100%; }
+html.cockpit-embedded-module body .oc-ph { background: transparent; border: 0; padding: 16px 28px 0; margin: 0 0 16px; }
+/* Embedded modules keep a visible page gutter so cards and headers do not sit
+   directly against the iframe edge. Use .oc-page-flush only for intentional
+   full-bleed tools. */
+html.cockpit-embedded-module body .oc-page:not(.oc-page-flush) {
+  padding: var(--oc-space-4, 16px) var(--oc-page-pad-x, 24px) var(--oc-space-5, 20px);
+}
+/* v2.3.124: 方案 C — 子页面在 iframe 模式下隐藏自身 .oc-ph-side (lang/theme 工具栏),
+   因为 shell topbar 已经在右上角提供 lang/theme 按钮, 避免重复. */
+html.cockpit-embedded-module body .oc-ph-side { display: none; }
+html.cockpit-embedded-module body .oc-card, html.cockpit-embedded-module body .oc-stat { box-sizing: border-box; min-width: 0; max-width: 100%; }
+html.cockpit-embedded-module body .oc-grid, html.cockpit-embedded-module body .oc-stat-grid { max-width: 100%; min-width: 0; }
+html.cockpit-embedded-module body .oc-table { width: 100%; max-width: 100%; }
+html.cockpit-embedded-module body .oc-tabs, html.cockpit-embedded-module body .oc-toolbar, html.cockpit-embedded-module body .oc-filter-bar { max-width: 100%; min-width: 0; overflow-x: auto; }
+html.cockpit-embedded-module body .oc-badge { border-radius: 999px; }
+@media (max-width: 900px) {
+  html.cockpit-embedded-module body .oc-ph-title { max-width: 100%; }
+}
+
+/* ===== B.1: Migrated from polish.js setProperty → CSS ===== */
+/* No - rely on selector specificity (html.cockpit-embedded-module prefix) */
+
+/* B.1.1: body - only add background-image and opacity */
+html.cockpit-embedded-module body {
+  background-image: none;
+  opacity: 1;
+}
+
+/* B.1.3: oc-card - add background-image, opacity, box-shadow, color */
+html.cockpit-embedded-module body .oc-card {
+  background-image: none;
+  opacity: 1;
+  box-shadow: var(--oc-shadow-sm, 0 1px 3px rgba(15, 23, 42, .06));
+  color: var(--oc-text-primary);
+}
+
+
+/* B.1 extra: robots-specific cards */
+html.cockpit-embedded-module[data-oc-module="robots"] .health-bar > .health-card {
+  min-height: 140px;
+  height: 100%;
+}
+
+html.cockpit-embedded-module[data-oc-module="robots"] .agent-grid > .oc-card,
+html.cockpit-embedded-module[data-oc-module="robots"] .agent-grid > .agent-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  margin-top: 0;
+}
+
+html.cockpit-embedded-module[data-oc-module="robots"] .agent-actions {
+  margin-top: auto;
+}
+
+
+
+/* ===== B.2-shell utility classes for migrated .style assignments ===== */
+[hidden] { display: none; }
+.oc-js-display-block:not([hidden]) { display: block; }
+.oc-js-display-flex:not([hidden]) { display: flex; }
+.oc-js-display-inline:not([hidden]) { display: inline; }
+.oc-js-display-inline-block:not([hidden]) { display: inline-block; }
+.oc-js-muted-action { opacity: .5; }
+.oc-js-copy-buffer { position: fixed; opacity: 0; }
+.oc-js-token-overlay,
+.oc-js-modal-overlay { position: fixed; inset: 0; background: var(--oc-bg-overlay); z-index: 10000; display: flex; align-items: center; justify-content: center; }
+.oc-js-token-overlay { z-index: 99999; }
+/* .models-toast 已移除，models-manager 改用 unified-components.css 共享 .toast 垫片 */
+.models-row-hover:hover { background: var(--accent-glow); }
+.models-proxy-row-hover:hover { background: var(--accent-soft); }
+.models-proxy-row-error:hover { background: var(--red-glow); }
+/* .robots-toast 已移除（dead code，robots 模块改用 .toast 垫片） */
+.robots-fallback-chip:hover { border-color: var(--accent); }
+/* .task-toast 已移除，改用 unified-components.css 共享 .toast 垫片 */
+
+.oc-clickable { cursor: pointer; }
+
+/* ================================================================
+   Page container - 统一页面外层布局
+   消费 --oc-page-pad-x / --oc-page-pad-y / --oc-space-* token
+   ================================================================ */
+.oc-page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: var(--oc-space-6) var(--oc-page-pad-x);
+  display: flex;
+  flex-direction: column;
+  gap: var(--oc-space-4);
+}
+/* oc-page-nested: child of oc-page, no padding (parent provides it), but keeps 16px gap */
+.oc-page-nested { display: flex; flex-direction: column; gap: var(--oc-space-4); }
+
+/* ================================================================
+   Page header (oc-ph) - 共享给所有子模块
+   1) .oc-ph-main 不再需要 padding-top, 因为 topbar 已经在 flex 布局里占 56px,
+      iframe 顶部紧贴 topbar 下边缘, 内容直接从 .oc-ph 的 16px padding 开始.
+   2) 之前是 56px -> 16px -> 16px (oc-ph-main), 那是给旧 absolute 浮层 topbar 用的.
+   ================================================================ */
+
+/* ================================================================
+   List item shared structure
+   用于所有"卡片式列表"内嵌的列表项结构
+   - .oc-list-item-body: 项内边距 + flex 行布局
+   - .oc-list-item-content: flex:1 主内容区
+   - .oc-list-item-actions: flex 行，按钮组
+   - .oc-list-item-meta: 标题下方的 meta 行
+   - .oc-badge-row: flex 徽章行（与上面 meta 类似但专用徽章）
+   - .oc-search-bar: 搜索栏布局（input + button）
+   - .oc-list: grid 容器（垂直列表项之间的 16px gap）
+   所有 token 来自 --oc-space-* / --oc-radius-* / --oc-text-*
+   ================================================================ */
+.oc-list {
+  display: grid;
+  gap: var(--oc-space-4);
+}
+
+/* ================================================================
+   Tabs - card-style shared design
+   风格：浅灰药丸容器 + 内部卡片 Tab + 激活态"浮起"
+   - 容器：浅灰背景 + 边框 + 圆角
+   - 普通 Tab：与容器同色 + 圆角
+   - hover：容器内 4% 主色透明 + 字色提亮
+   - active：白底 + 主色字 + 0.08 阴影"浮起"
+   - 整体 cubic-bezier 过渡
+   ================================================================ */
+/* .oc-tabs-underline 样式已从 unified-components.css 源头定义，无需在此覆盖 */
+
+/* ================================================================
+   Buttons refinement (.oc-btn + variants)
+   在 unified-components.css 基础之上加微渐变/深度/微动效
+   - .oc-btn-primary: 主色顶部微高光，按下凹陷
+   - 悬停：上浮 + 阴影加深
+   - active：下沉 + 阴影变浅
+   - focus：主色光晕
+   ================================================================ */
+.oc-btn {
+  font-family: inherit;
+  letter-spacing: 0.1px;
+  will-change: transform, box-shadow;
+}
+.oc-btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--oc-accent) 35%, transparent);
+}
+.oc-btn:active:not(:disabled) {
+  transform: translateY(1px) scale(0.98);
+  transition-duration: 60ms;
+}
+.oc-btn-primary {
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--oc-accent) 100%, white 8%) 0%,
+    var(--oc-accent) 50%,
+    color-mix(in srgb, var(--oc-accent) 100%, black 8%) 100%);
+  border-color: color-mix(in srgb, var(--oc-accent) 100%, black 12%);
+  box-shadow: 0 1px 0 color-mix(in srgb, white 18%, transparent) inset,
+              0 2px 6px var(--oc-accent-glow),
+              0 1px 2px rgba(0, 0, 0, 0.15);
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.15);
+}
+.oc-btn-primary:hover {
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--oc-accent-hover) 100%, white 8%) 0%,
+    var(--oc-accent-hover) 50%,
+    color-mix(in srgb, var(--oc-accent-hover) 100%, black 6%) 100%);
+  box-shadow: 0 1px 0 color-mix(in srgb, white 22%, transparent) inset,
+              0 6px 16px var(--oc-accent-glow),
+              0 2px 4px rgba(0, 0, 0, 0.18);
+  transform: translateY(-1px);
+}
+.oc-btn-primary:active {
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--oc-accent) 100%, black 4%) 0%,
+    color-mix(in srgb, var(--oc-accent) 100%, black 12%) 100%);
+  box-shadow: 0 1px 0 color-mix(in srgb, white 8%, transparent) inset,
+              0 1px 2px rgba(0, 0, 0, 0.2) inset,
+              0 0 0 transparent;
+}
+.oc-btn-secondary {
+  background: linear-gradient(180deg,
+    var(--oc-bg-elevated) 0%,
+    color-mix(in srgb, var(--oc-bg-elevated) 100%, black 4%) 100%);
+  box-shadow: 0 1px 0 color-mix(in srgb, white 8%, transparent) inset;
+}
+.oc-btn-secondary:hover {
+  border-color: var(--oc-border-hover);
+  color: var(--oc-text-primary);
+  background: linear-gradient(180deg,
+    var(--oc-bg-surface) 0%,
+    var(--oc-bg-elevated) 100%);
+  box-shadow: 0 1px 0 color-mix(in srgb, white 12%, transparent) inset,
+              0 3px 8px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+}
+.oc-btn-danger {
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--oc-danger) 100%, white 6%) 0%,
+    var(--oc-danger) 50%,
+    color-mix(in srgb, var(--oc-danger) 100%, black 6%) 100%);
+  box-shadow: 0 1px 0 color-mix(in srgb, white 18%, transparent) inset,
+              0 2px 6px color-mix(in srgb, var(--oc-danger) 35%, transparent);
+  color: #fff;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+}
+.oc-btn-danger:hover {
+  filter: brightness(1.06);
+  box-shadow: 0 1px 0 color-mix(in srgb, white 22%, transparent) inset,
+              0 6px 14px color-mix(in srgb, var(--oc-danger) 45%, transparent);
+  transform: translateY(-1px);
+}
+.oc-btn-success {
+  background: linear-gradient(180deg,
+    color-mix(in srgb, var(--oc-success) 100%, white 6%) 0%,
+    var(--oc-success) 50%,
+    color-mix(in srgb, var(--oc-success) 100%, black 6%) 100%);
+  box-shadow: 0 1px 0 color-mix(in srgb, white 18%, transparent) inset,
+              0 2px 6px color-mix(in srgb, var(--oc-success) 35%, transparent);
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.15);
+}
+.oc-btn-success:hover {
+  filter: brightness(1.06);
+  box-shadow: 0 1px 0 color-mix(in srgb, white 22%, transparent) inset,
+              0 6px 14px color-mix(in srgb, var(--oc-success) 45%, transparent);
+  transform: translateY(-1px);
+}
+.oc-btn-sm { font-weight: 600; }
+.oc-btn-sm:hover:not(:disabled) { transform: translateY(-1px); }
+
+/* ================================================================
+   Button - icon-only variant
+   方形图标按钮（用于列表行内的 🧪 ✏️ 🗑️ 等）
+   - 默认 32x32，sm 28x28
+   - padding 0，icon 居中
+   - 颜色继承 .oc-btn-primary/secondary/ghost/success/danger/warning
+   ================================================================ */
+.oc-btn-icon {
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--oc-text-base);
+  line-height: 1;
+  flex-shrink: 0;
+  border-width: 1px;
+  border-style: solid;
+  /* 共享：hover 时上浮 + 加深阴影 */
+  transition: transform var(--oc-duration-fast) var(--oc-ease),
+              box-shadow var(--oc-duration-fast) var(--oc-ease);
+}
+.oc-btn-icon.oc-btn-sm { width: 32px; height: 32px; font-size: var(--oc-text-base); }
+/* 中等尺寸：模块级主操作（"添加"、"刷新"、"搜索"、"批量测试"等）
+   统一跨模块的"操作区按钮"尺寸，比 sm 大、比 lg 小。
+   调高到 9×18 padding + 36px min-height，让顶部操作栏按钮更醒目，
+   解决 models-manager 顶栏视觉上"小一圈"的问题。 */
+.oc-btn.oc-btn-md,
+.oc-btn-md {
+  padding: 9px 18px;
+  font-size: var(--oc-text-base);
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  border-radius: var(--oc-radius-md);
+}
+.oc-btn-icon:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+}
+.oc-btn-icon:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+/* 默认无背景：与 ghost 一致 */
+.oc-btn-icon:not(.oc-btn-primary):not(.oc-btn-success):not(.oc-btn-warning):not(.oc-btn-danger):not(.oc-btn-secondary) {
+  background: var(--oc-bg-elevated);
+  border-color: var(--oc-border);
+  color: var(--oc-text-secondary);
+}
+
+/* ================================================================
+   Button - tag/pill variant
+   药丸形状标签/筛选按钮（用于分类切换、状态过滤）
+   - padding 6px 14px，radius-full
+   - 颜色继承 .oc-btn-primary/secondary/ghost/success/danger/warning
+   - 配合 .active 类（手动添加）做高亮
+   ================================================================ */
+
+/* ================================================================
+   Stat card - active variant
+   用于分类卡「激活态」，共享给所有模块
+   依赖 polish.css 在 unified-components.css 之后加载（级联覆盖）
+   ================================================================ */
+
+/* ================================================================
+   Utility / modifier classes (2.3.52)
+   用于替换 agents.js 中拼装的 inline style，遵循 unified-components
+   的 oc-btn-* modifier 命名风格（success / danger / primary / secondary）
+   ================================================================ */
+
+/* oc-btn color variants: 与 oc-btn-success / oc-btn-danger 平行 */
+.oc-btn-accent {
+  color: var(--accent, #1677ff);
+  border-color: var(--accent, #1677ff);
+  background: transparent;
+  text-decoration: none;
+}
+.oc-btn-accent:hover {
+  color: #fff;
+  background: var(--accent, #1677ff);
+  border-color: var(--accent, #1677ff);
+}
+.oc-btn-warning {
+  color: var(--yellow, #faad14);
+  border-color: var(--yellow, #faad14);
+  background: transparent;
+}
+.oc-btn-warning:hover {
+  color: #fff;
+  background: var(--yellow, #faad14);
+  border-color: var(--yellow, #faad14);
+}
+.oc-btn-green {
+  color: var(--green, #52c41a);
+  border-color: var(--green, #52c41a);
+  background: transparent;
+}
+.oc-btn-green:hover {
+  color: #fff;
+  background: var(--green, #52c41a);
+  border-color: var(--green, #52c41a);
+}
+
+/* layout utilities */
+.full-width { width: 100%; }
+.no-underline { text-decoration: none; }
+
+/* text color utilities（替换 agents.js 中 color:var(--xxx) 散落的 inline） */
+.oc-text-muted { color: var(--text-muted, var(--oc-text-tertiary)); }
+.oc-text-secondary { color: var(--text-secondary, var(--oc-text-secondary)); }
+
+/* heading utility（替换 index.html 标题 inline font-size/font-weight） */
+.oc-section-title {
+  font-size: var(--oc-text-2xl);
+  font-weight: 600;
+}
+
+/* mono + flex utilities（替换 agents.js 中 font-family:var(--font-mono) + flex 散落的 inline） */
+
+/* flex layout utilities（替换 agents.js 中 display:flex + gap 散落的 inline） */
+.oc-flex-gap-8 { display: flex; gap: 8px; }
+.oc-flex-gap-16 { display: flex; gap: 16px; }
+.oc-flex-gap-4 { display: flex; gap: 4px; flex-wrap: wrap; }
+.oc-flex-gap-6 { display: flex; gap: 6px; }
+
+/* test result utilities（替换 agents.js L866/L882/L891-893 拼装的 6 个 inline 属性） */
+
+/* spacing utilities（替换 agents.js 中 margin-bottom 散落的 inline） */
+.mb-12 { margin-bottom: 12px; }
+.mt-16 { margin-top: 16px; }
+
+/* mono model tag（替换 agents.js L866 拼装的 5 个 inline 属性） */
+
+/* health alert item（替换 agents.js L973 拼装的 4 个 inline 属性） */
+
+
+/* robots health-critical card modifier（替换 agents.js L433 的 inline border-color） */
+
+/* ====================================================================
+   module-shell-align v1.3.0 (2026-10-02) - 7 模块白名单 + applist 基准（2026-10-01 删去 ai-growth / inspira / mirror；2026-10-02 删去 session-center / task-center）
+   对齐「软件管理」基准：容器 1100 居中、页头 padding 4px 0、满宽页签条 + 右槽计数器、
+   body 横向 20px 外边距（applist 同款）。仅白名单内模块生效。
+   注意：本文件被 cockpit-ui-polish.js 移到 <head> 末尾，故用 :is() 并列白名单模块并提
+   一档特异性，否则会被同文件的 .oc-ph 基础规则压掉。
+   ==================================================================== */
+
+html.cockpit-embedded-module:is([data-oc-module="memory-monitor"], [data-oc-module="file-manager"], [data-oc-module="workspace-rule-panel"], [data-oc-module="config-recovery"], [data-oc-module="robots"], [data-oc-module="skill-manager"], [data-oc-module="models-manager"]) body .oc-page:not(.oc-page-flush) { box-sizing: border-box; max-width: 1100px; margin-left: auto; margin-right: auto; padding: 16px 24px 20px; gap: 10px; }
+html.cockpit-embedded-module:is([data-oc-module="memory-monitor"], [data-oc-module="file-manager"], [data-oc-module="workspace-rule-panel"], [data-oc-module="config-recovery"], [data-oc-module="robots"], [data-oc-module="skill-manager"], [data-oc-module="models-manager"]) body .app { box-sizing: border-box; max-width: 1100px; margin-left: auto; margin-right: auto; padding: 16px 24px 20px; gap: 10px; }
+html.cockpit-embedded-module:is([data-oc-module="memory-monitor"], [data-oc-module="file-manager"], [data-oc-module="workspace-rule-panel"], [data-oc-module="config-recovery"], [data-oc-module="robots"], [data-oc-module="skill-manager"], [data-oc-module="models-manager"]) body .oc-ph { padding: 4px 0; margin: 0 0 8px; align-items: center; gap: 14px; min-height: 0; flex-shrink: 0; background: transparent; border: 0; }
+html.cockpit-embedded-module:is([data-oc-module="memory-monitor"], [data-oc-module="file-manager"], [data-oc-module="workspace-rule-panel"], [data-oc-module="config-recovery"], [data-oc-module="robots"], [data-oc-module="skill-manager"], [data-oc-module="models-manager"]) body .oc-ph::after { display: none; }
+html.cockpit-embedded-module:is([data-oc-module="memory-monitor"], [data-oc-module="file-manager"], [data-oc-module="workspace-rule-panel"], [data-oc-module="config-recovery"], [data-oc-module="robots"], [data-oc-module="skill-manager"], [data-oc-module="models-manager"]) body .oc-ph-main { padding-top: 0; align-items: center; flex: 0 1 auto; }
+html.cockpit-embedded-module:is([data-oc-module="memory-monitor"], [data-oc-module="file-manager"], [data-oc-module="workspace-rule-panel"], [data-oc-module="config-recovery"], [data-oc-module="robots"], [data-oc-module="skill-manager"], [data-oc-module="models-manager"]) body .oc-ph-icon { box-sizing: border-box; width: 34px; height: 34px; border-radius: 10px; }
+html.cockpit-embedded-module:is([data-oc-module="memory-monitor"], [data-oc-module="file-manager"], [data-oc-module="workspace-rule-panel"], [data-oc-module="config-recovery"], [data-oc-module="robots"], [data-oc-module="skill-manager"], [data-oc-module="models-manager"]) body .oc-ph-text { display: flex; flex-wrap: wrap; align-items: baseline; gap: 3px 10px; min-width: 0; }
+html.cockpit-embedded-module:is([data-oc-module="memory-monitor"], [data-oc-module="file-manager"], [data-oc-module="workspace-rule-panel"], [data-oc-module="config-recovery"], [data-oc-module="robots"], [data-oc-module="skill-manager"], [data-oc-module="models-manager"]) body .oc-ph-eyebrow { margin-bottom: 0; }
+html.cockpit-embedded-module:is([data-oc-module="memory-monitor"], [data-oc-module="file-manager"], [data-oc-module="workspace-rule-panel"], [data-oc-module="config-recovery"], [data-oc-module="robots"], [data-oc-module="skill-manager"], [data-oc-module="models-manager"]) body .oc-ph-title { margin: 0; font-size: 15px; line-height: 1.2; }
+html.cockpit-embedded-module:is([data-oc-module="memory-monitor"], [data-oc-module="file-manager"], [data-oc-module="workspace-rule-panel"], [data-oc-module="config-recovery"], [data-oc-module="robots"], [data-oc-module="skill-manager"], [data-oc-module="models-manager"]) body .oc-ph-subtitle { max-width: none; font-size: 11px; line-height: 1.3; }
+html.cockpit-embedded-module:is([data-oc-module="memory-monitor"], [data-oc-module="file-manager"], [data-oc-module="workspace-rule-panel"], [data-oc-module="config-recovery"], [data-oc-module="robots"], [data-oc-module="skill-manager"], [data-oc-module="models-manager"]) body .oc-tabs { box-sizing: border-box; display: flex; align-items: center; padding: 6px 10px; margin: 0; width: 100%; max-width: none; overflow: visible; }
+html.cockpit-embedded-module:is([data-oc-module="memory-monitor"], [data-oc-module="file-manager"], [data-oc-module="workspace-rule-panel"], [data-oc-module="config-recovery"], [data-oc-module="robots"], [data-oc-module="skill-manager"], [data-oc-module="models-manager"]) body .oc-tabs-underline { margin: 0; }
+html.cockpit-embedded-module:is([data-oc-module="memory-monitor"], [data-oc-module="file-manager"], [data-oc-module="workspace-rule-panel"], [data-oc-module="config-recovery"], [data-oc-module="robots"], [data-oc-module="skill-manager"], [data-oc-module="models-manager"]) body .oc-tabs::after { content: ""; order: 1; flex: 1 1 auto; align-self: center; height: 1px; min-width: 24px; margin: 0 14px; background: linear-gradient(90deg, transparent, var(--border) 30%, var(--border) 70%, transparent); }
+html.cockpit-embedded-module:is([data-oc-module="memory-monitor"], [data-oc-module="file-manager"], [data-oc-module="workspace-rule-panel"], [data-oc-module="config-recovery"], [data-oc-module="robots"], [data-oc-module="skill-manager"], [data-oc-module="models-manager"]) body .oc-tabs > .oc-tabs-aside { order: 2; margin-left: auto; padding-right: 12px; font-size: var(--oc-text-xs); color: var(--oc-text-tertiary); white-space: nowrap; }
+html.cockpit-embedded-module:is([data-oc-module="memory-monitor"], [data-oc-module="file-manager"], [data-oc-module="workspace-rule-panel"], [data-oc-module="config-recovery"], [data-oc-module="robots"], [data-oc-module="skill-manager"], [data-oc-module="models-manager"]) body .oc-ph-side { display: flex; align-items: center; justify-content: flex-end; flex: 1 1 auto; min-width: 0; gap: 12px; padding-top: 0; }
+html.cockpit-embedded-module:is([data-oc-module="memory-monitor"], [data-oc-module="file-manager"], [data-oc-module="workspace-rule-panel"], [data-oc-module="config-recovery"], [data-oc-module="robots"], [data-oc-module="skill-manager"], [data-oc-module="models-manager"]) body .oc-ph-side > .oc-tool-btn { display: none; }
+html.cockpit-embedded-module:is([data-oc-module="memory-monitor"], [data-oc-module="file-manager"], [data-oc-module="workspace-rule-panel"], [data-oc-module="config-recovery"], [data-oc-module="robots"], [data-oc-module="skill-manager"], [data-oc-module="models-manager"]) body .sidebar { padding: 0; border-bottom: 0; background: transparent; gap: 10px; }
+html.cockpit-embedded-module:is([data-oc-module="memory-monitor"], [data-oc-module="file-manager"], [data-oc-module="workspace-rule-panel"], [data-oc-module="config-recovery"], [data-oc-module="robots"], [data-oc-module="skill-manager"], [data-oc-module="models-manager"]) body .sidebar-head { padding: 0; border-bottom: 0; }
+html.cockpit-embedded-module:is([data-oc-module="memory-monitor"], [data-oc-module="file-manager"], [data-oc-module="workspace-rule-panel"], [data-oc-module="config-recovery"], [data-oc-module="robots"], [data-oc-module="skill-manager"], [data-oc-module="models-manager"]) body .main { padding: 0; }
+html.cockpit-embedded-module[data-oc-module="robots"] body > .page-container, html.cockpit-embedded-module[data-oc-module="skill-manager"] body > #app { box-sizing: border-box; max-width: 1100px; margin-left: auto; margin-right: auto; padding: 16px 24px 20px; gap: 10px; }
+html.cockpit-embedded-module:is([data-oc-module="memory-monitor"], [data-oc-module="file-manager"], [data-oc-module="workspace-rule-panel"], [data-oc-module="config-recovery"], [data-oc-module="robots"], [data-oc-module="skill-manager"], [data-oc-module="models-manager"]) body { box-sizing: border-box; padding: 0 20px; }

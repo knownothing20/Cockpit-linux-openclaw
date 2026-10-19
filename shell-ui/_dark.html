@@ -1,0 +1,8 @@
+<!DOCTYPE html>
+<html><head><script>
+const url = new URL(location.href);
+const to = url.searchParams.get('to') || '/';
+const theme = url.searchParams.get('theme') || 'dark';
+localStorage.setItem('openclaw-theme', theme);
+setTimeout(()=>location.replace(to), 200);
+</script></head><body>loading</body></html>

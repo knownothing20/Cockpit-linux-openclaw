@@ -1,0 +1,11 @@
+{
+  "shellCssFiles": 15,
+  "importantTotal": 30,
+  "setProperty": 0,
+  "embedStyleAssignShell": 30,
+  "embedStyleAssignSub": 50,
+  "bakFilesMainline": 0,
+  "cacheBustVariants": 1,
+  "deadStringCount": 0,
+  "duplicateCss": 0
+}

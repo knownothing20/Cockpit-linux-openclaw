@@ -1,0 +1,10 @@
+{
+  "name": "openclaw-file-manager",
+  "version": "1.0.0",
+  "description": "Unified File Browser & Agent Memory Manager for OpenClaw",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js"
+  },
+  "dependencies": {}
+}

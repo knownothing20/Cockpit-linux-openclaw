@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+
+  <base href="/apps/memory/">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>内存监控</title>
+  <link rel="stylesheet" href="/unified-theme.css?v=20261010-fm-docs-real-pct">
+  <link rel="stylesheet" href="/unified-components.css?v=20261010-fm-docs-real-pct">
+  <link rel="stylesheet" href="/cockpit-ui-polish.css?v=20261010-fm-docs-real-pct">
+</head>
+<body class="memory-monitor">
+  <div class="oc-page">
+    <div class="oc-ph">
+      <div class="oc-ph-main">
+        <div class="oc-ph-icon">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></svg>
+        </div>
+        <div class="oc-ph-text">
+          <div class="oc-ph-eyebrow">MEMORY</div>
+          <h1 class="oc-ph-title" data-i18n="pageTitle">内存监控</h1>
+          <p class="oc-ph-subtitle" data-i18n="subtitle">查看系统内存占用、进程明细与软件分组使用情况</p>
+        </div>
+      </div>
+      <div class="oc-ph-side" aria-label="页面工具">
+        <button class="oc-tool-btn lang" id="memLangToggle" type="button" title="切换语言">中/En</button>
+      <button class="oc-tool-btn theme" id="memThemeToggle" type="button" title="切换主题">☽</button>
+      </div>
+    </div>
+    <section class="oc-card">
+      <div class="oc-card-header">
+        <h3 class="oc-card-title"><span class="oc-card-title-icon">🧠</span><span>内存总览</span></h3>
+        <div class="header-actions">
+          <button class="oc-btn oc-btn-sm" onclick="refresh()">刷新</button>
+        </div>
+      </div>
+      <div class="oc-card-body oc-stack">
+        <div id="memBars" class="oc-meters"></div>
+        <div id="memStats" class="oc-stat-grid"></div>
+      </div>
+    </section>
+
+    <section class="oc-card">
+      <div class="oc-card-header">
+        <h3 class="oc-card-title"><span class="oc-card-title-icon">📦</span><span>软件分组占用</span></h3>
+        <div class="header-actions"><span class="oc-hint-text">点击分组可展开进程</span></div>
+      </div>
+      <div class="oc-card-body oc-card-body--flush"><div id="groupsList" class="oc-collapse"></div></div>
+    </section>
+
+    <section class="oc-card">
+      <div class="oc-card-header">
+        <h3 class="oc-card-title"><span class="oc-card-title-icon">📋</span><span>进程明细</span></h3>
+        <div class="header-actions"><span id="processCount" class="oc-hint-text">共 0 个进程</span></div>
+      </div>
+      <div class="oc-card-body">
+        <div class="oc-table-wrap">
+        <table class="oc-table">
+          <thead>
+            <tr>
+              <th>PID</th>
+              <th>进程</th>
+              <th>内存</th>
+              <th>占比</th>
+              <th>命令</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="processTbody"></tbody>
+        </table>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div id="killModal" class="oc-modal-overlay">
+    <div class="oc-modal oc-modal-sm oc-modal--danger">
+      <div class="oc-modal-header"><h3>确认终止进程</h3></div>
+      <div id="killModalBody" class="oc-modal-body"></div>
+      <div class="oc-modal-footer">
+        <button class="oc-btn oc-btn-secondary" onclick="closeKillModal()">取消</button>
+        <button class="oc-btn oc-btn-danger" onclick="confirmKillStep1()">继续</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="killModal2" class="oc-modal-overlay">
+    <div class="oc-modal oc-modal-sm oc-modal--danger">
+      <div class="oc-modal-header"><h3>二次确认</h3></div>
+      <div id="killModal2Body" class="oc-modal-body"></div>
+      <div class="oc-modal-footer">
+        <button class="oc-btn oc-btn-secondary" onclick="closeKillModal2()">取消</button>
+        <button id="killConfirmBtn2" class="oc-btn oc-btn-danger" onclick="confirmKillStep2()">确定终止 (不可逆)</button>
+      </div>
+    </div>
+  </div>
+
+  <script defer src="app.js?v=20261010-fm-docs-real-pct"></script>
+</body>
+</html>

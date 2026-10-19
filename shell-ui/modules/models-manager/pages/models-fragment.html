@@ -1,0 +1,297 @@
+<div class="oc-page" id="models">
+
+  <!-- Page header -->
+  <div class="oc-ph">
+    <div class="oc-ph-main">
+      <div class="oc-ph-icon models-ph-accent">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+      </div>
+      <div class="oc-ph-text">
+        <div class="oc-ph-eyebrow">MODELS</div>
+        <h1 class="oc-ph-title" data-i18n="pageTitle">模型管理</h1>
+        <p class="oc-ph-subtitle" data-i18n="pageSubtitle">统一管理系统与 Agent 可用的大模型配置、默认模型、备用链路和能力标签。</p>
+      </div>
+    </div>
+    <div class="oc-ph-side">
+      <button class="oc-tool-btn lang" id="modelsLangToggle" type="button" title="切换语言">中/En</button>
+      <button class="oc-tool-btn theme" id="modelsThemeToggle" type="button" title="切换主题">☽</button>
+    </div>
+  </div>
+
+  <!-- Summary stats -->
+  <div class="oc-stat-grid models-summary-stats" aria-label="Models summary">
+    <div class="oc-stat models-stat-accent">
+      <div class="oc-stat-body">
+        <div class="oc-stat-label" data-i18n="providers">Providers</div>
+        <div class="oc-stat-row"><span class="oc-stat-value" id="providersCount" style="font-family:var(--oc-font-mono)">0</span></div>
+      </div>
+    </div>
+    <div class="oc-stat models-stat-cyan">
+      <div class="oc-stat-body">
+        <div class="oc-stat-label" data-i18n="models">Models</div>
+        <div class="oc-stat-row"><span class="oc-stat-value" id="modelsCount" style="font-family:var(--oc-font-mono)">0</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Source / Default / Fallback selector -->
+  <div class="oc-card models-hero-card">
+    <div class="oc-card-body models-hero-body">
+      <div class="hero-meta-item hero-meta-source">
+        <span class="meta-label" data-i18n="source">来源</span>
+        <select id="modelSource" onchange="switchModelSource(this.value)" class="oc-select models-source-select">
+          <option value="system" data-i18n="systemConfig">🖥️ 系统配置</option>
+        </select>
+      </div>
+      <div id="systemModelInfo" class="hero-meta-item hero-meta-default">
+        <span class="meta-label" data-i18n="default">默认</span>
+        <span id="defaultModelBadge" class="oc-badge oc-badge-success default-model-pill">
+          🧠 <span id="defaultModelName">-</span>
+        </span>
+        <div id="fallbackModelsSection" class="fallback-models-inline" hidden>
+          <span class="meta-label" data-i18n="fallback">Fallback</span>
+          <div id="fallbackModelsList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Actions bar -->
+  <div class="models-actions-bar">
+    <div class="models-actions-left">
+      <button class="oc-btn oc-btn-md oc-btn-primary" onclick="testAllModels()" id="btnBatchTestAll2" data-i18n="batchTestAll">🚀 批量测试全部模型</button>
+      <button class="oc-btn oc-btn-md oc-btn-ghost" onclick="fetchCliproxyModels()" id="btnFetchCliproxy" data-i18n="fetchModels">📡 拉取模型</button>
+      <button class="oc-btn oc-btn-md oc-btn-ghost" onclick="clearBatchTestResults()" data-i18n="clearResults">🧹 清空结果</button>
+    </div>
+    <div class="oc-flex-gap-8">
+      <button class="oc-btn oc-btn-md oc-btn-ghost" id="btnModelBindings" onclick="openModelBindings()" data-i18n="modelBindings">🎯 模型绑定</button>
+      <button class="oc-btn oc-btn-md oc-btn-ghost" id="btnManageProviders" onclick="openProviderManager()" data-i18n="manageProviders">🏷️ 管理提供方</button>
+      <button class="oc-btn oc-btn-md oc-btn-primary" id="btnAddModel" onclick="showAddModelDialog()" data-i18n="add">➕ 添加</button>
+    </div>
+  </div>
+
+  <!-- Legend -->
+  <div class="oc-card models-legend-card">
+    <span class="models-legend-title" data-i18n="legend">图例</span>
+    <span class="models-legend-item"><span class="oc-badge oc-badge-success models-legend-badge" data-i18n="legendDefault">🌟 默认</span> <span data-i18n="systemDefault">系统默认</span></span>
+    <span class="models-legend-item"><span class="oc-badge oc-badge-warning models-legend-badge" data-i18n="legendFallback">🔗 Fallback</span> <span data-i18n="fallbackAlt">备用</span></span>
+    <span class="models-legend-item"><span class="oc-badge oc-badge-primary models-legend-badge" data-i18n="legendAgent">🤖 Agent</span> <span data-i18n="user">使用者</span></span>
+    <span class="models-legend-item"><span class="models-legend-ctx configured">128k</span> <span data-i18n="configuredCtx">已配置CTX</span></span>
+    <span class="models-legend-item muted"><span class="models-legend-ctx">128k</span> <span data-i18n="defaultCtx">默认CTX</span></span>
+    <span class="models-legend-item"><span class="models-legend-image">🖼️</span> <span data-i18n="supportsImage">支持图片</span></span>
+  </div>
+
+  <!-- Cliproxy comparison section (hidden until fetch) -->
+  <div id="cliproxyModelsSection" class="models-section-spaced" hidden>
+    <div class="oc-card models-edge-card">
+      <div class="oc-card-header oc-flex-gap-16 models-clip-header">
+        <div class="oc-flex-gap-16 models-clip-title-row">
+          <span class="models-clip-title" data-i18n="cliproxyComparison">📡 远端模型对比</span>
+          <select id="proxyProviderSelect" class="oc-select models-proxy-provider-select" title="提供方"></select>
+          <span class="models-clip-legend">
+            <span class="oc-badge oc-badge-success" data-i18n="configured">已配置</span>
+            <span class="oc-badge oc-badge-warning" data-i18n="new">新增</span>
+            <span class="oc-badge oc-badge-danger models-expired-badge" data-i18n="expired">过期</span>
+          </span>
+        </div>
+        <div class="oc-flex-gap-8">
+          <button class="oc-btn oc-btn-sm oc-btn-primary" onclick="addAllNewCliproxyModels()" id="btnAddAllNew" data-i18n="addAllNew">➕ 添加全部新增</button>
+          <button class="oc-btn oc-btn-danger" onclick="removeAllExpiredCliproxyModels()" id="btnRemoveAllExpired" data-i18n="removeAllExpired">🗑️ 删除全部过期</button>
+        </div>
+      </div>
+      <div class="oc-card-body models-scroll-list" id="cliproxyModelsList"></div>
+    </div>
+  </div>
+
+  <!-- Batch test section (hidden until triggered) -->
+  <div id="batchModelTestSection" class="oc-card models-batch-card" hidden>
+    <div class="oc-card-header">
+      <span class="models-batch-title">⚡ <span data-i18n="batchTestResults">批量模型测试结果</span></span>
+    </div>
+    <div class="oc-card-body">
+      <div id="batchTestProgress" class="models-progress-block">
+        <div class="models-progress-top">
+          <span id="batchTestProgressText" class="models-progress-label" data-i18n="preparingTest">准备测试...</span>
+          <span id="batchTestProgressPercent" class="models-progress-percent">0%</span>
+        </div>
+        <div class="models-progress-track">
+          <div id="batchTestProgressBar" class="models-progress-bar"></div>
+        </div>
+        <div id="batchTestCurrentModel" class="models-progress-current"></div>
+      </div>
+      <div id="batchTestResults" hidden>
+        <div class="oc-table-wrap">
+          <table class="oc-table">
+            <thead>
+              <tr>
+                <th data-i18n="thModel">🤖 模型</th>
+                <th data-i18n="thLatency">⏱️ 延迟</th>
+                <th data-i18n="thInput">📥 输入</th>
+                <th data-i18n="thOutput">📤 输出</th>
+                <th data-i18n="thTime">🕐 时间</th>
+                <th data-i18n="thStatus">📊 状态</th>
+              </tr>
+            </thead>
+            <tbody id="batchTestResultsBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Models list (rendered by JS) -->
+  <div id="modelsList"></div>
+</div>
+
+<!-- Add Model Modal -->
+<div id="addModelModal" class="oc-modal-overlay">
+  <div class="oc-modal">
+    <div class="oc-modal-header">
+      <h3 data-i18n="addModelTitle">➕ 添加模型</h3>
+      <button class="oc-modal-close" onclick="hideAddModelDialog()">✕</button>
+    </div>
+    <div class="oc-modal-body">
+      <div class="models-form-row">
+        <label class="oc-field-label" data-i18n="labelProvider">Provider *</label>
+        <select id="addModelProvider" class="oc-select models-form-control"><option value="" data-i18n="selectProvider">选择 Provider</option></select>
+      </div>
+      <div class="models-form-row">
+        <label class="oc-field-label" data-i18n="labelModelId">模型 ID *</label>
+        <input type="text" id="addModelId" class="oc-input models-form-control" data-i18n-placeholder="phModelId" placeholder="例如: gpt-4o">
+      </div>
+      <div class="models-form-row">
+        <label class="oc-field-label" data-i18n="labelDisplayName">显示名称</label>
+        <input type="text" id="addModelName" class="oc-input models-form-control" data-i18n-placeholder="phDisplayName" placeholder="例如: GPT-4o">
+      </div>
+      <div class="models-form-row models-form-row-last">
+        <label class="oc-field-label" data-i18n="labelContextWindow">上下文窗口</label>
+        <input type="number" id="addModelContext" class="oc-input models-form-control" placeholder="128000" value="128000">
+      </div>
+      <div class="models-picker-section">
+        <div class="oc-flex-gap-8 models-picker-header">
+          <span class="models-picker-title" data-i18n="addModelPickerTitle">📡 从 Cliproxy 拉取后选择</span>
+          <button type="button" class="oc-btn oc-btn-sm oc-btn-ghost" id="btnFetchCliproxyForAdd" onclick="fetchCliproxyModelsForAdd()" data-i18n="addModelPickerFetch">🔄 拉取</button>
+        </div>
+        <div id="addModelPickerList" class="models-picker-list">
+          <div class="models-picker-empty" data-i18n="addModelPickerHint">点击 拉取 加载远程模型列表</div>
+        </div>
+      </div>
+    </div>
+    <div class="oc-modal-footer">
+      <button class="oc-btn oc-btn-ghost" onclick="hideAddModelDialog()" data-i18n="cancel">取消</button>
+      <button class="oc-btn oc-btn-primary" onclick="addModel()" data-i18n="addBtn">添加</button>
+    </div>
+  </div>
+</div>
+
+<!-- Model Bindings Modal -->
+<div id="modelBindingsModal" class="oc-modal-overlay">
+  <div class="oc-modal">
+    <div class="oc-modal-header">
+      <h3 data-i18n="modelBindings">🎯 模型绑定</h3>
+      <button class="oc-modal-close" onclick="hideModelBindings()">✕</button>
+    </div>
+    <div class="oc-modal-body">
+      <div class="models-picker-section">
+        <div class="models-picker-header">
+          <span class="models-picker-title" data-i18n="defaultModelSection">默认模型</span>
+          <button type="button" class="oc-btn oc-btn-sm oc-btn-ghost" onclick="addBindingFallback()" data-i18n="addFallback">➕ 添加 Fallback</button>
+        </div>
+        <div id="bindingDefaults" class="models-binding-rows"></div>
+      </div>
+      <div class="models-picker-section">
+        <div class="models-picker-header">
+          <span class="models-picker-title" data-i18n="agentModelSection">各 Agent 模型</span>
+        </div>
+        <div id="bindingAgents" class="models-scroll-list models-binding-rows"></div>
+      </div>
+      <div class="models-picker-section">
+        <div class="models-picker-header">
+          <span class="models-picker-title" data-i18n="remapSection">批量改指</span>
+        </div>
+        <div class="models-form-row">
+          <label class="oc-field-label" data-i18n="remapFrom">从提供方</label>
+          <select id="remapFrom" class="oc-select models-form-control"></select>
+        </div>
+        <div class="models-form-row models-form-row-last">
+          <label class="oc-field-label" data-i18n="remapTo">改指到</label>
+          <select id="remapTo" class="oc-select models-form-control"></select>
+        </div>
+        <div class="models-binding-hint" data-i18n="remapHint">只对「目标提供方下存在同名模型」的绑定生效，改不了的会列出来让你手动选。</div>
+        <button type="button" class="oc-btn oc-btn-sm oc-btn-ghost" onclick="runModelRemap()" data-i18n="remapRun">执行批量改指</button>
+      </div>
+    </div>
+    <div class="oc-modal-footer">
+      <button class="oc-btn oc-btn-ghost" onclick="hideModelBindings()" data-i18n="close">关闭</button>
+      <button class="oc-btn oc-btn-primary" onclick="saveModelBindings()" data-i18n="saveBindings">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- Provider Manager Modal -->
+<div id="providerManagerModal" class="oc-modal-overlay">
+  <div class="oc-modal">
+    <div class="oc-modal-header">
+      <h3 data-i18n="manageProviders">🏷️ 管理提供方</h3>
+      <button class="oc-modal-close" onclick="hideProviderManager()">✕</button>
+    </div>
+    <div class="oc-modal-body">
+      <div class="models-scroll-list" id="providerList"></div>
+      <div class="models-picker-section">
+        <div class="models-picker-header">
+          <span class="models-picker-title" data-i18n="newProviderTitle">➕ 新建提供方</span>
+        </div>
+        <div class="models-form-row">
+          <label class="oc-field-label" data-i18n="labelProviderId">提供方 ID *</label>
+          <input type="text" id="newProviderId" class="oc-input models-form-control" placeholder="例如: myapi">
+        </div>
+        <div class="models-form-row">
+          <label class="oc-field-label" data-i18n="labelProviderApi">API 类型 *</label>
+          <input type="text" id="newProviderApi" class="oc-input models-form-control" placeholder="openai-completions" value="openai-completions">
+        </div>
+        <div class="models-form-row">
+          <label class="oc-field-label" data-i18n="labelProviderBaseUrl">Base URL</label>
+          <input type="text" id="newProviderBaseUrl" class="oc-input models-form-control" placeholder="http://127.0.0.1:8317/v1">
+        </div>
+        <div class="models-form-row models-form-row-last">
+          <label class="oc-field-label" data-i18n="labelProviderApiKey">API Key</label>
+          <input type="password" id="newProviderApiKey" class="oc-input models-form-control" placeholder="sk-...">
+        </div>
+      </div>
+    </div>
+    <div class="oc-modal-footer">
+      <button class="oc-btn oc-btn-ghost" onclick="hideProviderManager()" data-i18n="close">关闭</button>
+      <button class="oc-btn oc-btn-primary" onclick="createProvider()" data-i18n="createProviderBtn">➕ 新建</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Model Modal -->
+<div id="editModelModal" class="oc-modal-overlay">
+  <div class="oc-modal">
+    <div class="oc-modal-header">
+      <h3 data-i18n="editModelTitle">✏️ 编辑模型</h3>
+      <button class="oc-modal-close" onclick="hideEditModelDialog()">✕</button>
+    </div>
+    <div class="oc-modal-body">
+      <input type="hidden" id="editModelProvider">
+      <input type="hidden" id="editModelIdOriginal">
+      <div class="models-form-row">
+        <label class="oc-field-label" data-i18n="labelModelIdReadonly">模型 ID</label>
+        <input type="text" id="editModelId" readonly class="oc-input models-readonly-input">
+      </div>
+      <div class="models-form-row">
+        <label class="oc-field-label" data-i18n="labelDisplayName">显示名称</label>
+        <input type="text" id="editModelName" class="oc-input models-form-control" data-i18n-placeholder="phDisplayName" placeholder="例如: GPT-4o">
+      </div>
+      <div class="models-form-row models-form-row-last">
+        <label class="oc-field-label" data-i18n="labelContextWindow">上下文窗口</label>
+        <input type="number" id="editModelContext" class="oc-input models-form-control" placeholder="128000">
+      </div>
+    </div>
+    <div class="oc-modal-footer">
+      <button class="oc-btn oc-btn-ghost" onclick="hideEditModelDialog()" data-i18n="cancel">取消</button>
+      <button class="oc-btn oc-btn-primary" onclick="editModel()" data-i18n="save">保存</button>
+    </div>
+  </div>
+</div>

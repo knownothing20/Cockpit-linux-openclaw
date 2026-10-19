@@ -1,0 +1,1156 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+
+<link rel="stylesheet" href="/unified-theme.css?v=20261010-fm-docs-real-pct">
+  <link rel="stylesheet" href="/unified-components.css?v=20261010-fm-docs-real-pct">
+  <link rel="stylesheet" href="/cockpit-ui-polish.css?v=20261010-fm-docs-real-pct">
+
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>文件管理器 - OpenClaw</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  color-scheme: dark;
+  --bg: var(--bg-page);
+  --bg-panel: var(--bg-sidebar);
+  --panel: var(--bg-sidebar);
+  --panel-hover: var(--bg-hover);
+  --panel-soft: var(--bg-elevated);
+  --line: var(--border);
+  --line-light: var(--border-hover);
+  --text: var(--text-primary);
+  --text2: var(--text-secondary);
+  --primary: var(--accent);
+  --primary-hover: var(--accent-hover);
+  --primary-soft: var(--accent-soft);
+  --positive: var(--accent-success);
+  --warning: var(--accent-warning);
+  --danger: var(--accent-danger);
+  --radius: var(--radius-card);
+  --shadow: var(--shadow);
+  --font-mono: var(--oc-font-mono);
+}
+
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--oc-font-sans);
+  font-size: var(--oc-text-base);
+  line-height: 1.5;
+  overflow: hidden;
+}
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+}
+
+
+
+
+
+.panel { display: none; flex: 1; overflow: hidden; flex-direction: column; }
+.panel.active { display: flex; }
+
+/* .toolbar migrated to .oc-toolbar */
+.toolbar label { font-size: var(--oc-text-sm); color: var(--text-muted); font-weight: 500; white-space: nowrap; flex-shrink: 0; }
+/* .toolbar select migrated to .oc-select */
+.oc-toolbar button {
+  padding: 8px 16px;
+  background: var(--bg-elevated);
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: var(--oc-text-md);
+  font-weight: 500;
+  transition: all 0.15s;
+  /* v2.3.111: 加 nowrap + flex-shrink:0, 防止按钮被 flex 挤压成竖排 ("刷/新"), 跟 select 一致. */
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.oc-toolbar button:hover {
+  background: var(--bg-card);
+  color: var(--text);
+  border-color: var(--border-hover);
+}
+
+.content-area {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  padding: 0 28px 20px;
+  gap: 16px;
+}
+/* v2.3.110: agent 记忆面板用 .memory-layout 包住 toolbar + content-area, 跟文件管理的 .file-browser-layout 一样跟 window 4 边拉开 20px 间距, 解决 "toolbar 左右没有 padding" + "toolbar 跟面板之间没空隙" */
+.memory-layout {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  /* v2.3.116: 去掉左右 20px margin —— 外壳已统一在 .app 上给 24px 左右 padding,
+     再叠 20px 会让本面板内容列 (178→1190) 比页头/页签条 (158→1210) 每侧窄 20px,
+     切页签时内容宽度跳变. */
+  margin: 0 0 20px;
+  overflow: hidden;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.memory-layout .oc-toolbar {
+  border-bottom: 1px solid var(--border);
+  border-radius: 12px 12px 0 0;
+  background: var(--bg-elevated);
+  padding: 12px 16px;
+  gap: 12px;
+}
+.agent-memory-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 0 0 auto;
+}
+.agent-memory-controls label {
+  font-size: var(--oc-text-sm);
+  color: var(--text-muted);
+  font-weight: 500;
+  white-space: nowrap;
+  padding: 0 2px;
+}
+.agent-memory-controls .oc-select {
+  width: auto;
+  min-width: 180px;
+  max-width: 280px;
+}
+.memory-layout .content-area {
+  padding: 14px;
+  gap: 14px;
+}
+.memory-edit-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.memory-edit-actions .oc-btn {
+  padding: 6px 14px;
+}
+
+.file-list-panel, .file-content-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-card);
+  /* v2.3.98: 去掉 backdrop-filter: blur(12px) + box-shadow 跟 v2.3.93 workspace-rule-panel 一致. 回归简洁圆角边框卡片. */
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+}
+.file-list-header, .file-content-header {
+  /* v2.3.99: 14px 18px → 18px 22px, 再加大 4px, 跟用户反馈"1px 肯定不止" (v2.3.98 改的 14px 18px 增量太小, 看起来还是贴边) */
+  padding: 18px 22px;
+  font-size: var(--oc-text-md);
+  font-weight: 600;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--text-secondary);
+}
+.file-list-body {
+  /* v2.3.99: 10px 12px → 14px 18px, 再加大 4-6px, 跟用户反馈"1px 肯定不止" */
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 18px;
+}
+.file-item {
+  /* v2.3.99: 12px 14px → 14px 18px, 再加大 2-4px */
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  background: transparent;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: all 0.15s;
+  border: 1px solid transparent;
+}
+.file-item:hover {
+  background: var(--bg-elevated);
+  border-color: var(--border);
+}
+.file-item .icon { font-size: var(--oc-icon-md); }                /* v2.3.99: 22px → 24px */
+.file-item .info { flex: 1; min-width: 0; }
+.file-item .name {
+  font-size: var(--oc-text-md);
+  font-weight: 500;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.file-item .meta {
+  font-size: var(--oc-text-xs);
+  color: var(--text-muted);
+  margin-top: 4px;                                     /* v2.3.99: 3px → 4px */
+}
+
+.file-content-body {
+  flex: 1;
+  overflow: auto;
+  padding: 16px;
+  background: var(--bg-card);
+  font-family: var(--font-mono);
+  font-size: var(--oc-text-md);
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--text-secondary);
+}
+.file-content-body code {
+  background: var(--bg-elevated);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: var(--oc-text-sm);
+  color: var(--text);
+}
+.file-content-body strong {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.editor {
+  display: none;
+  flex: 1;
+  width: 100%;
+  padding: 16px;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-family: var(--font-mono);
+  font-size: var(--oc-text-md);
+  line-height: 1.6;
+  resize: none;
+  outline: none;
+}
+.editor:focus { border-color: var(--accent); }
+
+.docs-stats-panel {
+  /* v2.3.116: 左右 padding 28px → 0, 内容列对齐页头/页签条 (158→1210);
+     面板自带纵向滚动, 滚动条 overlay 化, 避免贴住卡片右缘. */
+  padding: 0 0 20px;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.docs-stats-panel::-webkit-scrollbar { width: 0; height: 0; }
+
+.agent-bar { margin-bottom: 8px; }
+.agent-bar-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+  font-size: var(--oc-text-sm);
+  color: var(--text-secondary);
+}
+.agent-bar-header > span:last-child { font-variant-numeric: tabular-nums; }
+.agent-bar-track {
+  height: 20px;
+  border-radius: 5px;
+  background: var(--bg-elevated);
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+/* 分段用 flex 比例盒（2026-10-10 由 SVG 改来）：SVG + preserveAspectRatio="none"
+   是非等比缩放，段内数字会被水平拉伸变形（且那边误用了图标令牌 --oc-icon-2xl）。
+   flex 下文字是普通 HTML，不参与缩放。 */
+.agent-bar-fill {
+  display: flex;
+  height: 100%;
+  min-width: 4px;
+  border-radius: 5px;
+  overflow: hidden;
+}
+.agent-bar-seg { display: flex; align-items: center; justify-content: center; min-width: 0; }
+.agent-bar-seg i {
+  font-style: normal;
+  font-size: var(--oc-text-2xs);
+  font-weight: 500;
+  color: var(--text-on-accent);
+  line-height: 1;
+}
+.agent-bar-seg-core { background: var(--oc-chart-core); }
+.agent-bar-seg-project { background: var(--oc-chart-project); }
+.agent-bar-seg-memory { background: var(--oc-chart-memory); }
+.agent-bar-seg-rule { background: var(--oc-chart-rule); }
+.fm-stat-core { color: var(--oc-chart-core); }
+.fm-stat-project { color: var(--oc-chart-project); }
+.fm-stat-memory { color: var(--oc-chart-memory); }
+
+.breadcrumb {
+  font-size: var(--oc-text-sm);
+  color: var(--text-muted);
+  padding: 0 4px;
+}
+/* v2.3.111: toolbar 内的 breadcrumb (e.g. #memoryBreadcrumb) 推到最右 + 不换行 + 不挤压, 跟 select/button 保持一致的 nowrap + flex-shrink. */
+.oc-toolbar .breadcrumb {
+  margin-left: auto;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 1;
+  min-width: 0;
+}
+
+.oc-btn.oc-btn-sm {
+  padding: 5px 10px;
+  font-size: var(--oc-text-sm);
+  border-radius: 6px;
+}
+.oc-btn-danger {
+  background: var(--accent-danger);
+}
+.oc-btn.oc-btn-danger:hover { opacity: 0.9; }
+
+/* Toast — 使用 unified-components.css 共享 .toast 垫片 + body>.toast 定位 */
+
+.progress-bar {
+  width: 100%;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  margin-top: 12px;
+  overflow: hidden;
+  display: none;
+}
+.progress-bar.active { display: block; }
+.progress-fill {
+  height: 100%;
+  background: var(--accent);
+  width: 0%;
+  transition: width 0.3s;
+}
+
+.input-group {
+  margin-bottom: 16px;
+}
+.input-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  font-size: var(--oc-text-md);
+}
+.input-group input, .input-group select {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: var(--oc-text-md);
+  background: var(--bg-card);
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color 0.15s;
+}
+.input-group input:focus, .input-group select:focus {
+  border-color: var(--accent);
+}
+
+
+
+.share-section-title {
+  font-size: var(--oc-text-base);
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 20px 0 12px;
+  padding-left: 4px;
+}
+.share-section-title:first-child { margin-top: 0; }
+
+.upload-area {
+  border: 2px dashed var(--border);
+  border-radius: 12px;
+  padding: 36px;
+  text-align: center;
+  transition: all 0.3s;
+  cursor: pointer;
+}
+.upload-area:hover, .upload-area.dragover {
+  border-color: var(--accent);
+  background: var(--bg-elevated);
+}
+.upload-area input { display: none; }
+
+.share-list {
+  list-style: none;
+}
+.share-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 8px;
+  transition: background 0.2s;
+}
+.share-item:hover { background: var(--bg-elevated); }
+.share-info { flex: 1; min-width: 0; }
+.share-name {
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+  font-size: var(--oc-text-md);
+}
+.share-meta {
+  font-size: var(--oc-text-sm);
+  color: var(--text-muted);
+}
+.share-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+  margin-left: 12px;
+}
+
+.file-browser-layout {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  /* v2.3.100: 跟 .content-area 一样跟 window 4 边拉开 20px 间距. 之前 padding 0 + flex: 1 = 贴边 (file-browser-layout 0 padding 跟 window 4 边贴在一起, 即使内部 file-tree/file-main/file-item 各自有 padding 也看不出来 "2 边有 padding") */
+  /* v2.3.116: 同 .memory-layout —— 去掉左右 20px margin, 内容列对齐页头/页签条 (158→1210). */
+  margin: 0 0 20px;
+  /* v2.3.106: 去掉左边的 file-tree, 整体从 3 列变 2 列 (file-main + file-editor-panel), 让 file-main 拿到原本 file-tree 的 260px 空间. */
+  gap: 16px;
+}
+/* v2.3.106: 去掉左边的 file-tree 目录树面板, 相关 CSS 失效, 保留供以后恢复. */
+.file-tree { display: none; }
+
+.file-main {
+  /* v2.3.100: 加 1px 4 边 border + 圆角, file-main 跟 file-tree 各自独立圆角卡片 (跟 window 边缘 20px 拉开 + 跟 file-tree gap 16px 分隔) */
+  /* v2.3.106: 去掉 file-tree 后, file-main 变 main 区域, flex:1 拿满剩余空间 (除 file-editor-panel 占的 35%). */
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 20px 24px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.browser-breadcrumb {
+  /* v2.3.99: 10px 14px → 12px 18px, 再加大 2-4px */
+  display: flex;
+  align-items: center;
+  gap: 8px;                                           /* v2.3.99: 6px → 8px */
+  padding: 12px 18px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 14px;                                /* v2.3.99: 12px → 14px */
+  font-size: var(--oc-text-md);
+  flex-wrap: wrap;
+}
+.breadcrumb-item {
+  color: var(--accent);
+  cursor: pointer;
+  padding: 4px 10px;                                  /* v2.3.99: 3px 8px → 4px 10px, 再加大 */
+  border-radius: 4px;
+  font-size: var(--oc-text-md);
+}
+.breadcrumb-item:hover { background: var(--bg-card); }
+.breadcrumb-sep {
+  color: var(--text-muted);
+  font-size: var(--oc-text-sm);
+}
+.breadcrumb-item:last-child {
+  color: var(--text-primary);
+  font-weight: 500;
+  cursor: default;
+}
+.breadcrumb-item:last-child:hover { background: transparent; }
+
+.batch-toolbar {
+  /* v2.3.99: 10px 14px → 12px 18px, 再加大 2-4px */
+  display: flex;
+  align-items: center;
+  gap: 12px;                                          /* v2.3.99: 10px → 12px */
+  padding: 12px 18px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 14px;                                /* v2.3.99: 12px → 14px */
+  flex-wrap: wrap;
+}
+.batch-toolbar .batch-count {
+  font-size: var(--oc-text-md);
+  color: var(--text-secondary);
+  margin-right: auto;
+}
+.batch-toolbar.hidden { display: none; }
+
+.upload-zone {
+  /* v2.3.99: 24px 18px → 32px 24px, 再加大 8-6px 跟用户反馈"1px 肯定不止" */
+  border: 2px dashed var(--border);
+  border-radius: 8px;
+  padding: 32px 24px;
+  text-align: center;
+  margin-bottom: 14px;                                /* v2.3.99: 12px → 14px */
+  cursor: pointer;
+  transition: all 0.3s;
+  font-size: var(--oc-text-md);
+  color: var(--text-secondary);
+}
+.upload-zone:hover, .upload-zone.dragover {
+  border-color: var(--accent);
+  background: var(--bg-elevated);
+}
+.upload-zone input { display: none; }
+
+.browser-list {
+  flex: 1;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px;                                       /* v2.3.99: 4px → 8px, 再加大 4px */
+}
+.browser-item {
+  /* v2.3.99: 12px 14px → 14px 18px, 再加大 2-4px */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.15s;
+  border-radius: 6px;
+}
+.browser-item:last-child { border-bottom: none; }
+.browser-item:hover { background: var(--bg-elevated); }
+.browser-item-info {
+  display: flex;
+  align-items: center;
+  gap: 14px;                                          /* v2.3.99: 12px → 14px */
+  flex: 1;
+  min-width: 0;
+}
+.browser-item-icon {
+  font-size: var(--oc-icon-lg);                                    /* v2.3.99: 24px → 26px */
+  width: 26px;
+  text-align: center;
+  flex-shrink: 0;
+}
+.browser-item-name {
+  font-size: var(--oc-text-md);
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.browser-item-meta {
+  font-size: var(--oc-text-xs);
+  color: var(--text-muted);
+  margin-left: 40px;                                  /* v2.3.99: 36px → 40px */
+  margin-top: 4px;                                    /* v2.3.99: 3px → 4px */
+}
+.browser-item-actions {
+  display: flex;
+  gap: 10px;                                          /* v2.3.99: 8px → 10px */
+  flex-shrink: 0;
+}
+.browser-checkbox {
+  width: 18px;
+  height: 18px;
+  margin-right: 14px;                                 /* v2.3.99: 12px → 14px */
+  cursor: pointer;
+  flex-shrink: 0;
+  accent-color: var(--accent);
+}
+
+.file-editor-panel {
+  /* v2.3.101: 跟 .file-tree / .file-main 一样改成 1px 4 边 border + 圆角 12px 独立圆角卡片. v2.3.100 只改了 file-tree 跟 file-main, 漏了第三个子元素 file-editor-panel (只 border-left 无圆角), 所以最右侧"右边没 padding" 一直存在. */
+  /* v2.3.106: 去掉 file-tree 后, file-main 占的空间变大, file-editor-panel 收窄 42% → 32% / max 550px → 400px, 给 file-main 留更多空间. */
+  width: 32%;
+  min-width: 280px;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--bg-card);
+  overflow: hidden;
+}
+.file-editor-panel .file-content-header {
+  position: sticky;
+  top: 0;
+  background: var(--bg-card);
+  z-index: 1;
+}
+.file-editor-panel .file-content-body {
+  flex: 1;
+  overflow: auto;
+}
+.file-editor-panel .editor {
+  flex: 1;
+}
+
+.share-panel-scroll {
+  flex: 1;
+  overflow-y: auto;
+  /* v2.3.116: 左右 padding 28px → 0, 内容列对齐页头/页签条 (158→1210); 滚动条 overlay 化. */
+  padding: 20px 0;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  /* v2.3.114: 改成 flex column + gap:16px, 让三张 .oc-card (上传 / 本地 / 记录) 之间有 16px 空隙, 不再糊在一起. */
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.share-panel-scroll::-webkit-scrollbar { width: 0; height: 0; }
+/* v2.3.115: 修复 v2.3.114 加 padding 后内容被裁剪. .oc-card 来自 unified-components.css 默认有 overflow:hidden + 固定高度, v2.3.114 加 padding:20px 后, card 内容 (upload-area 36px padding + 图标 40px + 文字两行 ≈ 144px) 被压扁, 只剩图标可见. 同时 flex-shrink:1 默认让 card 在 .share-panel-scroll 高度不够时被压缩. */
+.share-panel-scroll .oc-card {
+  padding: 20px;
+  flex-shrink: 0;
+  overflow: visible;
+  height: auto;
+  min-height: 0;
+}
+.share-panel-scroll .oc-card > h2 {
+  margin: 0 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--oc-text-base);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.share-panel-scroll .oc-card > h2 svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+/* v2.3.115: upload-area 在 .oc-card 内, padding 36px 跟 card padding 20px 叠加看起来太挤, 缩到 24px. */
+.share-panel-scroll .oc-card .upload-area {
+  padding: 24px;
+}
+
+/* SVG Icon Styles */
+.icon-folder { color: var(--oc-warning); }
+.icon-file-code { color: var(--oc-success); }
+.icon-file-text { color: var(--oc-purple); }
+.icon-file { color: var(--oc-text-tertiary); }
+svg { vertical-align: -2px; }
+.tab-icon svg { vertical-align: -1px; }
+/* v2.3.105: .oc-tabs-underline 加 18px 左 margin, 配合原本 10px 内部 padding = 28px, 跟 .oc-ph 的 28px 左 padding 对齐 (跟 .oc-ph-title / .oc-ph-icon 同一垂直线) */
+.oc-tabs-underline { margin-left: 18px; }
+
+/* JS/HTML 渲染辅助类（替代内联 style） */
+body.file-manager .fm-icon { vertical-align: -2px; }
+body.file-manager .fm-hidden { display: none; }
+body.file-manager .fm-count-label { font-size: var(--oc-text-xs); color: var(--text-muted); }
+body.file-manager .fm-upload-icon { margin-bottom: 8px; }
+body.file-manager .fm-upload-hint { color: var(--text-muted); font-size: var(--oc-text-sm); margin-top: 6px; }
+body.file-manager .fm-item-main { min-width: 0; flex: 1; }
+body.file-manager .fm-error-text { color: var(--accent-danger); }
+body.file-manager .fm-dist-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 10px; }
+body.file-manager .fm-dist-label { font-size: var(--oc-text-xs); color: var(--text-muted); font-weight: 500; }
+body.file-manager .fm-bar-name { font-weight: 500; }
+body.file-manager .fm-legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: var(--oc-text-2xs); color: var(--text-muted); }
+body.file-manager .fm-legend-item { display: inline-flex; align-items: center; gap: 4px; }
+body.file-manager .fm-legend-dot { width: 10px; height: 10px; border-radius: 2px; }
+body.file-manager .fm-legend-dot.core { background: var(--oc-chart-core); }
+body.file-manager .fm-legend-dot.project { background: var(--oc-chart-project); }
+body.file-manager .fm-legend-dot.memory { background: var(--oc-chart-memory); }
+body.file-manager .fm-legend-dot.rule { background: var(--oc-chart-rule); }
+</style>
+<script>
+var translations = {
+  zh: {
+    'pageTitle': '文件管理器 - OpenClaw',
+    'headerTitle': '文件管理器',
+    'subtitle': '浏览文件、管理 Agent 记忆、追踪文档分布、分享文件',
+    'tab.files': '文件管理',
+    'tab.memory': 'Agent 记忆',
+    'tab.docs': '文档分布',
+    'tab.share': '文件分享',
+    'path': '路径',
+    'selectSubFolder': '-- 选择二级目录 --',
+    'refresh': '↻ 刷新',
+    'fileList': '文件列表',
+    'fileCount': '{count} 个文件',
+    'selectDirToView': '选择目录以查看文件',
+    'selectFile': '<svg class="fm-icon" width="14" height="14"><use href="#icon-file"/></svg> 选择文件',
+    'edit': '<svg class="fm-icon" width="13" height="13"><use href="#icon-edit"/></svg> 编辑',
+    'save': '<svg class="fm-icon" width="13" height="13"><use href="#icon-save"/></svg> 保存',
+    'cancel': '<svg class="fm-icon" width="13" height="13"><use href="#icon-x"/></svg> 取消',
+    'clickToView': '点击左侧文件查看内容',
+    'clickToEdit': '点击编辑按钮修改内容',
+    'selectAgent': '选择 Agent',
+    'selectAgentPlaceholder': '-- 请选择 Agent --',
+    'memoryFileList': 'memory 文件列表',
+    'memoryCount': '{count} 项',
+    'selectAgentToViewMemory': '请选择一个 Agent 以查看其 memory 文件夹内容',
+    'loading': '加载中...',
+    'noFiles': '暂无文件',
+    'loadFailed': '加载失败',
+    'loadFailedMsg': '加载失败: {msg}',
+    'saveFailed': '保存失败',
+    'saveFailedMsg': '保存失败: {msg}',
+    'currentPath': '当前: {path}',
+    'selectAgentEmpty': '请选择一个 Agent',
+    'emptyDir': '空目录',
+    'saving': '保存中...',
+    'saved': '已保存!',
+    'agentConfigFiles': 'Agent 配置文件',
+    'agentConfigDesc': '各 Agent 核心身份与能力定义',
+    'projectDocs': '项目文档',
+    'projectDocsDesc': '主文档 · 软件文档 · 项目产出',
+    'memoryAndRules': '记忆与规则',
+    'memoryAndRulesDesc': '记忆文件 · 共享规则 · 模板',
+    'agentDocsDist': '各 Agent 文档分布',
+    'agentFileCount': '{count} 个文件',
+    'coreConfig': '核心配置',
+    'projectDocsLegend': '项目文档',
+    'memoryFiles': '记忆文件',
+    'ruleFiles': '规则文件',
+    'directory': '<svg class="fm-icon" width="15" height="15"><use href="#icon-folder"/></svg> 目录树',
+    'clickOrDragToDir': '<svg class="fm-icon" width="14" height="14"><use href="#icon-upload"/></svg> 点击或拖拽文件到此处，上传到当前目录',
+    'selectedCount': '已选 {count} 项',
+    'batchShare': '<svg class="fm-icon" width="13" height="13"><use href="#icon-link"/></svg> 批量分享',
+    'batchCompress': '<svg class="fm-icon" width="13" height="13"><use href="#icon-archive"/></svg> 批量压缩',
+    'batchDownload': '<svg class="fm-icon" width="13" height="13"><use href="#icon-download"/></svg> 批量下载',
+    'clear': '清除',
+    'activeShares': '活跃分享记录',
+    'noShares': '暂无分享记录',
+    'uploadSuccess': '上传成功！链接已复制到剪贴板',
+    'uploadFailed': '上传失败',
+    'enterFilePath': '请输入文件路径',
+    'shareLinkGenerated': '分享链接已生成并复制！',
+    'shareFailed': '分享失败',
+    'requestFailed': '请求失败',
+    'expiryTime': '过期时间',
+    'expired': '已过期',
+    'minutesLater': '{n} 分钟后',
+    'hoursLater': '{n} 小时后',
+    'daysLater': '{n} 天后',
+    'deleted': '已删除',
+    'deleteFailed': '删除失败',
+    'copyLink': '复制链接',
+    'deleteBtn': '删除',
+    'download': '下载',
+    'share': '分享',
+    'copyPath': '复制地址',
+    'pathCopied': '路径已复制',
+    'thisComputer': '此电脑',
+    'generatedLinks': '已生成 {count} 个分享链接',
+    'compressing': '正在压缩，请稍候...',
+    'compressDone': '压缩完成，链接已复制！',
+    'compressFailed': '压缩失败',
+    'packaging': '正在打包下载...',
+    'packageFailed': '打包失败',
+    'uploadSuccessShort': '上传成功！',
+    'shareLinkCopied': '分享链接已复制！',
+    'remaining': '剩余',
+    'uploadSection': '<svg class="fm-icon" width="15" height="15"><use href="#icon-clip"/></svg> 上传文件分享',
+    'uploadDirLabel': '保存目录',
+    'uploadDirPlaceholder': '例如: /tmp/http-share-uploads',
+    'clickOrDrag': '点击选择文件或拖拽到此处',
+    'maxSize': '最大支持 1 GB',
+    'uploadSuccessWithPath': '已保存到 {path}，链接已复制',
+    'localShareSection': '<svg class="fm-icon" width="15" height="15"><use href="#icon-folder"/></svg> 本地文件分享',
+    'filePath': '文件/目录路径',
+    'filePathPlaceholder': '例如: /home/user/document.pdf',
+    'expiry': '有效期',
+    'expiry.10min': '10 分钟',
+    'expiry.30min': '30 分钟',
+    'expiry.1h': '1 小时',
+    'expiry.3h': '3 小时',
+    'expiry.12h': '12 小时',
+    'expiry.24h': '24 小时',
+    'generateShareLink': '生成分享链接',
+    'recordsSection': '<svg class="fm-icon" width="15" height="15"><use href="#icon-link"/></svg> 分享记录',
+    'noTextContent': '该文件无文本内容或无法预览',
+    'fileTooLarge': '文件过大，无法预览'
+  },
+  en: {
+    'pageTitle': 'File Manager - OpenClaw',
+    'headerTitle': 'File Manager',
+    'subtitle': 'Browse files, manage Agent memory, track docs distribution, share files',
+    'tab.files': 'File Manager',
+    'tab.memory': 'Agent Memory',
+    'tab.docs': 'Doc Distribution',
+    'tab.share': 'File Share',
+    'path': 'Path',
+    'selectSubFolder': '-- Select subfolder --',
+    'refresh': '↻ Refresh',
+    'fileList': 'File List',
+    'fileCount': '{count} files',
+    'selectDirToView': 'Select a directory to view files',
+    'selectFile': 'Select File',
+    'edit': 'Edit',
+    'save': 'Save',
+    'cancel': 'Cancel',
+    'clickToView': 'Click a file on the left to view content',
+    'clickToEdit': 'Click edit button to modify content',
+    'selectAgent': 'Select Agent',
+    'selectAgentPlaceholder': '-- Select an Agent --',
+    'memoryFileList': 'Memory File List',
+    'memoryCount': '{count} items',
+    'selectAgentToViewMemory': 'Select an Agent to view its memory folder',
+    'loading': 'Loading...',
+    'noFiles': 'No files',
+    'loadFailed': 'Load failed',
+    'loadFailedMsg': 'Load failed: {msg}',
+    'saveFailed': 'Save failed',
+    'saveFailedMsg': 'Save failed: {msg}',
+    'currentPath': 'Current: {path}',
+    'selectAgentEmpty': 'Select an Agent',
+    'emptyDir': 'Empty folder',
+    'saving': 'Saving...',
+    'saved': 'Saved!',
+    'agentConfigFiles': 'Agent Config Files',
+    'agentConfigDesc': 'Core identity & capability definitions for each Agent',
+    'projectDocs': 'Project Docs',
+    'projectDocsDesc': 'Main docs · Software docs · Project output',
+    'memoryAndRules': 'Memory & Rules',
+    'memoryAndRulesDesc': 'Memory files · Shared rules · Templates',
+    'agentDocsDist': 'Document distribution by Agent',
+    'agentFileCount': '{count} files',
+    'coreConfig': 'Core Config',
+    'projectDocsLegend': 'Project Docs',
+    'memoryFiles': 'Memory Files',
+    'ruleFiles': 'Rule Files',
+    'directory': 'Directory Tree',
+    'clickOrDragToDir': 'Click or drag files here to upload to current directory',
+    'selectedCount': '{count} selected',
+    'batchShare': 'Batch Share',
+    'batchCompress': 'Batch Compress',
+    'batchDownload': 'Batch Download',
+    'clear': 'Clear',
+    'activeShares': 'Active Share Records',
+    'noShares': 'No share records',
+    'uploadSuccess': 'Upload successful! Link copied to clipboard',
+    'uploadFailed': 'Upload failed',
+    'enterFilePath': 'Please enter a file path',
+    'shareLinkGenerated': 'Share link generated and copied!',
+    'shareFailed': 'Share failed',
+    'requestFailed': 'Request failed',
+    'expiryTime': 'Expires',
+    'expired': 'Expired',
+    'minutesLater': '{n} minutes left',
+    'hoursLater': '{n} hours left',
+    'daysLater': '{n} days left',
+    'deleted': 'Deleted',
+    'deleteFailed': 'Delete failed',
+    'copyLink': 'Copy Link',
+    'deleteBtn': 'Delete',
+    'download': 'Download',
+    'share': 'Share',
+    'copyPath': 'Copy Path',
+    'pathCopied': 'Path copied',
+    'thisComputer': 'This Computer',
+    'generatedLinks': '{count} share links generated',
+    'compressing': 'Compressing, please wait...',
+    'compressDone': 'Compression complete, link copied!',
+    'compressFailed': 'Compression failed',
+    'packaging': 'Packaging for download...',
+    'packageFailed': 'Packaging failed',
+    'uploadSuccessShort': 'Upload successful!',
+    'shareLinkCopied': 'Share link copied!',
+    'remaining': 'remaining',
+    'uploadSection': 'Upload & Share',
+    'uploadDirLabel': 'Save Directory',
+    'uploadDirPlaceholder': 'e.g.: /tmp/http-share-uploads',
+    'clickOrDrag': 'Click to select a file or drag it here',
+    'maxSize': 'Maximum 1 GB',
+    'uploadSuccessWithPath': 'Saved to {path}, link copied',
+    'localShareSection': 'Local File Share',
+    'filePath': 'File/Directory Path',
+    'filePathPlaceholder': 'e.g.: /home/user/document.pdf',
+    'expiry': 'Expiry',
+    'expiry.10min': '10 Minutes',
+    'expiry.30min': '30 Minutes',
+    'expiry.1h': '1 Hour',
+    'expiry.3h': '3 Hours',
+    'expiry.12h': '12 Hours',
+    'expiry.24h': '24 Hours',
+    'generateShareLink': 'Generate Share Link',
+    'recordsSection': 'Share Records',
+    'noTextContent': 'No text content or cannot preview',
+    'fileTooLarge': 'File too large to preview'
+  }
+};
+
+var currentLang = localStorage.getItem('openclaw-lang') || 'zh';
+
+function t(key, params) {
+  var text = (translations[currentLang] && translations[currentLang][key]) || (translations['zh'] && translations['zh'][key]) || key;
+  if (params) {
+    Object.keys(params).forEach(function(k) {
+      text = text.replace(new RegExp('\\{' + k + '\\}', 'g'), params[k]);
+    });
+  }
+  return text;
+}
+
+function setLang(lang) {
+  if (lang !== 'zh' && lang !== 'en') lang = 'zh';
+  currentLang = lang;
+  localStorage.setItem('openclaw-lang', lang);
+  document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+  document.title = t('pageTitle');
+  document.querySelectorAll('[data-i18n]').forEach(function(el) {
+    var key = el.getAttribute('data-i18n');
+    el.innerHTML = t(key);
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(function(el) {
+    var key = el.getAttribute('data-i18n-placeholder');
+    el.placeholder = t(key);
+  });
+  if (typeof refreshLangDynamic === 'function') refreshLangDynamic();
+}
+
+window.onShellLangChange = function(lang) {
+  setLang(lang);
+};
+
+window.addEventListener('message', function(e) {
+  if (e.data && e.data.type === 'openclaw-lang') {
+    setLang(e.data.lang);
+  }
+});
+</script>
+</head>
+<body class="file-manager">
+<!-- SVG Icon Sprite -->
+<svg  xmlns="http://www.w3.org/2000/svg" class="fm-hidden">
+<symbol id="icon-folder" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></symbol>
+<symbol id="icon-file" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></symbol>
+<symbol id="icon-file-text" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></symbol>
+<symbol id="icon-file-code" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="m10 13-2 2 2 2"/><path d="m14 17 2-2-2-2"/></symbol>
+<symbol id="icon-brain" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z"/><path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z"/><path d="M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4"/><path d="M17.599 6.5a3 3 0 0 0 .399-1.375"/><path d="M6.003 5.125A3 3 0 0 0 6.401 6.5"/><path d="M3.477 10.896a4 4 0 0 1 .585-.396"/><path d="M19.938 10.5a4 4 0 0 1 .585.396"/><path d="M6 18a4 4 0 0 1-1.967-.516"/><path d="M19.967 17.484A4 4 0 0 1 18 18"/></symbol>
+<symbol id="icon-bar-chart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" x2="12" y1="20" y2="10"/><line x1="18" x2="18" y1="20" y2="4"/><line x1="6" x2="6" y1="20" y2="16"/></symbol>
+<symbol id="icon-share" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" x2="12" y1="2" y2="15"/></symbol>
+<symbol id="icon-upload" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></symbol>
+<symbol id="icon-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></symbol>
+<symbol id="icon-link" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></symbol>
+<symbol id="icon-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/><path d="m15 5 4 4"/></symbol>
+<symbol id="icon-save" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-6a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v6"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/></symbol>
+<symbol id="icon-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></symbol>
+<symbol id="icon-clip" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></symbol>
+<symbol id="icon-archive" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="5" x="2" y="3" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></symbol>
+<symbol id="icon-monitor" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></symbol>
+<symbol id="icon-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+<symbol id="icon-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></symbol>
+<symbol id="icon-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></symbol>
+</svg>
+
+<div class="app">
+  <div class="oc-ph">
+    <div class="oc-ph-main">
+      <div class="oc-ph-icon" >
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>
+      </div>
+      <div class="oc-ph-text">
+        <div class="oc-ph-eyebrow">FILES</div>
+        <h1 class="oc-ph-title" data-i18n="headerTitle">文件管理器</h1>
+        <p class="oc-ph-subtitle" data-i18n="subtitle">浏览文件、管理 Agent 记忆、追踪文档分布、分享文件</p>
+      </div>
+    </div>
+    <div class="oc-ph-side">
+      <button class="oc-tool-btn lang" id="fmLangToggle" type="button" aria-label="语言">中/En</button>
+      <button class="oc-tool-btn theme" id="fmThemeToggle" type="button" aria-label="主题">☽</button>
+    </div>
+  </div>
+
+  <div class="oc-tabs oc-tabs-underline">
+    <button class="oc-tab active" data-tab="files">📁 <span data-i18n="tab.files">文件管理</span></button>
+    <button class="oc-tab" data-tab="memory">🧠 <span data-i18n="tab.memory">Agent 记忆</span></button>
+    <button class="oc-tab" data-tab="docs">📊 <span data-i18n="tab.docs">文档分布</span></button>
+    <button class="oc-tab" data-tab="share">📤 <span data-i18n="tab.share">文件分享</span></button>
+    <span class="oc-tabs-aside" id="tabsAside"></span>
+  </div>
+
+  <!-- v2.3.106: 去掉左边的 file-tree 目录树面板, 释放空间给 file-main, 整体从 3 列变 2 列 (file-main + file-editor-panel) -->
+  <!-- ═══ Files Panel (merged: HTTP Share browser + FM editor) ═══ -->
+  <div class="panel active" id="filesPanel">
+    <div class="file-browser-layout">
+      <div class="file-main">
+        <div class="upload-zone" id="browserUploadZone" onclick="document.getElementById('browserFileInput').click()" ondrop="browserHandleDrop(event)" ondragover="browserHandleDragOver(event)" ondragleave="browserHandleDragLeave(event)">
+          <input type="file" id="browserFileInput" onchange="browserHandleFileSelect(event)">
+          <span data-i18n="clickOrDragToDir"><svg class="fm-icon" width="14" height="14"><use href="#icon-upload"/></svg> 点击或拖拽文件到此处，上传到当前目录</span>
+        </div>
+        <div class="browser-breadcrumb" id="browserBreadcrumb"></div>
+        <div class="progress-bar" id="browserProgressBar">
+          <div class="progress-fill" id="browserProgressFill"></div>
+        </div>
+        <div class="batch-toolbar hidden" id="batchToolbar">
+          <span class="batch-count" id="batchCount"></span>
+          <button class="oc-btn oc-btn-sm" onclick="batchShare()" data-i18n="batchShare"><svg class="fm-icon" width="13" height="13"><use href="#icon-link"/></svg> 批量分享</button>
+          <button class="oc-btn oc-btn-sm oc-btn-secondary" onclick="batchCompress()" data-i18n="batchCompress"><svg class="fm-icon" width="13" height="13"><use href="#icon-archive"/></svg> 批量压缩</button>
+          <button class="oc-btn oc-btn-sm oc-btn-secondary" onclick="batchDownload()" data-i18n="batchDownload"><svg class="fm-icon" width="13" height="13"><use href="#icon-download"/></svg> 批量下载</button>
+          <button class="oc-btn oc-btn-sm oc-btn-secondary" onclick="clearSelection()" data-i18n="clear">清除</button>
+        </div>
+        <div id="browserList" class="browser-list">
+          <div class="oc-empty"><div class="oc-empty-icon">⏳</div><h4 data-i18n="loading">加载中...</h4></div>
+        </div>
+      </div>
+      <div class="file-editor-panel" id="fileEditorPanel">
+        <div class="file-content-header">
+          <span id="fileContentTitle" data-i18n="selectFile"><svg class="fm-icon" width="14" height="14"><use href="#icon-file"/></svg> 选择文件</span>
+          <span id="fileEditButtons"  class="fm-hidden">
+            <button onclick="editFile()" class="oc-btn oc-btn-sm oc-btn-secondary" data-i18n="edit"><svg class="fm-icon" width="13" height="13"><use href="#icon-edit"/></svg> 编辑</button>
+            <button onclick="saveFile()" id="saveBtn"  class="oc-btn oc-btn-sm fm-hidden" data-i18n="save"><svg class="fm-icon" width="13" height="13"><use href="#icon-save"/></svg> 保存</button>
+            <button onclick="cancelEdit()" id="cancelBtn"  class="oc-btn oc-btn-sm oc-btn-secondary fm-hidden" data-i18n="cancel"><svg class="fm-icon" width="13" height="13"><use href="#icon-x"/></svg> 取消</button>
+          </span>
+        </div>
+        <div class="file-content-body" id="fileContentBody">
+          <div class="oc-empty"><div class="oc-empty-icon"><svg class="fm-icon" width="32" height="32"><use href="#icon-file"/></svg></div><h4 data-i18n="clickToView">点击左侧文件查看内容</h4></div>
+        </div>
+        <textarea class="editor" id="fileEditor"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ Memory Panel ═══ -->
+  <div class="panel" id="memoryPanel">
+    <div class="memory-layout">
+      <div class="oc-toolbar">
+        <div class="oc-toolbar-start agent-memory-controls">
+          <label data-i18n="selectAgent">选择 Agent</label>
+          <select id="agentMemorySelect" class="oc-select" onchange="onAgentMemoryChange(this.value)">
+            <option value="" data-i18n="selectAgentPlaceholder">-- 请选择 Agent --</option>
+          </select>
+          <button onclick="refreshMemory()" data-i18n="refresh">↻ 刷新</button>
+        </div>
+        <span class="breadcrumb" id="memoryBreadcrumb"></span>
+      </div>
+      <div class="content-area">
+        <div class="file-list-panel">
+          <div class="file-list-header">
+            <span data-i18n="memoryFileList">memory 文件列表</span>
+            <span id="memoryCountLabel" class="fm-count-label">0 项</span>
+          </div>
+          <div class="file-list-body" id="memoryListBody">
+            <div class="oc-empty"><div class="oc-empty-icon"><svg class="fm-icon" width="32" height="32"><use href="#icon-brain"/></svg></div><h4 data-i18n="selectAgentToViewMemory">请选择一个 Agent 以查看其 memory 文件夹内容</h4></div>
+          </div>
+        </div>
+        <div class="file-content-panel">
+          <div class="file-content-header">
+            <span id="memoryContentTitle" data-i18n="selectFile"><svg class="fm-icon" width="14" height="14"><use href="#icon-file"/></svg> 选择文件</span>
+            <span id="memoryEditButtons" class="memory-edit-actions fm-hidden" >
+              <button onclick="editMemoryFile()" id="memoryEditBtn" class="oc-btn oc-btn-sm oc-btn-secondary" data-i18n="edit"><svg class="fm-icon" width="13" height="13"><use href="#icon-edit"/></svg> 编辑</button>
+              <button onclick="saveMemoryFile()" id="memorySaveBtn"  class="oc-btn oc-btn-sm oc-btn-primary fm-hidden" data-i18n="save"><svg class="fm-icon" width="13" height="13"><use href="#icon-save"/></svg> 保存</button>
+              <button onclick="cancelMemoryEdit()" id="memoryCancelBtn"  class="oc-btn oc-btn-sm oc-btn-secondary fm-hidden" data-i18n="cancel"><svg class="fm-icon" width="13" height="13"><use href="#icon-x"/></svg> 取消</button>
+            </span>
+          </div>
+          <div class="file-content-body" id="memoryContentBody">
+            <div class="oc-empty"><div class="oc-empty-icon"><svg class="fm-icon" width="32" height="32"><use href="#icon-file"/></svg></div><h4 data-i18n="clickToView">点击左侧文件查看内容</h4></div>
+          </div>
+          <textarea class="editor" id="memoryEditor"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ Docs Panel ═══ -->
+  <div class="panel" id="docsPanel">
+    <div class="docs-stats-panel" id="docsStatsPanel">
+      <div class="oc-empty"><div class="oc-empty-icon"><svg class="fm-icon" width="32" height="32"><use href="#icon-bar-chart"/></svg></div><h4 data-i18n="loading">加载中...</h4></div>
+    </div>
+  </div>
+
+  <!-- ═══ Share Panel (merged: upload + local share + records) ═══ -->
+  <div class="panel" id="sharePanel">
+    <div class="share-panel-scroll">
+      <div class="oc-card">
+        <h2 data-i18n="uploadSection"><svg class="fm-icon" width="15" height="15"><use href="#icon-clip"/></svg> 上传文件分享</h2>
+        <div class="input-group">
+          <label data-i18n="uploadDirLabel">保存目录</label>
+          <input type="text" id="shareUploadDir" value="/tmp/http-share-uploads" data-i18n-placeholder="uploadDirPlaceholder" placeholder="例如: /tmp/http-share-uploads">
+        </div>
+        <div class="upload-area" onclick="document.getElementById('shareFileInput').click()" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+          <input type="file" id="shareFileInput" onchange="handleFileSelect(event)">
+          <p class="fm-upload-icon"><svg class="fm-icon" width="40" height="40"><use href="#icon-clip"/></svg></p>
+          <p data-i18n="clickOrDrag">点击选择文件或拖拽到此处</p>
+          <p class="fm-upload-hint" data-i18n="maxSize">最大支持 1 GB</p>
+        </div>
+        <div class="progress-bar" id="progressBar">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+      </div>
+
+      <div class="oc-card">
+        <h2 data-i18n="localShareSection"><svg class="fm-icon" width="15" height="15"><use href="#icon-folder"/></svg> 本地文件分享</h2>
+        <div class="input-group">
+          <label data-i18n="filePath">文件/目录路径</label>
+          <input type="text" id="localPath" data-i18n-placeholder="filePathPlaceholder" placeholder="例如: /home/user/document.pdf">
+        </div>
+        <div class="input-group">
+          <label data-i18n="expiry">有效期</label>
+          <select id="localExpiry" class="oc-select">
+            <option value="10" data-i18n="expiry.10min">10 分钟</option>
+            <option value="30" data-i18n="expiry.30min">30 分钟</option>
+            <option value="60" data-i18n="expiry.1h">1 小时</option>
+            <option value="180" data-i18n="expiry.3h">3 小时</option>
+            <option value="720" data-i18n="expiry.12h">12 小时</option>
+            <option value="1440" data-i18n="expiry.24h">24 小时</option>
+          </select>
+        </div>
+        <button class="oc-btn" onclick="shareLocal()" data-i18n="generateShareLink">生成分享链接</button>
+      </div>
+
+      <div class="oc-card">
+        <h2 data-i18n="recordsSection"><svg class="fm-icon" width="15" height="15"><use href="#icon-link"/></svg> 分享记录</h2>
+        <div id="shareList">
+          <div class="oc-empty"><h4 data-i18n="noShares">暂无分享记录</h4></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script defer src="file-manager.js"></script>
+<script>setLang(currentLang);</script>
+<script>
+(function() {
+  function countAll(sel) { try { return document.querySelectorAll(sel).length; } catch (e) { return 0; } }
+  function update() {
+    var el = document.getElementById('tabsAside');
+    if (!el) return;
+    var active = document.querySelector('.oc-tab.active');
+    var key = active ? active.dataset.tab : 'files';
+    var n = 0, unit = '项';
+    if (key === 'memory') { n = countAll('#memoryListBody .memory-item, #memoryListBody .browser-item, #memoryListBody tr'); unit = '个记忆文件'; }
+    else if (key === 'docs') { n = countAll('#docsStatsPanel .oc-stat-item'); unit = '项统计'; }
+    else if (key === 'share') { n = countAll('#shareList .share-item'); unit = '个分享'; }
+    else { n = countAll('#browserList .browser-item'); unit = '项'; }
+    el.textContent = n ? ('共 ' + n + ' ' + unit) : '';
+  }
+  function boot() {
+    document.querySelectorAll('.oc-tab').forEach(function(b) {
+      b.addEventListener('click', function() { setTimeout(update, 80); setTimeout(update, 500); });
+    });
+    ['browserList', 'memoryListBody', 'docsStatsPanel', 'shareList'].forEach(function(id) {
+      var box = document.getElementById(id);
+      if (!box) return;
+      new MutationObserver(function() { setTimeout(update, 0); }).observe(box, { childList: true, subtree: true });
+    });
+    setTimeout(update, 400);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>8 Modules UI Comparison</title>
+<style>
+* { box-sizing: border-box; }
+body { margin: 0; padding: 16px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f4f6fa; color: #0f172a; }
+h1 { font-size: 18px; font-weight: 700; margin: 0 0 16px; }
+h1 .meta { font-size: 12px; font-weight: 500; color: #64748b; margin-left: 12px; }
+.grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.cell { background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; }
+.cell-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; border-bottom: 1px solid #e2e8f0; background: #f8fafc; }
+.cell-header .name { font-size: 12px; font-weight: 700; letter-spacing: 0.4px; text-transform: uppercase; }
+.cell-header .path { font-size: 10px; color: #64748b; font-family: ui-monospace, monospace; }
+.cell-frame { width: 100%; height: 320px; border: 0; }
+</style>
+</head>
+<body>
+<h1>8 Modules · UI Comparison <span class="meta">grid of iframes · same shell · theme=light · 320px crop</span></h1>
+<div class="grid">
+  <div class="cell"><div class="cell-header"><span class="name">AppList</span><span class="path">/apps/applist</span></div><iframe class="cell-frame" src="/apps/applist"></iframe></div>
+  <div class="cell"><div class="cell-header"><span class="name">Robots</span><span class="path">/apps/robots</span></div><iframe class="cell-frame" src="/apps/robots"></iframe></div>
+  <div class="cell"><div class="cell-header"><span class="name">Config Recovery</span><span class="path">/apps/config-recovery</span></div><iframe class="cell-frame" src="/apps/config-recovery"></iframe></div>
+  <div class="cell"><div class="cell-header"><span class="name">File Manager</span><span class="path">/apps/file-manager</span></div><iframe class="cell-frame" src="/apps/file-manager"></iframe></div>
+  <div class="cell"><div class="cell-header"><span class="name">Skill Manager</span><span class="path">/apps/skill-manager</span></div><iframe class="cell-frame" src="/apps/skill-manager"></iframe></div>
+  <div class="cell"><div class="cell-header"><span class="name">Models Manager</span><span class="path">/apps/models-manager</span></div><iframe class="cell-frame" src="/apps/models-manager"></iframe></div>
+  <div class="cell"><div class="cell-header"><span class="name">Memory</span><span class="path">/apps/memory</span></div><iframe class="cell-frame" src="/apps/memory"></iframe></div>
+  <div class="cell"><div class="cell-header"><span class="name">Workspace Rule</span><span class="path">/apps/workspace-rule-panel</span></div><iframe class="cell-frame" src="/apps/workspace-rule-panel"></iframe></div>
+</div>
+</body>
+</html>

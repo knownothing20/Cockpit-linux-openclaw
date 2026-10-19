@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+
+<meta charset="UTF-8">
+<script defer src="/cockpit-theme.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>配置中心 - OpenClaw</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+
+:root {
+  color-scheme: light dark;
+  --bg-primary: var(--oc-bg-canvas);
+  --bg-secondary: var(--oc-bg-surface);
+  --bg-tertiary: var(--oc-bg-elevated);
+  --bg-card: var(--oc-bg-elevated);
+  --bg-hover: var(--oc-bg-elevated);
+  --border: var(--oc-border);
+  --border-glow: var(--oc-accent-soft);
+  --text-primary: var(--oc-text-primary);
+  --text-secondary: var(--oc-text-secondary);
+  --text-muted: var(--oc-text-tertiary);
+  --text-on-accent: white;
+  --accent: var(--oc-accent);
+  --accent-hover: var(--oc-accent-hover);
+  --accent-glow: var(--oc-accent-soft);
+  --success: var(--oc-success);
+  --success-glow: var(--oc-success-soft);
+  --warning: var(--oc-warning);
+  --error: var(--oc-danger);
+  --info: var(--oc-cyan);
+  --green: var(--oc-success);
+  --red: var(--oc-danger);
+  --yellow: var(--oc-warning);
+  --purple: var(--oc-purple);
+  --blue: var(--oc-accent);
+  --cyan: var(--oc-cyan);
+  --radius-sm: var(--oc-radius-sm);
+  --radius-md: var(--oc-radius-md);
+  --radius-lg: var(--oc-radius-lg);
+  --radius-xl: var(--oc-radius-xl);
+  --shadow-sm: var(--oc-shadow-sm);
+  --shadow-md: var(--oc-shadow-md);
+  --transition-fast: var(--oc-motion-fast) var(--oc-ease-standard);
+  --transition-normal: var(--oc-motion-normal) var(--oc-ease-standard);
+}
+
+body {
+  font-family: var(--oc-font-sans);
+  background: var(--bg-primary); color: var(--text-primary); padding: 24px 32px; overflow-x: hidden;
+}
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-tertiary); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+body.embed-mode { padding: 16px 24px; }
+body.embed-mode .oc-ph { padding: 4px 0 18px; margin: 0 0 22px; }
+
+/* ===== Top Section: Overview Dashboard (like software page) ===== */
+.overview-section { margin-bottom:20px; }
+
+/* Status bar — 3 big cards */
+.status-bar { display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; margin-bottom:20px; }
+.config-status-metric { padding:22px 24px; text-align:center; }
+.config-status-metric:hover { border-color:var(--border); box-shadow:none; transform:none; }
+.config-status-metric .icon-big { font-size:var(--oc-text-4xl); margin-bottom:8px; }
+.config-status-metric .value-big { font-size:var(--oc-text-5xl); font-weight:700; line-height:1; margin-bottom:4px; }
+.config-status-metric .label-big { font-size:var(--oc-text-sm); color:var(--text-muted); }
+.config-status-metric .value-green { color:var(--green); }
+.config-status-metric .value-blue { color:var(--blue); }
+.config-status-metric .value-purple { color:var(--purple); }
+.config-health-deductions { grid-column:1/-1; margin-top:4px; padding:12px 16px; background:var(--oc-warning-soft); border:1px solid var(--oc-warning-soft); border-radius:10px; }
+.config-health-title { font-size:var(--oc-text-md); font-weight:600; color:var(--yellow); margin-bottom:8px; }
+.config-health-item { align-items:flex-start; margin-bottom:6px; font-size:var(--oc-text-sm); }
+.config-health-points { color:var(--red); font-weight:600; min-width:32px; }
+.config-health-reason { color:var(--text-primary); flex:1; }
+.config-health-fix { color:var(--cyan); cursor:pointer; white-space:nowrap; }
+
+/* Feature grid */
+.feature-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:10px; margin-bottom:16px; }
+.config-feature-row { align-items:center; gap:10px; padding:12px 16px; background:var(--bg-tertiary); border-radius:var(--radius-md); font-size:var(--oc-text-sm); cursor:default; }
+.config-feature-row.is-actionable { cursor:pointer; }
+.config-feature-row .feat-icon { font-size:var(--oc-text-2xl); min-width:24px; text-align:center; }
+.config-feature-row .feat-text { flex:1; }
+.config-feature-row .feat-name { color:var(--text-primary); font-weight:500; }
+.config-feature-row .feat-desc { color:var(--text-muted); font-size:var(--oc-text-2xs); margin-top:2px; }
+.config-feature-row .feat-status { font-size:var(--oc-text-2xl); }
+.feat-ok { color:var(--green); }
+.feat-warn { color:var(--yellow); }
+.feat-error { color:var(--red); }
+
+/* Meta info row (timing) */
+.meta-row { display:flex; justify-content:space-between; align-items:center; padding-top:12px; border-top:1px solid var(--border); font-size:var(--oc-text-xs); color:var(--text-muted); }
+.meta-row a { color:var(--accent); text-decoration:none; }
+.meta-row a:hover { text-decoration:underline; }
+
+/* Editor button in header */
+.section-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+.section-header .card-title { margin:0; }
+.config-section-header-fill { flex:1; margin-bottom:0; }
+.header-actions { display:flex; gap:8px; }
+
+/* Stats row (for tracker section) */
+.stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:20px; }
+
+/* Timeline */
+.session-group { margin-bottom:16px; }
+.session-header { display:flex; align-items:center; gap:10px; padding:8px 12px; background:var(--bg-tertiary); border-radius:var(--radius-sm); margin-bottom:4px; cursor:pointer; user-select:none; }
+.session-header:hover { background:var(--bg-hover); }
+.session-header .time { font-size:var(--oc-text-xs); color:var(--text-muted); font-family:var(--oc-font-mono); min-width:140px; }
+.session-header .count { font-size:var(--oc-text-xs); color:var(--accent); }
+.session-header .actions { margin-left:auto; display:flex; gap:6px; }
+
+.config-change-row { display:grid; grid-template-columns:auto 1fr auto; gap:10px; align-items:center; padding:8px 12px 8px 36px; font-size:var(--oc-text-sm); border-left:2px solid var(--border); margin-left:6px; transition:background var(--transition-fast); }
+.config-change-row:hover { background:var(--bg-tertiary); }
+.config-change-row .key-path { font-family:var(--oc-font-mono); color:var(--text-primary); font-size:var(--oc-text-xs); }
+.config-change-row .diff { color:var(--text-muted); font-size:var(--oc-text-xs); }
+.config-change-row .actions { display:flex; gap:6px; }
+.config-key-name { font-weight:600; color:var(--accent); }
+.config-key-path-sub { color:var(--text-muted); font-family:var(--oc-font-mono); font-size:var(--oc-text-2xs); }
+.config-muted-xs { font-size:var(--oc-text-2xs); color:var(--text-muted); }
+.config-timeline-error { color:var(--red); font-size:var(--oc-text-sm); padding:12px; }
+
+/* ===== Editor Modal ===== */
+.modal-overlay { display:none; position:fixed; inset:0; background:var(--oc-bg-overlay); z-index:1000; backdrop-filter:blur(4px); animation:fadeIn .2s ease; }
+.modal-overlay.active { display:flex; align-items:center; justify-content:center; }
+.modal { background:var(--bg-secondary); border:1px solid var(--border); border-radius:var(--radius-xl); width:90vw; max-width:900px; max-height:85vh; display:flex; flex-direction:column; box-shadow:var(--shadow-md); animation:slideUp .3s ease; }
+.modal-header { display:flex; justify-content:space-between; align-items:center; padding:16px 24px; border-bottom:1px solid var(--border); }
+.modal-header h3 { font-size:var(--oc-text-xl); font-weight:600; }
+.modal-body { flex:1; overflow:auto; padding:16px 24px; }
+.modal-footer { display:flex; justify-content:flex-end; gap:8px; padding:12px 24px; border-top:1px solid var(--border); }
+.modal textarea { width:100%; min-height:60vh; padding:16px; background:var(--bg-primary); border:1px solid var(--border); border-radius:var(--radius-md); color:var(--text-primary); font-family:var(--oc-font-mono); font-size:var(--oc-text-md); line-height:1.6; resize:vertical; tab-size:2; }
+.modal textarea:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-glow); }
+.config-modal-sm { max-width:640px; }
+.config-modal-lg { max-width:960px; }
+.config-modal-desc { margin-bottom:14px; color:var(--text-secondary); font-size:var(--oc-text-md); }
+.config-field-block { margin-bottom:16px; }
+.config-field-label { font-size:var(--oc-text-sm); color:var(--text-muted); display:block; margin-bottom:6px; }
+.config-current-model { display:flex; align-items:center; gap:10px; padding:10px 14px; background:var(--bg-tertiary); border-radius:var(--radius-md); border:1px solid var(--border); }
+.config-model-icon { font-size:var(--oc-text-base); }
+.config-current-model-name { flex:1; font-weight:600; font-size:var(--oc-text-base); }
+.config-model-id { font-size:var(--oc-text-xs); color:var(--text-muted); font-family:var(--oc-font-mono); }
+.config-select-full { width:100%; padding:10px 14px; border-radius:var(--radius-md); background:var(--bg-primary); border:1px solid var(--border); color:var(--text-primary); font-size:var(--oc-text-md); outline:none; cursor:pointer; }
+.config-preview { display:none; padding:12px; background:var(--bg-tertiary); border-radius:var(--radius-md); border:1px solid var(--border); margin-bottom:16px; }
+.config-preview-grid { display:grid; grid-template-columns:auto 1fr; gap:6px 12px; font-size:var(--oc-text-sm); }
+.config-preview-label { color:var(--text-muted); }
+.config-preview-name { font-weight:600; }
+.config-preview-id { font-family:var(--oc-font-mono); font-size:var(--oc-text-xs); }
+.config-mapping-toolbar { margin-bottom:12px; display:flex; align-items:center; justify-content:space-between; }
+.config-mapping-desc { color:var(--text-secondary); font-size:var(--oc-text-md); }
+.config-mapping-control { align-items:center; }
+.config-mapping-label { font-size:var(--oc-text-xs); color:var(--text-muted); }
+.config-mapping-select { padding:4px 8px; border-radius:6px; background:var(--bg-tertiary); border:1px solid var(--border); color:var(--text-primary); font-size:var(--oc-text-xs); outline:none; }
+.config-mapping-head,
+.config-mapping-row { display:grid; grid-template-columns:2fr 1.5fr 1fr 1.5fr 50px; gap:8px; padding:8px 12px; }
+.config-mapping-head { background:var(--bg-tertiary); border-radius:var(--radius-sm) var(--radius-sm) 0 0; font-size:var(--oc-text-xs); font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:.05em; }
+.config-mapping-editor { max-height:50vh; overflow-y:auto; border:1px solid var(--border); border-top:none; border-radius:0 0 var(--radius-sm) var(--radius-sm); }
+.config-mapping-loading { padding:32px; text-align:center; color:var(--text-muted); }
+.config-mapping-empty { padding:24px; text-align:center; color:var(--text-muted); }
+.config-mapping-loading-icon { font-size:var(--oc-text-3xl); margin-bottom:8px; }
+.config-mapping-row { border-bottom:1px solid var(--border); align-items:center; font-size:var(--oc-text-sm); }
+.config-mapping-row.even { background:var(--bg-primary); }
+.config-mapping-row.odd { background:var(--bg-secondary); }
+.config-mapping-input { width:100%; padding:4px 8px; border-radius:4px; background:var(--bg-tertiary); border:1px solid var(--border); color:var(--text-primary); outline:none; }
+.config-mapping-input.key,
+.config-mapping-select-sm { font-size:var(--oc-text-xs); }
+.config-mapping-input.key { font-family:var(--oc-font-mono); }
+.config-mapping-input.name,
+.config-mapping-input.desc { font-size:var(--oc-text-sm); }
+.config-mapping-select-sm { width:100%; padding:4px 8px; border-radius:4px; background:var(--bg-tertiary); border:1px solid var(--border); color:var(--text-primary); outline:none; }
+.config-remove-btn { padding:2px 8px; }
+
+.msg-box { display:none; font-size:var(--oc-text-sm); padding:8px 12px; border-radius:6px; margin-bottom:8px; }
+.msg-box.error { display:block; background:var(--oc-danger-soft); color:var(--red); border:1px solid var(--oc-danger-soft); }
+.msg-box.success { display:block; background:var(--oc-success-soft); color:var(--green); border:1px solid var(--oc-success-soft); }
+.msg-box.info { display:block; background:var(--oc-accent-soft); color:var(--accent); border:1px solid var(--oc-accent-soft); }
+.oc-js-loading { opacity:.6; }
+.config-ph-icon-accent { --oc-ph-color:var(--oc-accent); }
+
+
+.filter-bar { display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+.filter-bar select, .filter-bar input { padding:6px 10px; border-radius:6px; font-size:var(--oc-text-sm); background:var(--bg-tertiary); border:1px solid var(--border); color:var(--text-primary); outline:none; }
+.filter-bar select:focus, .filter-bar input:focus { border-color:var(--accent); }
+
+@keyframes fadeIn { from{opacity:0} to{opacity:1} }
+@keyframes slideUp { from{opacity:0; transform:translateY(20px)} to{opacity:1; transform:translateY(0)} }
+@keyframes pageIn { from{opacity:0; transform:translateY(16px)} to{opacity:1; transform:translateY(0)} }
+.config-container { animation:pageIn .4s cubic-bezier(.4,0,.2,1); }
+
+@media(max-width:768px){ .status-bar{grid-template-columns:1fr;} .stats-row{grid-template-columns:repeat(2,1fr);} body{padding:16px;} .feature-grid{grid-template-columns:1fr;} }
+/* Toast — 使用 unified-components.css 共享 .toast 垫片 + body>.toast 定位 */
+</style>
+  <link rel="stylesheet" href="/cockpit-ui-polish.css?v=20261010-fm-docs-real-pct">
+  <link rel="stylesheet" href="/unified-components.css?v=20261010-fm-docs-real-pct">
+<style id=config-recovery-unified-layout-v17>
+/* Shared shell layout alignment; .oc-page provides flex/gap/padding. */
+body.config-recovery,
+body.config-recovery.embed-mode {
+  padding: 0;
+  margin: 0;
+  overflow-x: hidden;
+  background: var(--bg, var(--oc-bg, var(--oc-bg-canvas)));
+}
+
+/* Hide standalone-only tabs in embedded mode */
+body.config-recovery .config-recovery-tabs,
+body.config-recovery.embed-mode .config-recovery-tabs {
+  display: none;
+}
+
+/* Filter-bar width: auto to avoid flex overflow */
+.config-recovery .filter-bar {
+  width: auto;
+  max-width: 100%;
+}
+</style>
+</head>
+<body class="config-recovery">
+<script>if(window.parent&&window.parent!==window)document.body.classList.add('embed-mode');</script>
+<div class="oc-page config-container">
+
+  <div class="oc-ph">
+    <div class="oc-ph-main">
+      <div class="oc-ph-icon config-ph-icon-accent">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15l-2-2h-4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-4l-2 2z"/><path d="M10 21v-2a2 2 0 0 1 2-2h0a2 2 0 0 1 2 2v2"/><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </div>
+      <div class="oc-ph-text">
+        <div class="oc-ph-eyebrow">CONFIG</div>
+        <h1 class="oc-ph-title" data-i18n="pageTitle">配置中心</h1>
+        <p class="oc-ph-subtitle" data-i18n="pageSubtitle">Config Recovery · Editor · Change Tracker</p>
+      </div>
+    </div>
+    <div class="oc-ph-side" aria-label="页面工具">
+      <button class="oc-tool-btn lang" id="crLangToggle" type="button" title="切换语言">中/En</button>
+      <button class="oc-tool-btn theme" id="crThemeToggle" type="button" title="切换主题">☽</button>
+    </div>
+  </div>
+
+  <div class="oc-card" id="overviewCard">
+    <div class="oc-card-header">
+      <div class="section-header config-section-header-fill">
+        <div class="card-title"><span class="icon">📋</span> <span data-i18n="configRecoveryStatus">配置恢复状态</span></div>
+        <div class="header-actions">
+          <button class="oc-btn oc-btn-md" onclick="createBackup()" data-i18n="backupNow">📦 立即备份</button>
+          <button class="oc-btn oc-btn-md" onclick="validateConfig()" data-i18n="validate">✅ 校验</button>
+          <button class="oc-btn oc-btn-md oc-btn-primary" onclick="openEditor()" data-i18n="editConfig">📝 编辑配置</button>
+          <button class="oc-btn oc-btn-md oc-btn-secondary" onclick="openModelConfig()" data-i18n="modelConfig">🤖 大模型配置</button>
+          <button class="oc-btn oc-btn-md oc-btn-secondary" id="btnUpdateMapping" onclick="openUpdateMapping()" data-i18n="updateMapping">🔄 更新映射表</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="oc-card-body">
+      <div class="status-bar" id="statusBar">
+      </div>
+
+      <div class="feature-grid" id="featureGrid">
+      </div>
+
+      <div class="meta-row" id="metaRow">
+      </div>
+    </div>
+  </div>
+
+  <div class="oc-card">
+    <div class="oc-card-header">
+      <div class="section-header config-section-header-fill">
+        <div class="card-title"><span class="icon">📊</span> <span data-i18n="changeTracker">变更追踪</span></div>
+        <div class="header-actions">
+          <button class="oc-btn oc-btn-md" onclick="refreshChanges()" data-i18n="refresh">↻ 刷新</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="oc-card-body">
+      <div class="stats-row oc-stat-grid" id="statsRow">
+        <div class="oc-stat-item"><span class="oc-stat-value" id="statTotal">-</span><span class="oc-stat-label" data-i18n="totalChanges">总变更</span></div>
+        <div class="oc-stat-item"><span class="oc-stat-value" id="statToday">-</span><span class="oc-stat-label" data-i18n="today">今日</span></div>
+        <div class="oc-stat-item"><span class="oc-stat-value" id="statWeek">-</span><span class="oc-stat-label" data-i18n="thisWeek">本周</span></div>
+        <div class="oc-stat-item"><span class="oc-stat-value" id="statSessions">-</span><span class="oc-stat-label" data-i18n="sessions">会话数</span></div>
+      </div>
+
+      <div class="filter-bar">
+        <select id="filterType" onchange="refreshChanges()">
+          <option value="" data-i18n="allTypes">全部类型</option>
+          <option value="field_update" data-i18n="fieldUpdate">字段修改</option>
+          <option value="field_add" data-i18n="fieldAdd">新增字段</option>
+          <option value="field_delete" data-i18n="fieldDelete">删除字段</option>
+          <option value="agent_create" data-i18n="agentCreate">创建Agent</option>
+          <option value="agent_delete" data-i18n="agentDelete">删除Agent</option>
+          <option value="backup_restore" data-i18n="disasterRecovery">灾备恢复</option>
+        </select>
+        <input type="text" id="filterKey" data-i18n-placeholder="searchKeyPath" placeholder="搜索 key path..." oninput="debounceRefresh()">
+        <select id="filterDays" onchange="refreshChanges()">
+          <option value="1" data-i18n="todayFilter">今天</option>
+          <option value="7" selected data-i18n="last7Days">近7天</option>
+          <option value="30" data-i18n="last30Days">近30天</option>
+          <option value="" data-i18n="allFilter">全部</option>
+        </select>
+      </div>
+
+      <div id="changesTimeline"><div class="oc-empty"><div class="oc-empty-icon">📭</div><h4 data-i18n="loadingChanges">加载变更记录...</h4></div></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="editorModal">
+  <div class="modal">
+    <div class="modal-header"><h3 data-i18n="editOpenclawJson">📝 编辑 openclaw.json</h3><button class="oc-btn oc-btn-sm" onclick="closeEditor()" data-i18n="close">✕ 关闭</button></div>
+    <div class="modal-body"><div id="editorMsg" class="msg-box"></div><textarea id="configTextarea" class="oc-textarea" spellcheck="false" placeholder="Loading..."></textarea></div>
+    <div class="modal-footer">
+      <button class="oc-btn" onclick="closeEditor()" data-i18n="cancel">取消</button>
+      <button class="oc-btn" onclick="loadConfigInEditor()" data-i18n="reload">↻ 重新加载</button>
+      <button class="oc-btn oc-btn-primary" onclick="saveConfigFromEditor()" data-i18n="saveAndRecord">💾 保存并记录变更</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API_BASE = '/api/config-center';
+
+
+function showToast(msg) {
+  var existing = document.querySelectorAll('body > .toast');
+  existing.forEach(function(t) { t.remove(); });
+  var el = document.createElement('div');
+  el.className = 'toast oc-toast oc-toast-warning';
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(function() {
+    el.classList.add('oc-toast-exit');
+    setTimeout(function() { if (el.parentNode) el.remove(); }, 300);
+  }, 2700);
+}
+
+const translations = {
+  zh: {
+    docTitle: '配置中心 - OpenClaw',
+    pageTitle: '⚙️ 配置中心',
+    pageSubtitle: 'Config Recovery · Editor · Change Tracker',
+    configRecoveryStatus: '配置恢复状态',
+    backupNow: '📦 立即备份',
+    validate: '✅ 校验',
+    editConfig: '📝 编辑配置',
+    modelConfig: '🤖 大模型配置',
+    updateMapping: '🔄 更新映射表',
+    changeTracker: '变更追踪',
+    refresh: '↻ 刷新',
+    totalChanges: '总变更',
+    today: '今日',
+    thisWeek: '本周',
+    sessions: '会话数',
+    allTypes: '全部类型',
+    fieldUpdate: '字段修改',
+    fieldAdd: '新增字段',
+    fieldDelete: '删除字段',
+    agentCreate: '创建Agent',
+    agentDelete: '删除Agent',
+    disasterRecovery: '灾备恢复',
+    searchKeyPath: '搜索 key path...',
+    todayFilter: '今天',
+    last7Days: '近7天',
+    last30Days: '近30天',
+    allFilter: '全部',
+    loadingChanges: '加载变更记录...',
+    editOpenclawJson: '📝 编辑 openclaw.json',
+    close: '✕ 关闭',
+    cancel: '取消',
+    reload: '↻ 重新加载',
+    saveAndRecord: '💾 保存并记录变更',
+    modelConfigTitle: '🤖 大模型配置',
+    selectBuiltinModel: '选择系统内置大模型，确定后写入映射表配置。',
+    currentMappingModel: '当前映射分析模型',
+    selectNewModel: '选择新模型',
+    selectFromBuiltin: '-- 从内置模型列表选择 --',
+    name: '名称',
+    provider: 'Provider',
+    maxTokens: 'MaxTokens',
+    confirm: '✅ 确定',
+    mappingEditorTitle: '🔄 映射表编辑',
+    aiAnalyze: '🤖 AI 分析',
+    addField: '➕ 新增字段',
+    mappingDesc: '编辑字段与功能的映射关系。可直接修改字段名、描述、分类和影响。',
+    analysisModel: '分析模型：',
+    keyPath: 'Key Path',
+    category: '分类',
+    description: '描述',
+    saveMapping: '💾 保存映射表',
+    healthScore: '健康度',
+    configError: '配置有误',
+    backupFiles: '备份文件',
+    backupCopy: '备份副本',
+    backupCopyDesc: '执行配置备份',
+    validateCopy: '校验副本',
+    validateCopyDesc: '校验配置文件格式',
+    restoreCopy: '恢复副本',
+    restoreCopyDesc: '从备份恢复配置',
+    scheduledBackup: '定时备份',
+    scheduledBackupDesc: '定时自动备份',
+    gatewayAutostart: 'Gateway 自启',
+    gatewayAutostartDesc: '开机自动启动',
+    backupDirCheck: '备份文件',
+    backupDirCheckDesc: '检查备份目录',
+    noBackup: '暂无备份',
+    trackerDbOk: '✅ 追踪数据库正常',
+    trackerDbNotInit: '⚠️ 追踪数据库未初始化',
+    latestBackup: '最新备份:',
+    howToReach100: '⚠️ 如何达到 100%',
+    noBackupToRestore: '暂无备份可恢复',
+    selectBackupFile: '选择备份文件:',
+    enterIndexOrFilename: '输入序号或文件名:',
+    invalidIndex: '无效序号',
+    backupCreated: '备份创建成功',
+    backupFailed: '备份失败: ',
+    confirmRestore: '⚠️ 确认恢复到此备份？当前配置将被替换。',
+    restoreSuccess: '恢复成功',
+    restoreFailed: '恢复失败:',
+    configValid: '✅ 配置校验通过',
+    configInvalid: '❌ 配置有误: ',
+    validateFailed: '校验失败:',
+    loadFailed: '加载失败: ',
+    jsonFormatError: 'JSON格式错误: ',
+    saveSuccess: '保存成功！',
+    changesRecordedUnit: '条变更',
+    saveFailed: '保存失败: ',
+    noChanges: '暂无变更记录',
+    changesCount: '项变更',
+    revertGroup: '撤销整组',
+    modify: '修改',
+    add: '新增',
+    delete: '删除',
+    createAgent: '创建Agent',
+    deleteAgent: '删除Agent',
+    rollback: '回滚',
+    rolledBack: '已回滚',
+    disasterRecoveryOp: '灾备恢复操作',
+    added: '新增: ',
+    deleted: '删除: ',
+    confirmRollback: '确认回滚此变更？',
+    rollbackSuccess: '回滚成功',
+    rollbackFailed: '回滚失败: ',
+    confirmRevertSession: '确认撤销此会话的所有变更？',
+    reverted: '已撤销',
+    revertFailed: '撤销失败: ',
+    loadModelListFailed: '加载模型列表失败',
+    notSet: '未设置',
+    selectModelFirst: '请先选择一个模型',
+    mappingModelUpdated: '✅ 映射模型已更新为 ',
+    updateFailed: '❌ 更新失败: ',
+    requestFailed: '❌ 请求失败: ',
+    loading: '加载中...',
+    loadingBtn: '⏳ 加载中...',
+    loadingMappingData: '正在加载映射数据...',
+    noMappingFields: '暂无映射字段，点击「➕ 新增字段」或「🤖 AI 分析」生成',
+    enterFieldPath: '输入字段路径（如 agents.defaults.models）:',
+    deleteMappingConfirm: '删除映射 ',
+    mappingSaved: '✅ 映射表已保存',
+    saveMappingFailed: '❌ 保存失败: ',
+    saving: '⏳ 保存中...',
+    selectAnalysisModelFirst: '请先选择分析模型',
+    analyzing: '⏳ 分析中...',
+    analyzingWith: '⏳ 正在用 {model} 分析配置文件...',
+    aiAnalyzeComplete: '✅ AI 分析完成，映射表已更新，请检查后保存',
+    analyzeFailed: '❌ 分析失败: ',
+    basicConfig: '基础配置',
+    model: '模型',
+    agent: 'Agent',
+    security: '安全',
+    plugin: '插件',
+    other: '其他',
+    loadChangesFailed: '加载失败: '
+  },
+  en: {
+    docTitle: 'Config Center - OpenClaw',
+    pageTitle: '⚙️ Config Center',
+    pageSubtitle: 'Config Recovery · Editor · Change Tracker',
+    configRecoveryStatus: 'Config Recovery Status',
+    backupNow: '📦 Backup Now',
+    validate: '✅ Validate',
+    editConfig: '📝 Edit Config',
+    modelConfig: '🤖 Model Config',
+    updateMapping: '🔄 Update Mapping',
+    changeTracker: 'Change Tracker',
+    refresh: '↻ Refresh',
+    totalChanges: 'Total Changes',
+    today: 'Today',
+    thisWeek: 'This Week',
+    sessions: 'Sessions',
+    allTypes: 'All Types',
+    fieldUpdate: 'Field Update',
+    fieldAdd: 'Field Add',
+    fieldDelete: 'Field Delete',
+    agentCreate: 'Create Agent',
+    agentDelete: 'Delete Agent',
+    disasterRecovery: 'Disaster Recovery',
+    searchKeyPath: 'Search key path...',
+    todayFilter: 'Today',
+    last7Days: 'Last 7 Days',
+    last30Days: 'Last 30 Days',
+    allFilter: 'All',
+    loadingChanges: 'Loading changes...',
+    editOpenclawJson: '📝 Edit openclaw.json',
+    close: '✕ Close',
+    cancel: 'Cancel',
+    reload: '↻ Reload',
+    saveAndRecord: '💾 Save & Record Changes',
+    modelConfigTitle: '🤖 Model Configuration',
+    selectBuiltinModel: 'Select a built-in model. Will be written to mapping config on confirm.',
+    currentMappingModel: 'Current Mapping Model',
+    selectNewModel: 'Select New Model',
+    selectFromBuiltin: '-- Select from built-in models --',
+    name: 'Name',
+    provider: 'Provider',
+    maxTokens: 'MaxTokens',
+    confirm: '✅ Confirm',
+    mappingEditorTitle: '🔄 Mapping Editor',
+    aiAnalyze: '🤖 AI Analyze',
+    addField: '➕ Add Field',
+    mappingDesc: 'Edit field-to-function mapping. You can modify field name, description, category and impact.',
+    analysisModel: 'Analysis Model:',
+    keyPath: 'Key Path',
+    category: 'Category',
+    description: 'Description',
+    saveMapping: '💾 Save Mapping',
+    healthScore: 'Health',
+    configError: 'Config Error',
+    backupFiles: 'Backup Files',
+    backupCopy: 'Backup Copy',
+    backupCopyDesc: 'Create config backup',
+    validateCopy: 'Validate Copy',
+    validateCopyDesc: 'Validate config format',
+    restoreCopy: 'Restore Copy',
+    restoreCopyDesc: 'Restore config from backup',
+    scheduledBackup: 'Scheduled Backup',
+    scheduledBackupDesc: 'Auto backup on schedule',
+    gatewayAutostart: 'Gateway Autostart',
+    gatewayAutostartDesc: 'Auto start on boot',
+    backupDirCheck: 'Backup Dir',
+    backupDirCheckDesc: 'Check backup directory',
+    noBackup: 'No backups yet',
+    trackerDbOk: '✅ Tracker DB OK',
+    trackerDbNotInit: '⚠️ Tracker DB not initialized',
+    latestBackup: 'Latest backup:',
+    howToReach100: '⚠️ How to reach 100%',
+    noBackupToRestore: 'No backups available to restore',
+    selectBackupFile: 'Select backup file:',
+    enterIndexOrFilename: 'Enter index or filename:',
+    invalidIndex: 'Invalid index',
+    backupCreated: 'Backup created successfully',
+    backupFailed: 'Backup failed: ',
+    confirmRestore: '⚠️ Confirm restore to this backup? Current config will be replaced.',
+    restoreSuccess: 'Restored successfully',
+    restoreFailed: 'Restore failed:',
+    configValid: '✅ Config validation passed',
+    configInvalid: '❌ Config error: ',
+    validateFailed: 'Validation failed:',
+    loadFailed: 'Load failed: ',
+    jsonFormatError: 'JSON format error: ',
+    saveSuccess: 'Saved successfully!',
+    changesRecordedUnit: ' changes recorded',
+    saveFailed: 'Save failed: ',
+    noChanges: 'No changes recorded',
+    changesCount: ' changes',
+    revertGroup: 'Revert Group',
+    modify: 'Modified',
+    add: 'Added',
+    delete: 'Deleted',
+    createAgent: 'Agent Created',
+    deleteAgent: 'Agent Deleted',
+    rollback: 'Rollback',
+    rolledBack: 'Rolled back',
+    disasterRecoveryOp: 'Disaster recovery operation',
+    added: 'Added: ',
+    deleted: 'Deleted: ',
+    confirmRollback: 'Confirm rollback this change?',
+    rollbackSuccess: 'Rollback successful',
+    rollbackFailed: 'Rollback failed: ',
+    confirmRevertSession: 'Confirm revert all changes in this session?',
+    reverted: 'Reverted',
+    revertFailed: 'Revert failed: ',
+    loadModelListFailed: 'Failed to load model list',
+    notSet: 'Not set',
+    selectModelFirst: 'Please select a model first',
+    mappingModelUpdated: '✅ Mapping model updated to ',
+    updateFailed: '❌ Update failed: ',
+    requestFailed: '❌ Request failed: ',
+    loading: 'Loading...',
+    loadingBtn: '⏳ Loading...',
+    loadingMappingData: 'Loading mapping data...',
+    noMappingFields: 'No mapping fields yet. Click "➕ Add Field" or "🤖 AI Analyze" to generate',
+    enterFieldPath: 'Enter field path (e.g. agents.defaults.models):',
+    deleteMappingConfirm: 'Delete mapping ',
+    mappingSaved: '✅ Mapping saved',
+    saveMappingFailed: '❌ Save failed: ',
+    saving: '⏳ Saving...',
+    selectAnalysisModelFirst: 'Please select an analysis model first',
+    analyzing: '⏳ Analyzing...',
+    analyzingWith: '⏳ Analyzing config with {model}...',
+    aiAnalyzeComplete: '✅ AI analysis complete, mapping updated. Please review and save.',
+    analyzeFailed: '❌ Analysis failed: ',
+    basicConfig: 'Basic',
+    model: 'Model',
+    agent: 'Agent',
+    security: 'Security',
+    plugin: 'Plugin',
+    other: 'Other',
+    loadChangesFailed: 'Load failed: '
+  }
+};
+
+let currentLang = localStorage.getItem('openclaw-lang') || 'zh';
+
+function t(key, params) {
+  var str = (translations[currentLang] && translations[currentLang][key]) || translations['zh'][key] || key;
+  if (params) {
+    Object.keys(params).forEach(function(k) {
+      str = str.replace(new RegExp('\\{' + k + '\\}', 'g'), params[k]);
+    });
+  }
+  return str;
+}
+
+function setLang(lang) {
+  currentLang = lang;
+  localStorage.setItem('openclaw-lang', lang);
+  document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+  document.querySelectorAll('[data-i18n]').forEach(function(el) {
+    var key = el.dataset.i18n;
+    if (key) el.textContent = t(key);
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(function(el) {
+    var key = el.dataset.i18nPlaceholder;
+    if (key) el.placeholder = t(key);
+  });
+  document.title = t('docTitle');
+  if (window._i18nReady) {
+    loadOverview();
+    refreshChanges();
+  }
+}
+
+window.onShellLangChange = function(lang) { setLang(lang); };
+
+window.addEventListener('message', function(e) {
+  if (e.data && e.data.type === 'openclaw-lang') {
+    setLang(e.data.lang);
+    return;
+  }
+  if (!e.data || e.data.target !== 'config-center') return;
+  if (e.data.action === 'refresh') { loadOverview(); refreshChanges(); }
+});
+
+(function initTheme() {
+  const saved = localStorage.getItem('openclaw-theme');
+  applyTheme(saved === 'light' || saved === 'dark' ? saved : 'dark');
+})();
+
+function notifyParent(event, detail) {
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage({ source: 'config-center', event, detail }, '*');
+  }
+}
+
+async function loadOverview() {
+  try {
+    const res = await fetch(`${API_BASE}/overview`);
+    const o = await res.json();
+    renderOverview(o);
+  } catch(e) { console.error('overview error:', e); renderOverview({}); }
+}
+
+function renderOverview(o) {
+  const healthPct = o.health_pct ?? '?';
+  const healthColor = typeof healthPct === 'number'
+    ? (healthPct >= 80 ? 'var(--green)' : healthPct >= 50 ? 'var(--yellow)' : 'var(--red)')
+    : 'var(--purple)';
+  const backupCount = o.backup_count ?? 0;
+  const fileSize = o.file_size || '-';
+  const lastModified = o.last_modified || '-';
+
+  document.getElementById('statusBar').innerHTML = `
+    <div class="oc-card config-status-metric">
+      <div class="icon-big">${o.config_valid !== false ? '✅' : '❌'}</div>
+      <div class="value-big ${o.config_valid === false ? '' : 'value-green'}">${typeof healthPct === 'number' ? healthPct + '%' : healthPct}</div>
+      <div class="label-big">${o.config_valid === false ? t('configError') : t('healthScore')}</div>
+    </div>
+    <div class="oc-card config-status-metric">
+      <div class="icon-big">📦</div>
+      <div class="value-big value-blue">${backupCount}</div>
+      <div class="label-big">${t('backupFiles')}</div>
+    </div>
+    <div class="oc-card config-status-metric">
+      <div class="icon-big">📝</div>
+      <div class="value-big value-purple">${fileSize}</div>
+      <div class="label-big">${lastModified}</div>
+    </div>
+    ${typeof healthPct === 'number' && healthPct < 100 && Array.isArray(o.health_deductions) && o.health_deductions.length > 0 ? `
+    <div class="config-health-deductions">
+      <div class="config-health-title">${t('howToReach100')}</div>
+      ${o.health_deductions.map(d => `
+        <div class="oc-flex-gap-8 config-health-item">
+          <span class="config-health-points">-${d.pts}%</span>
+          <span class="config-health-reason">${esc(d.reason)}</span>
+          <span class="config-health-fix">💡 ${esc(d.fix)}</span>
+        </div>
+      `).join('')}
+    </div>` : ''}`;
+
+  const features = [
+    { icon: '💾',   name: t('backupCopy'),     desc: t('backupCopyDesc'),        ok: !!o.has_backups,          action: () => createBackup() },
+    { icon: '🔍',   name: t('validateCopy'),    desc: t('validateCopyDesc'),      ok: o.config_valid !== false, action: () => validateConfig() },
+    { icon: '↩️',   name: t('restoreCopy'),     desc: t('restoreCopyDesc'),       ok: o.can_restore,            action: () => showRestorePicker(o.backups || []) },
+    { icon: '⏰',   name: t('scheduledBackup'), desc: t('scheduledBackupDesc'),   ok: o.auto_backup_enabled,    action: null },
+    { icon: '🚀',   name: t('gatewayAutostart'),desc: t('gatewayAutostartDesc'),  ok: o.gateway_autostart,      action: null },
+    { icon: '🔒',   name: t('backupDirCheck'),  desc: t('backupDirCheckDesc'),    ok: o.backups_dir_ok,         action: null },
+  ];
+
+  document.getElementById('featureGrid').innerHTML = features.map(f => `<div class="oc-list-item config-feature-row${f.action ? ' is-actionable' : ''}">
+    <div class="feat-icon">${f.icon}</div>
+    <div class="feat-text"><div class="feat-name">${esc(f.name)}</div><div class="feat-desc">${esc(f.desc)}</div></div>
+    <div class="feat-status">${f.ok ? '<span class="feat-ok">' + (f.name === t('validateCopy') ? '🔍' : '✅') + '</span>' : '<span class="feat-error">✕</span>'}</div>
+    ${f.action ? `<span class="feat-action" data-idx="${features.indexOf(f)}"></span>` : ''}
+  </div>`).join('');
+
+  window._featureActions = features.map(f => f.action);
+
+  document.querySelectorAll('.config-feature-row').forEach((el, i) => {
+    if (window._featureActions[i]) {
+      el.addEventListener('click', () => window._featureActions[i]());
+    }
+  });
+
+  const latestBackup = o.latest_backup ? `${o.latest_backup.filename} (${o.latest_backup.time})` : t('noBackup');
+  const trackerDb = o.tracker_db_exists ? t('trackerDbOk') : t('trackerDbNotInit');
+
+  document.getElementById('metaRow').innerHTML = `
+    <span>${t('latestBackup')} <strong>${esc(latestBackup)}</strong></span>
+    <span>${trackerDb}</span>`;
+}
+
+function showRestorePicker(backups) {
+  if (!backups.length) return alert(t('noBackupToRestore'));
+  const names = backups.map((b,i) => `[${i+1}] ${b.filename} (${b.time}, ${b.size})`).join('\n');
+  const choice = prompt(`${t('selectBackupFile')}\n${names}\n\n${t('enterIndexOrFilename')}`);
+  if (!choice) return;
+  let filename;
+  if (/^\d+$/.test(choice.trim())) {
+    const idx = parseInt(choice.trim()) - 1;
+    if (idx >= 0 && idx < backups.length) filename = backups[idx].filename;
+    else return alert(t('invalidIndex'));
+  } else { filename = choice.trim(); }
+  restoreBackup(filename);
+}
+
+async function createBackup() {
+  try {
+    const res = await fetch(`${API_BASE}/backups`, { method:'POST' });
+    const d = await res.json();
+    alert(d.ok ? t('backupCreated') : t('backupFailed') + d.error);
+    loadOverview(); refreshChanges();
+  } catch(e) { alert(t('backupFailed') + e.message); }
+}
+async function restoreBackup(fn) {
+  if(!confirm(t('confirmRestore'))) return;
+  try{
+    const res = await fetch(`${API_BASE}/backups/${encodeURIComponent(fn)}/restore`, {method:'POST'});
+    const d = await res.json();
+    alert(d.ok?t('restoreSuccess'):t('restoreFailed')+d.error);
+    notifyParent('config-restored', { backup: fn });
+    loadOverview(); refreshChanges();
+  } catch(e){alert(t('restoreFailed')+e.message);}
+}
+async function validateConfig(){
+  try{
+    const res = await fetch(`${API_BASE}/validate`);
+    const d = await res.json(); alert(d.ok?t('configValid'):t('configInvalid')+d.error);
+  }catch(e){alert(t('validateFailed')+e.message);}
+}
+
+function openEditor(){document.getElementById('editorModal').classList.add('active'); loadConfigInEditor();}
+function closeEditor(){document.getElementById('editorModal').classList.remove('active');}
+async function loadConfigInEditor(){
+  const msg=document.getElementById('editorMsg'); msg.className='msg-box'; msg.textContent='';
+  try{
+    const res=await fetch(`${API_BASE}/raw`);
+    document.getElementById('configTextarea').value=await res.text();
+  }catch(e){msg.className='msg-box error'; msg.textContent=t('loadFailed')+e.message;}
+}
+async function saveConfigFromEditor(){
+  const msg=document.getElementById('editorMsg');
+  const newContent=document.getElementById('configTextarea').value;
+  try{JSON.parse(newContent);}catch(e){msg.className='msg-box error'; msg.textContent=t('jsonFormatError')+e.message;return;}
+  try{
+    const res=await fetch(`${API_BASE}/save`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({content:newContent,source:'config-center-editor'})});
+    const d=await res.json();
+    if(d.ok){
+      msg.className='msg-box success'; msg.textContent=t('saveSuccess')+(d.changesRecorded?`(${d.changesRecorded}${t('changesRecordedUnit')})`:'');
+      notifyParent('config-saved', { changesRecorded: d.changesRecorded || 0 });
+      loadOverview(); refreshChanges();
+    }else{msg.className='msg-box error'; msg.textContent=t('saveFailed')+d.error;}
+  }catch(e){msg.className='msg-box error'; msg.textContent=t('saveFailed')+e.message;}
+}
+
+let _debounceTimer=null; function debounceRefresh(){clearTimeout(_debounceTimer);_debounceTimer=setTimeout(refreshChanges,400);}
+
+async function refreshChanges(){
+  const tVal=document.getElementById('filterType').value,k=document.getElementById('filterKey').value,d=document.getElementById('filterDays').value,p=new URLSearchParams();
+  if(tVal)p.set('type',tVal);if(k)p.set('key',k);if(d)p.set('days',d);
+  try{
+    const[csRes,stRes]=await Promise.all([fetch(`${API_BASE}/changes?${p}`),fetch(`${API_BASE}/stats`)]);
+    const changes=await csRes.json(), stats=await stRes.json();
+    document.getElementById('statTotal').textContent=stats.total??'-';
+    document.getElementById('statToday').textContent=stats.today??'-';
+    document.getElementById('statWeek').textContent=stats.week??'-';
+    document.getElementById('statSessions').textContent=stats.sessions??'-';
+
+    renderTimeline(changes);
+  }catch(e){document.getElementById('changesTimeline').innerHTML='<div class="config-timeline-error">'+t('loadChangesFailed')+esc(e.message)+'</div>';}
+}
+
+let _mappingNames = {};
+async function loadMappingForTimeline() {
+  try {
+    const res = await fetch('/api/config-center/mapping');
+    const data = await res.json();
+    const mappings = (data.mapping && data.mapping.mappings) || {};
+    _mappingNames = mappings;
+  } catch(e) {}
+}
+
+function resolveKeyName(keyPath) {
+  const m = _mappingNames[keyPath];
+  if (m && m.name) return m.name;
+  for (const [k, v] of Object.entries(_mappingNames)) {
+    if (keyPath.startsWith(k + '.') || keyPath.startsWith(k + '[')) return v.name || k;
+  }
+  return null;
+}
+
+function renderTimeline(changes){
+  const el=document.getElementById('changesTimeline');
+  if(!changes||!changes.length){el.innerHTML='<div class="oc-empty"><div class="oc-empty-icon">📭</div><h4>'+t('noChanges')+'</h4></div>';return;}
+  const sessions={};
+  changes.forEach(c=>{const sid=c.session_id||'unknown';if(!sessions[sid])sessions[sid]={time:c.created_at,source:c.source,changes:[]};sessions[sid].changes.push(c);});
+  let html='';
+  Object.entries(sessions).forEach(([sid,sess])=>{
+    html+=`<div class="session-group"><div class="session-header" onclick="this.nextElementSibling.hidden=!this.nextElementSibling.hidden"><span class="time">${esc(sess.time||sid)}</span><span class="count">${sess.changes.length}${t('changesCount')}</span>${sess.source?'<span class="oc-badge oc-badge-primary">'+esc(sess.source)+'</span>':''}<div class="actions"><button class="oc-btn oc-btn-sm oc-btn-danger" onclick="event.stopPropagation();revertSession('${esc(sid)}')">${t('revertGroup')}</button></div></div><div class="timeline" hidden>`;
+    sess.changes.forEach(c=>{
+      const tc=c.change_type.includes('delete')?'oc-badge-danger':c.change_type.includes('add')?'oc-badge-success':c.change_type.includes('restore')?'oc-badge-cyan':'oc-badge-warning';
+      const tl={field_update:t('modify'),field_add:t('add'),field_delete:t('delete'),agent_create:t('createAgent'),agent_delete:t('deleteAgent'),backup_restore:t('disasterRecovery')}[c.change_type]||c.change_type;
+      const mappedName = resolveKeyName(c.key_path);
+      const nameHtml = mappedName
+        ? `<span class="config-key-name">${esc(mappedName)}</span><br><small class="config-key-path-sub">${esc(c.key_path)}</small>`
+        : `<span class="key-path">${esc(c.key_path)}</span>`;
+      html+=`<div class="oc-list-item config-change-row"><span class="oc-badge ${tc}">${tl}</span><div>${nameHtml}<div class="diff">${formatDiff(c)}</div></div><div class="actions">${!c.reverted_at?'<button class="oc-btn oc-btn-sm" onclick="revertChange('+c.id+')">'+t('rollback')+'</button>':'<span class="config-muted-xs">'+t('rolledBack')+'</span>'}</div></div>`;
+    });
+    html+='</div></div>';
+  });
+  el.innerHTML=html;
+}
+function formatDiff(c){
+  if(c.change_type==='backup_restore') return t('disasterRecoveryOp');
+  const ov=truncate(c.old_value,40),nv=truncate(c.new_value,40);
+  if(ov&&nv)return ov+' → '+nv;if(nv)return t('added')+nv;if(ov)return t('deleted')+ov;return '';
+}
+function truncate(s,len){if(!s)return '';s=String(s);return s.length>len?s.substring(0,len)+'...':s;}
+
+async function revertChange(id){if(!confirm(t('confirmRollback')))return;try{const res=await fetch(`${API_BASE}/changes/${id}/revert`,{method:'POST'});const d=await res.json();alert(d.ok?t('rollbackSuccess'):t('rollbackFailed')+d.error);if(d.ok)notifyParent('config-reverted',{type:'change',id});refreshChanges();}catch(e){alert(t('rollbackFailed')+e.message);}}
+async function revertSession(sid){if(!confirm(t('confirmRevertSession')))return;try{const res=await fetch(`${API_BASE}/sessions/${encodeURIComponent(sid)}/revert`,{method:'POST'});const d=await res.json();alert(d.ok?t('reverted')+(d.reverted||0)+t('changesRecordedUnit'):t('revertFailed')+d.error);if(d.ok)notifyParent('config-reverted',{type:'session',sid});refreshChanges();}catch(e){alert(t('revertFailed')+e.message);}}
+
+function esc(s){if(!s)return'';const d=document.createElement('div');d.textContent=String(s);return d.innerHTML;}
+
+window._i18nReady = true;
+setLang(currentLang);
+loadMappingForTimeline();
+
+
+document.addEventListener('DOMContentLoaded', function() {
+  var mc = document.getElementById('modelConfigModal');
+  var um = document.getElementById('updateMappingModal');
+  var ec = document.getElementById('editorModal');
+  if (mc) mc.addEventListener('click', function(e) { if (e.target === mc) closeModelConfig(); });
+  if (um) um.addEventListener('click', function(e) { if (e.target === um) closeUpdateMapping(); });
+  if (ec) ec.addEventListener('click', function(e) { if (e.target === ec) closeEditor(); });
+});
+document.addEventListener('keydown', function(e) { if (e.key === 'Escape') { closeEditor(); closeModelConfig(); closeUpdateMapping(); } });
+</script>
+
+
+<div class="modal-overlay" id="modelConfigModal">
+  <div class="modal config-modal-sm">
+    <div class="modal-header"><h3 data-i18n="modelConfigTitle">🤖 大模型配置</h3><button class="oc-btn oc-btn-sm" onclick="closeModelConfig()" data-i18n="close">✕ 关闭</button></div>
+    <div class="modal-body">
+      <div id="modelMsg" class="msg-box"></div>
+      <p class="config-modal-desc" data-i18n="selectBuiltinModel">选择系统内置大模型，确定后写入映射表配置。</p>
+      <div class="config-field-block">
+        <label class="config-field-label" data-i18n="currentMappingModel">当前映射分析模型</label>
+        <div class="config-current-model">
+          <span class="config-model-icon">🎯</span>
+          <span id="currentModelDisplay" class="config-current-model-name" data-i18n="loading">加载中...</span>
+          <span id="currentModelId" class="config-model-id"></span>
+        </div>
+      </div>
+      <div class="config-field-block">
+        <label class="config-field-label" data-i18n="selectNewModel">选择新模型</label>
+        <select id="builtinModelSelect" class="oc-select config-select-full">
+          <option value="" data-i18n="selectFromBuiltin">-- 从内置模型列表选择 --</option>
+        </select>
+      </div>
+      <div id="modelPreview" class="config-preview">
+        <div class="config-preview-grid">
+          <span class="config-preview-label" data-i18n="name">名称</span><span id="previewName" class="config-preview-name"></span>
+          <span class="config-preview-label">ID</span><span id="previewId" class="config-preview-id"></span>
+          <span class="config-preview-label" data-i18n="provider">Provider</span><span id="previewProvider"></span>
+          <span class="config-preview-label" data-i18n="maxTokens">MaxTokens</span><span id="previewTokens"></span>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="oc-btn" onclick="closeModelConfig()" data-i18n="cancel">取消</button>
+      <button class="oc-btn oc-btn-primary" onclick="confirmModelSelect()" data-i18n="confirm">✅ 确定</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="updateMappingModal">
+  <div class="modal config-modal-lg">
+    <div class="modal-header">
+      <h3 data-i18n="mappingEditorTitle">🔄 映射表编辑</h3>
+      <div class="oc-flex-gap-8">
+        <button class="oc-btn oc-btn-sm" onclick="autoAnalyzeMapping()" data-i18n="aiAnalyze">🤖 AI 分析</button>
+        <button class="oc-btn oc-btn-sm" onclick="addMappingRow()" data-i18n="addField">➕ 新增字段</button>
+        <button class="oc-btn oc-btn-sm" onclick="closeUpdateMapping()" data-i18n="close">✕ 关闭</button>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div id="mappingMsg" class="msg-box"></div>
+      <div class="config-mapping-toolbar">
+        <p class="config-mapping-desc" data-i18n="mappingDesc">编辑字段与功能的映射关系。可直接修改字段名、描述、分类和影响。</p>
+        <div class="oc-flex-gap-8 config-mapping-control">
+          <label class="config-mapping-label" data-i18n="analysisModel">分析模型：</label>
+          <select id="mappingModel" class="oc-select config-mapping-select"></select>
+        </div>
+      </div>
+      <div class="config-mapping-head">
+        <span data-i18n="keyPath">Key Path</span><span data-i18n="name">名称</span><span data-i18n="category">分类</span><span data-i18n="description">描述</span><span></span>
+      </div>
+      <div id="mappingEditor" class="config-mapping-editor">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="oc-btn" onclick="closeUpdateMapping()" data-i18n="cancel">取消</button>
+      <button class="oc-btn oc-btn-primary" onclick="saveMappingFromEditor()" data-i18n="saveMapping">💾 保存映射表</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let _builtinModels = [];
+
+async function openModelConfig() {
+  document.getElementById('modelConfigModal').classList.add('active');
+  await loadBuiltinModels();
+  await loadCurrentMappingModel();
+}
+function closeModelConfig() { document.getElementById('modelConfigModal').classList.remove('active'); }
+
+async function loadBuiltinModels() {
+  try {
+    const res = await fetch('/api/config-center/builtin-models');
+    const data = await res.json();
+    if (!data.ok) { document.getElementById('modelMsg').className = 'msg-box error'; document.getElementById('modelMsg').textContent = t('loadModelListFailed'); return; }
+    _builtinModels = data.models || [];
+    const sel = document.getElementById('builtinModelSelect');
+    sel.innerHTML = '<option value="">' + t('selectFromBuiltin') + '</option>' +
+      _builtinModels.map(m => `<option value="${esc(m.id)}">${esc(m.name)} (${esc(m.id)})</option>`).join('');
+  } catch(e) { console.error('loadBuiltinModels error:', e); }
+}
+
+async function loadCurrentMappingModel() {
+  try {
+    const res = await fetch('/api/config-center/mapping');
+    const data = await res.json();
+    const curModel = data.mapping?.mappingModel || '';
+    const curName = _builtinModels.find(m => m.id === curModel)?.name || curModel || t('notSet');
+    document.getElementById('currentModelDisplay').textContent = curName;
+    document.getElementById('currentModelId').textContent = curModel;
+  } catch(e) {}
+}
+
+document.getElementById('builtinModelSelect').addEventListener('change', function() {
+  const sel = this.value;
+  const preview = document.getElementById('modelPreview');
+  if (!sel) { ocSetDisplay(preview, 'none'); return; }
+  const m = _builtinModels.find(x => x.id === sel);
+  if (!m) { ocSetDisplay(preview, 'none'); return; }
+  ocSetDisplay(preview, 'block');
+  document.getElementById('previewName').textContent = m.name;
+  document.getElementById('previewId').textContent = m.id;
+  document.getElementById('previewProvider').textContent = m.provider;
+  document.getElementById('previewTokens').textContent = m.maxTokens || '-';
+});
+
+async function confirmModelSelect() {
+  const sel = document.getElementById('builtinModelSelect').value;
+  if (!sel) { alert(t('selectModelFirst')); return; }
+  const msg = document.getElementById('modelMsg');
+  try {
+    const res = await fetch('/api/config-center/models', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ mappingModel: sel })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      msg.className = 'msg-box success'; msg.textContent = t('mappingModelUpdated') + sel;
+      await loadCurrentMappingModel();
+    } else { msg.className = 'msg-box error'; msg.textContent = t('updateFailed') + data.error; }
+  } catch(e) { msg.className = 'msg-box error'; msg.textContent = t('requestFailed') + e.message; }
+}
+
+let _mappingData = {};
+
+async function openUpdateMapping() {
+  const btn = document.getElementById('btnUpdateMapping');
+  const origText = btn.innerHTML;
+  btn.innerHTML = t('loadingBtn'); btn.disabled = true; btn.classList.add('oc-js-loading');
+  document.getElementById('updateMappingModal').classList.add('active');
+  document.getElementById('mappingEditor').innerHTML = '<div class="config-mapping-loading"><div class="config-mapping-loading-icon">⏳</div>'+t('loadingMappingData')+'</div>';
+  try {
+    await Promise.all([loadMappingEditor(), loadBuiltinModelsForMapping()]);
+  } finally {
+    btn.innerHTML = origText; btn.disabled = false; btn.classList.remove('oc-js-loading');
+  }
+}
+function closeUpdateMapping() { document.getElementById('updateMappingModal').classList.remove('active'); }
+
+async function loadBuiltinModelsForMapping() {
+  try {
+    const res = await fetch('/api/config-center/builtin-models');
+    const data = await res.json();
+    if (!data.ok) return;
+    const sel = document.getElementById('mappingModel');
+    const curVal = sel.value;
+    sel.innerHTML = (data.models || []).map(m => `<option value="${esc(m.id)}">${esc(m.name)}</option>`).join('');
+    if (curVal) sel.value = curVal;
+    else if (_mappingData.mappingModel) sel.value = _mappingData.mappingModel;
+  } catch(e) {}
+}
+
+async function loadMappingEditor() {
+  try {
+    const res = await fetch('/api/config-center/mapping');
+    const data = await res.json();
+    _mappingData = data.mapping || {};
+    renderMappingEditor();
+  } catch(e) { console.error('loadMappingEditor error:', e); }
+}
+
+function renderMappingEditor() {
+  const editor = document.getElementById('mappingEditor');
+  const mappings = _mappingData.mappings || {};
+  const keys = Object.keys(mappings);
+  if (!keys.length) {
+    editor.innerHTML = '<div class="config-mapping-empty">'+t('noMappingFields')+'</div>';
+    return;
+  }
+  editor.innerHTML = keys.map((k, i) => {
+    const m = mappings[k];
+    return `<div class="config-mapping-row ${i%2===0?'even':'odd'}">
+      <input type="text" value="${esc(k)}" data-idx="${i}" data-field="key" class="oc-input config-mapping-input key" onchange="mappingFieldChanged(this)">
+      <input type="text" value="${esc(m.name||'')}" data-idx="${i}" data-field="name" class="oc-input config-mapping-input name" onchange="mappingFieldChanged(this)">
+      <select data-idx="${i}" data-field="category" class="oc-select config-mapping-select-sm" onchange="mappingFieldChanged(this)">
+        <option value="基础配置" ${m.category==='基础配置'?'selected':''}>${t('basicConfig')}</option>
+        <option value="模型" ${m.category==='模型'?'selected':''}>${t('model')}</option>
+        <option value="Agent" ${m.category==='Agent'?'selected':''}>${t('agent')}</option>
+        <option value="安全" ${m.category==='安全'?'selected':''}>${t('security')}</option>
+        <option value="插件" ${m.category==='插件'?'selected':''}>${t('plugin')}</option>
+        <option value="其他" ${(!m.category||m.category==='其他')?'selected':''}>${t('other')}</option>
+      </select>
+      <input type="text" value="${esc(m.description||'')}" data-idx="${i}" data-field="description" class="oc-input config-mapping-input desc" onchange="mappingFieldChanged(this)">
+      <button class="oc-btn oc-btn-sm oc-btn-danger config-remove-btn" onclick="removeMappingRow(${i})">✕</button>
+    </div>`;
+  }).join('');
+}
+
+function mappingFieldChanged(el) {
+  const idx = parseInt(el.dataset.idx);
+  const field = el.dataset.field;
+  const keys = Object.keys(_mappingData.mappings || {});
+  if (idx >= keys.length) return;
+  const key = keys[idx];
+  if (field === 'key') {
+    const newKey = el.value.trim();
+    if (newKey && newKey !== key) {
+      _mappingData.mappings[newKey] = _mappingData.mappings[key];
+      delete _mappingData.mappings[key];
+      renderMappingEditor();
+    }
+  } else {
+    if (!_mappingData.mappings[key]) _mappingData.mappings[key] = {};
+    _mappingData.mappings[key][field] = el.value;
+  }
+}
+
+function addMappingRow() {
+  const key = prompt(t('enterFieldPath'));
+  if (!key) return;
+  if (!_mappingData.mappings) _mappingData.mappings = {};
+  _mappingData.mappings[key] = { name: key.split('.').pop(), description: '', category: '其他', impact: '' };
+  renderMappingEditor();
+}
+
+function removeMappingRow(idx) {
+  const keys = Object.keys(_mappingData.mappings || {});
+  if (idx >= keys.length) return;
+  if (!confirm(t('deleteMappingConfirm') + keys[idx] + '？')) return;
+  delete _mappingData.mappings[keys[idx]];
+  renderMappingEditor();
+}
+
+async function saveMappingFromEditor() {
+  const msg = document.getElementById('mappingMsg');
+  const saveBtn = document.querySelector('#updateMappingModal .modal-footer button[onclick="saveMappingFromEditor()"]');
+  const origSaveText = saveBtn ? saveBtn.innerHTML : '';
+  if (saveBtn) { saveBtn.innerHTML = t('saving'); saveBtn.disabled = true; saveBtn.classList.add('oc-js-loading'); }
+  try {
+    const res = await fetch('/api/config-center/mapping/save', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ mappings: _mappingData.mappings })
+    });
+    const data = await res.json();
+    if (data.ok) { msg.className = 'msg-box success'; msg.textContent = t('mappingSaved'); }
+    else { msg.className = 'msg-box error'; msg.textContent = t('saveMappingFailed') + data.error; }
+  } catch(e) { msg.className = 'msg-box error'; msg.textContent = t('requestFailed') + e.message; }
+  finally { if (saveBtn) { saveBtn.innerHTML = origSaveText; saveBtn.disabled = false; saveBtn.classList.remove('oc-js-loading'); } }
+}
+
+async function autoAnalyzeMapping() {
+  const model = document.getElementById('mappingModel').value;
+  const msg = document.getElementById('mappingMsg');
+  msg.className = 'msg-box'; msg.textContent = '';
+  if (!model) { msg.className = 'msg-box error'; msg.textContent = t('selectAnalysisModelFirst'); return; }
+  const aiBtn = document.querySelector('#updateMappingModal .modal-header button[onclick="autoAnalyzeMapping()"]');
+  const origAiText = aiBtn ? aiBtn.innerHTML : '';
+  if (aiBtn) { aiBtn.innerHTML = t('analyzing'); aiBtn.disabled = true; aiBtn.classList.add('oc-js-loading'); }
+  msg.className = 'msg-box info'; msg.textContent = t('analyzingWith', { model: model });
+  try {
+    const res = await fetch('/api/config-center/mapping/update', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ model })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      _mappingData = data.mapping || _mappingData;
+      renderMappingEditor();
+      msg.className = 'msg-box success';
+      msg.textContent = t('aiAnalyzeComplete');
+    } else {
+      msg.className = 'msg-box error';
+      msg.textContent = t('analyzeFailed') + data.error;
+    }
+  } catch(e) {
+    msg.className = 'msg-box error';
+    msg.textContent = t('requestFailed') + e.message;
+  } finally {
+    if (aiBtn) { aiBtn.innerHTML = origAiText; aiBtn.disabled = false; aiBtn.classList.remove('oc-js-loading'); }
+  }
+}
+</script>
+
+<script>
+(function() {
+  // 主题按钮逻辑由 /cockpit-theme.js 统一接管 (基于 .oc-tool-btn.theme 类自动绑定)
+  function crInitHeaderTools() {
+    var langBtn = document.getElementById('crLangToggle');
+    if (langBtn) {
+      langBtn.addEventListener('click', function() {
+        var cur = (typeof currentLang === 'string') ? currentLang : (localStorage.getItem('openclaw-lang') || 'zh');
+        var next = cur === 'zh' ? 'en' : 'zh';
+        if (typeof setLang === 'function') setLang(next);
+        if (window.parent && window.parent !== window) {
+          try { window.parent.postMessage({ type: 'openclaw-lang', lang: next }, window.location.origin); } catch (e) {}
+        }
+      });
+    }
+  }
+  window.addEventListener('message', function(e) {
+    if (e.data && e.data.type === 'openclaw-lang') {
+      if (e.data.lang && typeof setLang === 'function') setLang(e.data.lang);
+    }
+  });
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', crInitHeaderTools);
+  } else {
+    crInitHeaderTools();
+  }
+})();
+</script>
+</body>
+</html>

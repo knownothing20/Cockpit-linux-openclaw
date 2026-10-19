@@ -1,0 +1,10 @@
+{
+  "name": "openclaw-models-manager",
+  "version": "1.0.0",
+  "description": "OpenClaw Models Manager - standalone model management service",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {}
+}

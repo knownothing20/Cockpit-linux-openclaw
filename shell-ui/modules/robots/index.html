@@ -1,0 +1,1956 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+
+<link rel="stylesheet" href="/unified-theme.css?v=20261010-fm-docs-real-pct">
+<link rel="stylesheet" href="/unified-components.css?v=20261010-fm-docs-real-pct">
+  <link rel="stylesheet" href="/cockpit-ui-polish.css?v=20261010-fm-docs-real-pct">
+
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>机器人管理 - OpenClaw</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  color-scheme: light dark;
+  --bg-body: var(--oc-bg-canvas);
+  --bg-page: var(--oc-bg-canvas);
+  --bg-surface: var(--oc-bg-surface);
+  --bg-elevated: var(--oc-bg-elevated);
+  --bg-hover: var(--oc-bg-elevated);
+  --bg-input: var(--oc-bg-input);
+  --bg-overlay: var(--oc-bg-overlay);
+  --border-subtle: var(--oc-border);
+  --border-default: var(--oc-border-hover);
+  --border-active: var(--oc-border-strong);
+  --text-primary: var(--oc-text-primary);
+  --text-secondary: var(--oc-text-secondary);
+  --text-muted: var(--oc-text-tertiary);
+  --text-inverse: var(--text-on-accent);
+  --accent: var(--oc-accent);
+  --accent-hover: var(--oc-accent-hover);
+  --accent-glow: var(--oc-accent-ring);
+  --accent-subtle: var(--oc-accent-soft);
+  --green: var(--oc-success);
+  --green-subtle: var(--oc-success-soft);
+  --green-glow: var(--oc-success-soft);
+  --red: var(--oc-danger);
+  --red-subtle: var(--oc-danger-soft);
+  --red-glow: var(--oc-danger-soft);
+  --yellow: var(--oc-warning);
+  --yellow-subtle: var(--oc-warning-soft);
+  --yellow-glow: var(--oc-warning-soft);
+  --purple: var(--oc-purple);
+  --purple-subtle: var(--oc-purple-soft);
+  --purple-glow: var(--oc-purple-soft);
+  --blue: var(--oc-accent);
+  --cyan: var(--oc-cyan);
+  --cyan-glow: var(--oc-cyan-soft);
+  --space-1: var(--oc-space-1);
+  --space-2: var(--oc-space-2);
+  --space-3: var(--oc-space-3);
+  --space-4: var(--oc-space-4);
+  --space-5: var(--oc-space-5);
+  --space-6: var(--oc-space-6);
+  --space-8: var(--oc-space-8);
+  --space-10: 40px;
+  --space-12: 48px;
+  --radius-sm: var(--oc-radius-sm);
+  --radius-md: var(--oc-radius-md);
+  --radius-lg: var(--oc-radius-lg);
+  --radius-xl: var(--oc-radius-xl);
+  --radius-full: var(--oc-radius-full);
+  --shadow-sm: var(--oc-shadow-sm);
+  --shadow-md: var(--oc-shadow-md);
+  --shadow-lg: var(--oc-shadow-lg);
+  --shadow-xl: var(--oc-shadow-lg);
+  --shadow-glow: 0 0 0 4px var(--oc-accent-ring);
+  --font-sans: var(--oc-font-sans);
+  --font-mono: var(--oc-font-mono);
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--bg-body);
+  color: var(--text-primary);
+  overflow-x: hidden;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* === 滚动条 === */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-default); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* === 页面容器 === */
+.page-container {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: var(--oc-page-pad-y) var(--oc-page-pad-x);
+  position: relative;
+  z-index: 1;
+}
+
+/* === 内容区域 === */
+.oc-tab-content { display: none; }
+.oc-tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* === 骨架屏 === */
+.skeleton {
+  background: linear-gradient(90deg, var(--bg-elevated) 25%, var(--bg-hover) 50%, var(--bg-elevated) 75%);
+  background-size: 200% 100%;
+  animation: skeletonShimmer 1.5s infinite;
+  border-radius: var(--radius-sm);
+}
+@keyframes skeletonShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* === 指标卡片 - 使用 oc-stat 组件 === */
+.metric-delta {
+  font-size: var(--oc-text-sm);
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  background: var(--green-subtle);
+  color: var(--green);
+}
+
+/* oc-stat-item 顶部小辅助行（"10 个机器人" 展示在活跃数上方） */
+.oc-stat-meta {
+  font-size: var(--oc-text-2xs);
+  font-weight: 500;
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
+  margin-bottom: 2px;
+  line-height: 1.2;
+}
+
+/* === 健康状态栏 === */
+/* 健康状态栏使用统一 .oc-stat-item（与下方指标概览同款），无自定义样式。 */
+
+/* === 健康评分圆环 === */
+.health-ring {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+}
+.health-ring svg {
+  transform: rotate(-90deg);
+}
+.health-ring-bg {
+  fill: none;
+  stroke: var(--border-subtle);
+  stroke-width: 4;
+}
+.health-ring-fill {
+  fill: none;
+  stroke-width: 4;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.8s ease;
+}
+.health-ring-text {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--oc-text-sm);
+  font-weight: 700;
+}
+
+/* === 告警条 === */
+.alert-banner {
+  margin-bottom: var(--space-5);
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius-md);
+  font-size: var(--oc-text-md);
+  font-weight: 500;
+  display: none;
+  align-items: center;
+  gap: var(--space-2);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  animation: slideInDown 0.3s ease;
+}
+.alert-banner.has-alerts {
+  display: flex;
+}
+.alert-banner:hover {
+  transform: translateX(4px);
+}
+.alert-banner.critical {
+  background: var(--red-subtle);
+  border-color: var(--red-subtle);
+  color: var(--red);
+}
+.alert-banner.warning {
+  background: var(--yellow-subtle);
+  border-color: var(--yellow-subtle);
+  color: var(--yellow);
+}
+@keyframes slideInDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* === 工具栏（oc-card 包装，右侧操作组） === */
+.toolbar-card {
+  padding: 5px 14px;
+  margin-bottom: var(--space-4);
+  line-height: 1;
+  /* 卡片自身就是 flex 容器 — 让 .toolbar-group 自然靠右 */
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  min-height: 44px;
+}
+.toolbar-card,
+.toolbar-card:hover {
+  transform: none;
+  box-shadow: none;
+  border-color: var(--border-subtle);
+}
+
+/* 卡片左侧留白钩子 — 如果以后想加 left content，可加 <div class="toolbar-left-slot"></div> 即可 */
+.toolbar-card > .toolbar-left-slot { margin-right: auto; display: flex; align-items: center; gap: 6px; }
+
+/* 操作组 / 刷新组 — 一组按钮的容器 */
+.toolbar-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* 分组间的细分隔线 */
+.toolbar-divider {
+  display: inline-block;
+  align-self: center;
+  width: 1px;
+  height: 18px;
+  background: linear-gradient(to bottom, transparent 0%, var(--border-subtle) 30%, var(--border-subtle) 70%, transparent 100%);
+  margin: 0 2px;
+  flex: 0 0 auto;
+}
+
+/* 工具栏内按钮：统一 30px 高，圆角 6px，加 icon 间距 */
+.toolbar-card .toolbar-btn {
+  height: 30px;
+  line-height: 1;
+  padding: 0 12px;
+  font-size: var(--oc-text-sm);
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 6px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease, transform 0.15s ease;
+}
+.toolbar-card .toolbar-btn:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-default);
+  color: var(--blue);
+}
+.toolbar-card .toolbar-btn:active {
+  transform: translateY(1px);
+}
+.toolbar-card .toolbar-btn .oc-btn-icon-svg {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  color: currentColor;
+  opacity: 0.85;
+}
+.toolbar-card .toolbar-btn:hover .oc-btn-icon-svg { opacity: 1; }
+
+/* 紧凑 select */
+.oc-select-sm { padding: 3px 26px 3px 10px; font-size: var(--oc-text-sm); border-radius: var(--oc-radius-sm); }
+.toolbar-card .toolbar-select {
+  height: 30px;
+  line-height: 1;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  font-size: var(--oc-text-sm);
+  font-weight: 500;
+  padding: 0 26px 0 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.toolbar-card .toolbar-select:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-default);
+  color: var(--blue);
+}
+
+/* 刷新按钮 — 圆形 icon-only，hover 时 icon 旋转 360° */
+.toolbar-card .toolbar-btn-refresh {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--blue-subtle);
+  border: 1px solid transparent;
+  color: var(--blue);
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.3s ease, border-color 0.15s ease;
+}
+.toolbar-card .toolbar-btn-refresh .toolbar-refresh-icon {
+  width: 14px;
+  height: 14px;
+  transition: transform 0.4s cubic-bezier(0.5, 0, 0.2, 1);
+}
+.toolbar-card .toolbar-btn-refresh:hover {
+  background: var(--blue);
+  border-color: var(--blue);
+  color: var(--text-on-accent);
+}
+.toolbar-card .toolbar-btn-refresh:hover .toolbar-refresh-icon {
+  transform: rotate(360deg);
+}
+.toolbar-card .toolbar-btn-refresh:active {
+  transform: scale(0.94);
+}
+/* 加载中：旋转动画 */
+.toolbar-card .toolbar-btn-refresh.is-loading .toolbar-refresh-icon {
+  animation: toolbar-refresh-spin 0.8s linear infinite;
+}
+@keyframes toolbar-refresh-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* === 输入框 === */
+/* .input replaced by .oc-input */
+
+/* === 选择框 === */
+/* .select replaced by .oc-select */
+
+/* === 脉冲指示器 === */
+.pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 0 0 var(--green-glow);
+  animation: pulseRing 2s infinite;
+}
+@keyframes pulseRing {
+  0% { box-shadow: 0 0 0 0 var(--green-glow); }
+  70% { box-shadow: var(--shadow-glow); }
+  100% { box-shadow: var(--shadow-glow); }
+}
+.pulse-dot.yellow { background: var(--yellow); animation-name: pulseRingYellow; }
+@keyframes pulseRingYellow {
+  0% { box-shadow: 0 0 0 0 var(--yellow-glow); }
+  70% { box-shadow: var(--shadow-glow); }
+  100% { box-shadow: var(--shadow-glow); }
+}
+
+/* === Agent 卡片网格 === */
+.agent-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: var(--space-5);
+}
+
+/* === Agent 卡片内部（仅 agent 特有部分，oc-card / oc-card-header / oc-card-body / oc-stat-item / oc-btn / oc-badge 等由统一设计系统提供） === */
+.agent-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--oc-text-2xl);
+  background: var(--accent-subtle);
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+}
+.oc-card:hover .agent-avatar {
+  transform: scale(1.05);
+  box-shadow: 0 0 12px var(--accent-glow);
+}
+.agent-meta { flex: 1; min-width: 0; }
+.agent-name-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 2px;
+  flex-wrap: wrap;
+}
+.agent-name {
+  font-size: var(--oc-text-base);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.agent-id {
+  font-size: var(--oc-text-xs);
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+/* card-body 内层布局：让 4 个 mini-stat 紧密排布，actions 推到最底 */
+.agent-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.agent-card-body .oc-form-group {
+  margin-bottom: 0;
+}
+.agent-card-body .agent-model-section label {
+  margin-bottom: 6px;
+}
+.agent-stats-grid {
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin: 0;
+}
+.agent-stats-grid .oc-stat-item {
+  padding: 8px 6px;
+  gap: 2px;
+  align-items: center;
+  text-align: center;
+}
+.agent-stats-grid .oc-stat-value {
+  font-size: var(--oc-text-base);
+  font-weight: 700;
+  line-height: 1.1;
+}
+.agent-stats-grid .oc-stat-label {
+  font-size: var(--oc-text-2xs);
+  margin-bottom: 0;
+}
+.agent-actions {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: auto;
+  padding-top: var(--space-2);
+}
+.agent-actions .oc-btn { flex: 1; }
+
+/* === 任务追踪 === */
+.task-tracker {
+  margin-top: auto;
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border-subtle);
+}
+.task-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+.task-indicator {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  margin-top: 6px;
+  flex-shrink: 0;
+  animation: pulse 2s infinite;
+  box-shadow: 0 0 8px var(--green);
+}
+.task-content {
+  flex: 1;
+  min-width: 0;
+}
+.task-label {
+  font-size: var(--oc-text-2xs);
+  font-weight: 600;
+  color: var(--green);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 2px;
+}
+.task-text {
+  font-size: var(--oc-text-sm);
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.5;
+}
+.task-item-muted {
+  align-items: center;
+  padding: 6px 10px;
+  background: var(--bg-subtle, rgba(99,102,241,0.04));
+  border-radius: 8px;
+  border: 1px solid var(--border-subtle);
+}
+body.robots .agent-card .task-item-muted { margin-top: 4px; }
+
+/* === 全局任务追踪面板（oc-card 包装） === */
+.tracker-panel {
+  margin-top: var(--space-6);
+}
+.tracker-panel .oc-card-header {
+  padding: 14px 18px;
+}
+.tracker-panel .oc-section-title {
+  font-size: var(--oc-text-base);
+}
+.tracker-panel .oc-card-body {
+  padding: 12px 18px 16px;
+}
+.tracker-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.tracker-empty {
+  font-size: var(--oc-text-sm);
+  text-align: center;
+  padding: 18px 0 20px;
+  letter-spacing: 0.02em;
+}
+.tracker-item {
+  padding: 12px 14px;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  transition: all 0.2s ease;
+}
+.tracker-item:hover {
+  border-color: var(--border-default);
+}
+.tracker-item-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: 6px;
+}
+.tracker-item-avatar {
+  font-size: var(--oc-text-xl);
+}
+.tracker-item-name {
+  font-size: var(--oc-text-sm);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+.tracker-item-model {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--oc-text-xs);
+  color: var(--text-muted);
+}
+.tracker-item-activity {
+  font-size: var(--oc-text-xs);
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+/* === 工作流浮层（oc-modal + oc-card 套件） === */
+.wf-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--oc-bg-overlay);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 50;
+  display: none;
+  overflow-y: auto;
+  padding: var(--space-10) var(--space-6);
+}
+.wf-overlay.active {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  animation: fadeIn 0.2s ease;
+}
+.wf-panel {
+  max-width: 900px;
+  width: 100%;
+  margin-bottom: var(--space-6);
+  animation: slideUp 0.3s ease;
+}
+.wf-panel::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--oc-bg-surface), transparent);
+  pointer-events: none;
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+}
+.wf-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+.wf-header-text {
+  flex: 1;
+  min-width: 0;
+}
+.wf-actions {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+.wf-info {
+  font-size: var(--oc-text-sm);
+  color: var(--text-muted);
+  margin-bottom: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  background: var(--bg-body);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  line-height: 1.6;
+}
+.wf-steps {
+  max-height: 60vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-right: 4px;
+}
+/* 工作流步骤 — list-item 风格，左边彩色边框标识类型，hover 提亮 */
+.wf-step {
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  border-left: 3px solid var(--border-subtle);
+  background: var(--bg-body);
+  font-size: var(--oc-text-md);
+  transition: background 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
+  animation: slideInRight 0.3s ease;
+}
+.wf-step:hover {
+  background: var(--bg-elevated);
+  transform: translateX(2px);
+}
+.wf-step.user       { border-left-color: var(--blue); }
+.wf-step.text       { border-left-color: var(--green); }
+.wf-step.toolCall   { border-left-color: var(--accent); }
+.wf-step.subagent   { border-left-color: var(--purple); }
+.wf-step.toolResult { border-left-color: var(--cyan); }
+.wf-step.toolResult.error {
+  border-left-color: var(--red);
+  background: var(--red-subtle);
+}
+.wf-step-type {
+  font-size: var(--oc-text-xs);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+}
+.wf-step-text {
+  color: var(--text-secondary);
+  word-break: break-all;
+  line-height: 1.55;
+  font-size: var(--oc-text-sm);
+}
+
+/* === 通信拓扑 === */
+/* 画布卡片（oc-card 包装） */
+.topo-canvas-card {
+  padding: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+.topo-canvas-card #topoCanvas {
+  width: 100%;
+  height: 600px;
+  border-radius: var(--radius-md);
+  background: var(--bg-body);
+  display: block;
+}
+
+/* 图例卡片 — 4 个图例项 + 1 数字徽章，用 SVG 画线代替字符画 */
+.topo-legend {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px 16px;
+  padding: 10px 16px;
+  margin-bottom: var(--space-4);
+  font-size: var(--oc-text-sm);
+  color: var(--text-secondary);
+}
+.topo-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.topo-legend-line {
+  width: 32px;
+  height: 6px;
+  flex: 0 0 auto;
+  color: var(--accent);
+  display: block;
+}
+.topo-legend-line-thin { color: var(--accent); }
+.topo-legend-line-dashed { color: var(--text-muted); }
+.topo-legend-divider {
+  width: 1px;
+  height: 14px;
+  background: var(--border-subtle);
+  flex: 0 0 auto;
+}
+.topo-legend-badge {
+  display: inline-block;
+  min-width: 22px;
+  height: 18px;
+  line-height: 18px;
+  padding: 0 5px;
+  text-align: center;
+  background: var(--accent);
+  color: var(--text-on-accent);
+  border-radius: 9px;
+  font-size: var(--oc-text-xs);
+  font-weight: 700;
+  flex: 0 0 auto;
+}
+.topo-legend-label {
+  white-space: nowrap;
+  color: var(--text-secondary);
+}
+
+/* 拓扑统计卡片（oc-stat-grid 包装，原 oc-toolbar-section 是网格，stat-grid 升级为更标准化的指标条） */
+#topoStats {
+  margin-top: var(--space-2);
+}
+
+/* === 关于页面 === */
+.about-card {
+  background: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: var(--space-8);
+  /* v1.3.1: 去掉 max-width:900px —— 「模块说明」内容列撑满 1052px,
+     与页头 / 页签条 (158→1210) 对齐 (和 file-manager 四个页签同批处理). */
+  max-width: none;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+}
+.about-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, var(--oc-bg-surface) 0%, transparent 40%, var(--accent-subtle) 100%);
+  -webkit-mask: linear-gradient(white 0 0) content-box, linear-gradient(white 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  opacity: 1;
+}
+.about-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--oc-bg-surface), transparent);
+  pointer-events: none;
+}
+.about-card h2 {
+  font-size: var(--oc-text-3xl);
+  font-weight: 700;
+  margin-bottom: var(--space-5);
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+.about-card h3 {
+  font-size: var(--oc-text-base);
+  font-weight: 600;
+  margin: var(--space-8) 0 var(--space-4);
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.about-card p {
+  font-size: var(--oc-text-lg);
+  line-height: 1.8;
+  color: var(--text-secondary);
+  margin-bottom: var(--space-5);
+}
+.about-card li {
+  font-size: var(--oc-text-base);
+  line-height: 1.8;
+  color: var(--text-secondary);
+  margin-bottom: var(--space-2);
+}
+.about-card ul {
+  margin-left: var(--space-5);
+  margin-bottom: var(--space-5);
+  list-style: none;
+}
+.about-card ul li::before {
+  content: '•';
+  color: var(--accent);
+  font-weight: bold;
+  display: inline-block;
+  width: 1em;
+  margin-left: -1em;
+}
+.about-card code {
+  background: var(--bg-elevated);
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  font-size: var(--oc-text-md);
+  font-family: var(--font-mono);
+  color: var(--cyan);
+  border: 1px solid var(--border-subtle);
+}
+.about-card pre {
+  background: var(--bg-body);
+  padding: var(--space-5);
+  border-radius: var(--radius-md);
+  font-size: var(--oc-text-md);
+  overflow: auto;
+  margin: var(--space-5) 0;
+  border: 1px solid var(--border-subtle);
+  font-family: var(--font-mono);
+  line-height: 1.6;
+}
+.about-card pre code {
+  background: none;
+  padding: 0;
+  color: var(--text-secondary);
+  border: none;
+  font-size: var(--oc-text-md);
+}
+
+/* === 名词解释（oc-card 包装 + oc-badge 词条 + oc-stat-grid 布局） === */
+.glossary-card {
+  margin-top: var(--space-6);
+}
+.glossary-card .oc-section-title {
+  font-size: var(--oc-text-lg);
+}
+.glossary-card .oc-card-body {
+  padding: 16px 20px 18px;
+}
+.glossary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px 20px;
+}
+.glossary-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: var(--oc-text-sm);
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+.glossary-term {
+  flex-shrink: 0;
+  font-size: var(--oc-text-xs);
+  font-weight: 600;
+}
+.glossary-desc {
+  color: var(--text-muted);
+}
+
+/* === 模态框 === */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--oc-bg-overlay);
+  backdrop-filter: blur(8px);
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6);
+  animation: fadeIn 0.2s ease;
+}
+.modal-content {
+  background: var(--bg-surface);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  max-width: 600px;
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+  border: 1px solid var(--border-subtle);
+  box-shadow: var(--shadow-lg);
+  animation: slideUp 0.3s ease;
+  position: relative;
+}
+.modal-content::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border-subtle), transparent);
+  pointer-events: none;
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-5);
+}
+.modal-title {
+  font-size: var(--oc-text-2xl);
+  font-weight: 600;
+}
+.modal-close {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-muted);
+  font-size: var(--oc-text-2xl);
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  transition: all 0.2s ease;
+  font-weight: 400;
+  line-height: 1;
+}
+.modal-close:hover {
+  background: var(--bg-hover);
+  color: var(--red);
+  transform: scale(1.05);
+}
+
+/* === Toast — 使用 unified-components.css 共享 .toast 垫片 + body>.toast 定位 === */
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* === 脉冲动画 === */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* === 数字计数动画 === */
+.count-up {
+  animation: countPop 0.3s ease;
+}
+@keyframes countPop {
+  0% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+/* === 响应式 === */
+@media (max-width: 1024px) {
+  .health-bar { grid-template-columns: repeat(2, 1fr); }
+  .agent-grid { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+}
+
+@media (max-width: 768px) {
+  .oc-ph {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-4);
+  }
+  .toolbar-card .oc-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .oc-toolbar-start, .oc-toolbar-end {
+    justify-content: flex-start;
+  }
+  .toolbar-search { width: 100%; }
+  .toolbar-spacer { display: none; }
+  .agent-grid { grid-template-columns: 1fr; }
+}
+
+/* === 工具类（颜色别名，保留兼容；语义化变体见 .oc-stat-value-color-*） === */
+.green { color: var(--green); }
+.accent { color: var(--accent); }
+.red { color: var(--red); }
+.yellow { color: var(--yellow); }
+.purple { color: var(--purple); }
+.blue { color: var(--blue); }
+.cyan { color: var(--cyan); }
+
+/* === 语义化 oc-stat-value 颜色变体（用于顶部指标卡，与 oc-stat-value 配合） === */
+.oc-stat-value-color-success { color: var(--green); }
+.oc-stat-value-color-accent  { color: var(--accent); }
+.oc-stat-value-color-info    { color: var(--cyan); }
+.oc-stat-value-color-warning { color: var(--yellow); }
+.oc-stat-value-color-danger  { color: var(--red); }
+
+/* text-based value (e.g. Gateway "正常/降级/离线") — smaller, padded, badge-like */
+.oc-stat-value-text {
+  font-size: var(--oc-text-xl);
+  font-weight: 700;
+  line-height: 1.1;
+  padding: 4px 10px;
+  border-radius: var(--radius-md);
+  display: inline-block;
+  align-self: flex-start;
+  background: var(--green-subtle);
+  transition: all 0.3s ease;
+}
+.oc-stat-value-text.oc-stat-value-color-success { background: var(--green-subtle); color: var(--green); }
+.oc-stat-value-text.oc-stat-value-color-warning { background: var(--yellow-subtle); color: var(--yellow); }
+.oc-stat-value-text.oc-stat-value-color-danger  { background: var(--red-subtle); color: var(--red); }
+.oc-stat-value-text.oc-stat-value-color-info    { background: var(--cyan-glow); color: var(--cyan); }
+
+/* === 工具栏布局（替换通信拓扑等页签中的 inline 布局） === */
+.oc-toolbar {
+  margin-bottom: var(--space-5);
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+
+/* === Shell 统一布局间隙微调：标题 / Tab / 内容 === */
+body.robots .oc-ph { margin-bottom:18px; padding-bottom:24px; }
+body.robots .oc-tab-content.active { padding-top:0; }
+body.robots #healthBar { margin-top:0; margin-bottom:18px; }
+body.robots .oc-toolbar { margin-top:0; margin-bottom:24px; }
+
+/* === Robots 卡片等高修复 === */
+body.robots #metricsOverview {
+  display:grid;
+  grid-template-columns:repeat(5, minmax(0, 1fr));
+  gap:var(--space-4);
+  margin-bottom:var(--space-6);
+  align-items:stretch;
+}
+body.robots .agent-grid { align-items:stretch; grid-auto-rows:1fr; }
+body.robots .agent-grid .agent-actions { margin-top:auto; }
+body.robots .agent-grid .task-tracker { margin-top:var(--space-4); }
+body.robots #healthBar,
+body.robots #metricsOverview,
+body.robots .agent-grid { align-items:stretch; }
+body.robots #metricsOverview > .oc-stat-item { height:100%; }
+body.robots .agent-card { margin:0; align-self:stretch; display:flex; flex-direction:column; }
+.robots-ph-accent { --oc-ph-color:var(--oc-accent); }
+.robots-toast-icon { font-size:var(--oc-text-base); font-weight:700; }
+.robots-confirm-message { font-size:var(--oc-text-base); color:var(--text-secondary); margin-bottom:20px; }
+.robots-confirm-actions { justify-content:flex-end; }
+.robots-skeleton-card { display:flex; flex-direction:column; min-height:280px; }
+.robots-skeleton-header { align-items:center; margin-bottom:20px; }
+.robots-skeleton-avatar { width:48px; height:48px; border-radius:12px; flex-shrink:0; }
+.robots-skeleton-main { flex:1; }
+.robots-skeleton-title { width:120px; height:16px; margin-bottom:8px; }
+.robots-skeleton-subtitle { width:80px; height:12px; }
+.robots-skeleton-strip { width:100%; height:32px; margin-bottom:16px; border-radius:8px; }
+.robots-skeleton-stats { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:20px; }
+.robots-skeleton-stat { height:48px; border-radius:8px; }
+.robots-skeleton-action { flex:1; height:32px; border-radius:8px; }
+.robots-empty-error { grid-column:1/-1; color:var(--red); }
+.robots-retry-btn { margin-top:12px; }
+.robots-alert-icon { font-size:var(--oc-text-xl); }
+.robots-btn-loading-skeleton { width:60px; height:14px; display:inline-block; border-radius:4px; }
+.health-ring-text.critical { color:var(--red); }
+.health-ring-text.warning { color:var(--yellow); }
+.health-ring-text.healthy { color:var(--green); }
+.robots-task-muted-marker { width:6px; height:6px; border-radius:50%; background:var(--text-muted); flex-shrink:0; margin-top:1px; opacity:0.7; }
+.robots-task-muted-marker::before { content:''; }
+.robots-cron-block { margin-bottom:6px; }
+.robots-cron-toggle { font-size:var(--oc-text-2xs); color:var(--red); font-weight:600; margin-bottom:4px; cursor:pointer; align-items:center; }
+.robots-cron-row { align-items:center; font-size:var(--oc-text-xs); padding:4px 8px; background:var(--red-subtle); border-radius:6px; border:1px solid var(--red-subtle); margin-bottom:3px; cursor:pointer; }
+.robots-cron-x { color:var(--red); flex-shrink:0; }
+.robots-cron-label { color:var(--text-secondary); flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.robots-cron-detail { color:var(--text-muted); font-size:var(--oc-text-2xs); }
+.robots-workflow-note { color:var(--text-muted); }
+.robots-workflow-state { text-align:center; padding:20px; color:var(--text-muted); }
+.robots-workflow-error { text-align:center; padding:20px; color:var(--red); }
+.robots-workflow-skeleton { width:80px; height:16px; display:inline-block; border-radius:4px; }
+.wf-step-type.user { color:var(--blue); }
+.wf-step-type.text { color:var(--green); }
+.wf-step-type.toolCall { color:var(--accent); }
+.wf-step-type.subagent { color:var(--purple); }
+.wf-step-type.toolResult { color:var(--cyan); }
+.robots-topo-stat-muted { color:var(--text-muted); }
+.robots-topo-card { padding:16px; }
+.robots-topo-card.spaced { margin-top:12px; }
+.robots-topo-title-accent { font-size:var(--oc-text-md); font-weight:600; margin-bottom:10px; color:var(--accent); }
+.robots-topo-title-info { font-size:var(--oc-text-md); font-weight:600; margin-bottom:10px; color:var(--cyan); }
+.robots-topo-row { align-items:center; margin-bottom:6px; font-size:var(--oc-text-sm); }
+.robots-topo-binding-row { align-items:center; margin-bottom:4px; font-size:var(--oc-text-sm); }
+.robots-topo-arrow { color:var(--accent); }
+.robots-topo-muted-arrow { color:var(--text-muted); }
+.robots-topo-primary { color:var(--text-primary); }
+.robots-topo-info { color:var(--cyan); }
+.robots-topo-bar { flex:1; height:6px; border:0; border-radius:3px; overflow:hidden; background:var(--bg-body); }
+.robots-topo-bar::-webkit-progress-bar { background:var(--bg-body); }
+.robots-topo-bar::-webkit-progress-value { background:var(--accent); border-radius:3px; transition:width .5s ease; }
+.robots-topo-bar::-moz-progress-bar { background:var(--accent); border-radius:3px; transition:width .5s ease; }
+.robots-topo-count { color:var(--accent); font-weight:600; min-width:30px; text-align:right; }
+.robots-health-badge { margin-left:6px; cursor:help; }
+.robots-agent-card { display:flex; flex-direction:column; }
+.robots-health-ring-slot { margin-left:auto; }
+.robots-stat-purple { color:var(--purple); }
+.robots-tracker-primary { color:var(--green); font-weight:500; }
+.robots-fallback-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+.robots-fallback-title { font-size:var(--oc-text-md); font-weight:600; color:var(--yellow); }
+.robots-unsaved { font-size:var(--oc-text-2xs); color:var(--yellow); }
+.robots-fallback-save { color:var(--green); border-color:var(--green); }
+.robots-fallback-save.is-disabled { opacity:.5; }
+.robots-fallback-selected { flex-wrap:wrap; margin-bottom:8px; }
+.robots-fallback-pill { display:inline-flex; align-items:center; gap:6px; padding:6px 12px; background:var(--accent-subtle); border:1px solid var(--accent); border-radius:8px; font-size:var(--oc-text-sm); }
+.robots-fallback-index { color:var(--accent); font-weight:600; }
+.robots-fallback-remove { background:none; border:none; color:var(--red); cursor:pointer; font-size:var(--oc-text-base); padding:0 2px; }
+.robots-fallback-empty { font-size:var(--oc-text-sm); color:var(--text-muted); }
+.robots-fallback-options { flex-wrap:wrap; }
+.robots-fallback-add-icon { color:var(--accent); opacity:.5; }
+.robots-batch-summary { padding:12px; background:var(--bg-body); border-radius:var(--radius-md); font-size:var(--oc-text-sm); color:var(--text-secondary); }
+.robots-batch-save { min-width:140px; }
+#batchModelConfigModal .oc-form-group { margin-bottom:16px; }
+#batchModelConfigModal .oc-select { width:100%; }
+#batchModelConfigModal .robots-fallback-selected,
+#batchModelConfigModal .robots-fallback-options { display:flex; gap:8px; }
+.robots-test-model-block { margin-bottom:16px; }
+.robots-test-label { font-size:var(--oc-text-sm); color:var(--text-muted); margin-bottom:8px; }
+.robots-model-pill { padding:4px 8px; background:var(--bg-body); border-radius:6px; font-size:var(--oc-text-xs); font-family:var(--font-mono); }
+.robots-test-results { margin-bottom:16px; }
+.robots-test-muted { font-size:var(--oc-text-sm); color:var(--text-muted); }
+.robots-test-actions { align-items:center; }
+.robots-test-run { flex:1; }
+.robots-test-row { align-items:center; padding:8px; margin-bottom:4px; background:var(--bg-body); border-radius:8px; }
+.robots-test-pulse { animation:pulse 1s infinite; }
+.robots-test-model { font-size:var(--oc-text-sm); font-family:var(--font-mono); flex:1; }
+.robots-test-status { font-size:var(--oc-text-xs); color:var(--text-muted); }
+.robots-test-status.ok { color:var(--green); }
+.robots-test-status.fail { color:var(--red); }
+.robots-result-mark { font-weight:700; }
+.robots-result-mark.ok { color:var(--green); }
+.robots-result-mark.fail { color:var(--red); }
+.robots-health-alert-item { padding:12px; margin-bottom:10px; border-radius:8px; }
+.robots-health-alert-item.critical { background:var(--red-subtle); border:1px solid var(--red-subtle); }
+.robots-health-alert-item.warning { background:var(--yellow-subtle); border:1px solid var(--yellow-subtle); }
+.robots-health-alert-title { font-weight:600; margin-bottom:4px; }
+.robots-health-alert-title.critical { color:var(--red); }
+.robots-health-alert-title.warning { color:var(--yellow); }
+.robots-health-alert-message { font-size:var(--oc-text-md); color:var(--text-primary); margin-bottom:4px; }
+.robots-health-alert-detail { font-size:var(--oc-text-xs); color:var(--text-muted); margin-bottom:6px; }
+.robots-health-fix { font-size:var(--oc-text-xs); color:var(--green); line-height:1.6; margin-bottom:8px; }
+.robots-health-ai-btn { font-size:var(--oc-text-sm); }
+.robots-modal-close-row { margin-top:16px; text-align:right; }
+.robots-inline-loading { animation:pulse 1s infinite; }
+.robots-ai-result-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
+.robots-ai-result-head.spaced { margin-bottom:8px; }
+.robots-ai-title { font-size:var(--oc-text-sm); font-weight:600; color:var(--accent); }
+.robots-copy-btn { font-size:var(--oc-text-xs); padding:2px 8px; }
+.robots-ai-text { font-size:var(--oc-text-sm); color:var(--text-secondary); line-height:1.7; white-space:pre-wrap; }
+.robots-ai-text-md { font-size:var(--oc-text-md); color:var(--text-secondary); line-height:1.7; white-space:pre-wrap; }
+.robots-cron-modal-block { margin-bottom:16px; }
+.robots-cron-modal-title-row { align-items:center; margin-bottom:12px; }
+.robots-cron-modal-title { font-size:var(--oc-text-base); font-weight:600; color:var(--text-primary); }
+.robots-cron-meta-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px; }
+.robots-cron-meta-card { padding:12px; background:var(--bg-body); border-radius:8px; border:1px solid var(--border-subtle); }
+.robots-cron-meta-label { font-size:var(--oc-text-xs); color:var(--text-muted); margin-bottom:4px; }
+.robots-cron-meta-value { font-size:var(--oc-text-base); font-weight:600; color:var(--text-primary); }
+.robots-cron-meta-value.ok { color:var(--green); }
+.robots-cron-meta-value.fail { color:var(--red); }
+.robots-cron-fix-guide { padding:12px; background:var(--red-subtle); border-radius:8px; border:1px solid var(--red-subtle); margin-bottom:16px; }
+.robots-cron-fix-title { font-size:var(--oc-text-sm); font-weight:600; color:var(--red); margin-bottom:8px; }
+.robots-cron-fix-text { font-size:var(--oc-text-md); color:var(--text-secondary); line-height:1.6; }
+.robots-cron-ai-btn { font-size:var(--oc-text-sm); margin-bottom:16px; }
+.robots-modal-actions-end { justify-content:flex-end; }
+
+</style>
+<script defer src="/cockpit-theme.js"></script>
+</head>
+<body class="robots">
+
+<div class="page-container">
+
+  <!-- 页面标题栏 -->
+  <header class="oc-ph">
+    <div class="oc-ph-main">
+      <div class="oc-ph-icon robots-ph-accent">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" y1="16" x2="8" y2="16"/><line x1="16" y1="16" x2="16" y2="16"/><circle cx="8" cy="16" r="1" fill="currentColor"/><circle cx="16" cy="16" r="1" fill="currentColor"/><path d="M9 21v-2a3 3 0 0 1 6 0v2"/></svg>
+      </div>
+      <div class="oc-ph-text">
+        <div class="oc-ph-eyebrow">ROBOTS</div>
+        <h1 class="oc-ph-title" data-i18n="pageTitle">机器人管理</h1>
+        <p class="oc-ph-subtitle" data-i18n="pageSubtitle">所有 Agent 配置与状态 · 实时监控</p>
+      </div>
+    </div>
+    <div class="oc-ph-side">
+      <button class="oc-tool-btn lang" id="btnLangToggle" type="button" title="切换语言" onclick="toggleLocale()">
+        <span id="langLabel">中/En</span>
+      </button>
+      <button class="oc-tool-btn theme" id="btnThemeToggle" type="button" title="切换主题">☽</button>
+    </div>
+  </header>
+
+  <!-- 导航标签 -->
+  <nav class="oc-tabs oc-tabs-underline">
+    <button class="oc-tab active" data-tab="list" data-i18n="tabList" onclick="switchTab('list')">🤖 机器人列表</button>
+    <button class="oc-tab" data-tab="topology" data-i18n="tabTopology" onclick="switchTab('topology')">🌐 通信拓扑</button>
+    <button class="oc-tab" data-tab="about" data-i18n="tabAbout" onclick="switchTab('about')">ℹ️ 模块说明</button>
+  </nav>
+
+  <!-- 列表页 -->
+  <div id="tab-list" class="oc-tab-content active">
+
+    <!-- 健康状态栏 — 与指标概览同款 .oc-stat-item，垂直布局：value 在上 / label 在下 -->
+    <div class="oc-stat-grid" id="healthBar">
+      <div class="oc-stat-item">
+        <span class="oc-stat-value oc-stat-value-color-success" id="healthHealthy">-</span>
+        <span class="oc-stat-label" data-i18n="healthHealthy">健康</span>
+      </div>
+      <div class="oc-stat-item">
+        <span class="oc-stat-value oc-stat-value-color-warning" id="healthWarning">-</span>
+        <span class="oc-stat-label" data-i18n="healthWarning">警告</span>
+      </div>
+      <div class="oc-stat-item">
+        <span class="oc-stat-value oc-stat-value-color-danger" id="healthCritical">-</span>
+        <span class="oc-stat-label" data-i18n="healthCritical">异常</span>
+      </div>
+      <div class="oc-stat-item">
+        <span class="oc-stat-value oc-stat-value-text oc-stat-value-color-info" id="healthGateway">-</span>
+        <span class="oc-stat-label" data-i18n="healthGateway">Gateway</span>
+      </div>
+    </div>
+
+    <!-- 告警横幅 -->
+    <div id="healthAlerts" class="alert-banner critical" onclick="toggleHealthAlerts()"></div>
+
+    <!-- 工具栏（oc-card 包装）— 只保留右侧操作组，左侧内容已迁出 -->
+    <div class="oc-card toolbar-card toolbar-card-actions">
+      <div class="toolbar-group toolbar-group-actions">
+        <button onclick="openBatchModelConfigModal()" id="btnBatchModelConfig" class="oc-btn oc-btn-primary oc-btn-sm toolbar-btn">
+          <svg class="oc-btn-icon-svg" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+            <path d="M2.5 3.5h5M2.5 8h8M2.5 12.5h11" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="12" cy="3.5" r="1.5" fill="currentColor" stroke="none"/>
+            <circle cx="11" cy="8" r="1.5" fill="currentColor" stroke="none"/>
+            <circle cx="14.5" cy="12.5" r="1.5" fill="currentColor" stroke="none"/>
+          </svg>
+          <span data-i18n="batchModelConfig">批量配置模型</span>
+        </button>
+        <button onclick="testAllPlatforms()" id="btnTestPlatforms" class="oc-btn oc-btn-secondary oc-btn-sm toolbar-btn">
+          <svg class="oc-btn-icon-svg" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+            <path d="M8 1.5l5 2.5v8L8 14.5 3 12V4l5-2.5z" stroke-linejoin="round"/>
+            <path d="M3 4l5 2.5 5-2.5M8 6.5v8" stroke-linejoin="round"/>
+          </svg>
+          <span data-i18n="testPlatform">测试平台</span>
+        </button>
+        <button onclick="restartGateway()" id="btnRestartGateway" class="oc-btn oc-btn-secondary oc-btn-sm toolbar-btn">
+          <svg class="oc-btn-icon-svg" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+            <path d="M2.5 8a5.5 5.5 0 0 1 9.39-3.89M13.5 8a5.5 5.5 0 0 1-9.39 3.89" stroke-linecap="round"/>
+            <path d="M11.5 2.5v2.5h-2.5M4.5 13.5v-2.5h2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span data-i18n="restartGateway">重启 Gateway</span>
+        </button>
+      </div>
+      <span class="toolbar-divider" aria-hidden="true"></span>
+      <div class="toolbar-group toolbar-group-refresh">
+        <select id="refreshInterval" class="oc-select oc-select-sm toolbar-select" onchange="setRefreshInterval(this.value)">
+          <option value="0" selected data-i18n="manualRefresh">手动刷新</option>
+          <option value="10" data-i18n="refresh10s">10秒</option>
+          <option value="30" data-i18n="refresh30s">30秒</option>
+          <option value="60" data-i18n="refresh1m">1分钟</option>
+          <option value="300" data-i18n="refresh5m">5分钟</option>
+        </select>
+        <button onclick="loadAgentsData()" class="oc-btn oc-btn-secondary oc-btn-icon toolbar-btn-refresh" data-i18n-title="refresh" title="刷新">
+          <svg class="oc-btn-icon-svg toolbar-refresh-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+            <path d="M13.5 8a5.5 5.5 0 1 1-1.61-3.89M13.5 2.5v2.5h-2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- 指标概览 -->
+    <div id="metricsOverview" class="oc-stat-grid">
+      <div class="oc-stat-item">
+        <span class="oc-stat-value oc-stat-value-color-accent" id="agentsCount">0</span>
+        <span class="oc-stat-label" data-i18n="totalRobots">机器人总数</span>
+      </div>
+      <div class="oc-stat-item">
+        <span class="oc-stat-value oc-stat-value-color-success" id="agentsActive">0</span>
+        <span class="oc-stat-label" data-i18n="activeRobots">活跃机器人</span>
+      </div>
+      <div class="oc-stat-item">
+        <span class="oc-stat-value oc-stat-value-color-accent" id="agentsTotalTokens">0</span>
+        <span class="oc-stat-label" data-i18n="totalTokens">总 Tokens</span>
+      </div>
+      <div class="oc-stat-item">
+        <span class="oc-stat-value oc-stat-value-color-info" id="agentsTotalMessages">0</span>
+        <span class="oc-stat-label" data-i18n="totalMessages">总消息数</span>
+      </div>
+      <div class="oc-stat-item">
+        <span class="oc-stat-value oc-stat-value-color-warning" id="agentsAvgResponse">-</span>
+        <span class="oc-stat-label" data-i18n="avgResponse">平均响应</span>
+      </div>
+    </div>
+
+    <!-- Agent 卡片网格 -->
+    <div class="agent-grid" id="agentsList"></div>
+
+    <!-- 全局任务追踪 -->
+    <div id="agentTaskTracking"></div>
+
+    <!-- 名词解释（oc-card 包装 + oc-badge 词条 + 描述） -->
+    <div class="oc-card glossary-card">
+      <div class="oc-card-header">
+        <h3 class="oc-section-title" data-i18n="glossaryTitle">名词解释</h3>
+      </div>
+      <div class="oc-card-body">
+        <div class="glossary-grid">
+          <div class="glossary-item" data-i18n-html="workingDesc">
+            <span class="oc-badge oc-badge-success glossary-term">工作中</span>
+            <span class="glossary-desc">最后活跃时间 &lt; 5 分钟</span>
+          </div>
+          <div class="glossary-item" data-i18n-html="slackingDesc">
+            <span class="oc-badge oc-badge-warning glossary-term">摸鱼</span>
+            <span class="glossary-desc">最后活跃时间 5 分钟 ~ 24 小时</span>
+          </div>
+          <div class="glossary-item" data-i18n-html="offDutyDesc">
+            <span class="oc-badge oc-badge-default glossary-term">下班了</span>
+            <span class="glossary-desc">最后活跃时间 &gt; 24 小时</span>
+          </div>
+          <div class="glossary-item" data-i18n-html="primaryModelDesc">
+            <span class="oc-badge oc-badge-primary glossary-term">主模型</span>
+            <span class="glossary-desc">Agent 默认使用的大模型</span>
+          </div>
+          <div class="glossary-item" data-i18n-html="tempWorkerDesc">
+            <span class="oc-badge oc-badge-purple glossary-term">临时工</span>
+            <span class="glossary-desc">Agent 动态创建的子代理</span>
+          </div>
+          <div class="glossary-item" data-i18n-html="liveWorkDesc">
+            <span class="oc-badge oc-badge-cyan glossary-term">实时工作</span>
+            <span class="glossary-desc">Agent 当前正在执行的活动</span>
+          </div>
+          <div class="glossary-item" data-i18n-html="healthScoreDesc">
+            <span class="oc-badge oc-badge-danger glossary-term">健康评分</span>
+            <span class="glossary-desc">满分100，&lt;50异常，&lt;80警告，≥80健康</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 通信拓扑页 -->
+  <div id="tab-topology" class="oc-tab-content">
+    <div class="oc-card toolbar-card toolbar-card-topo">
+      <h2 class="oc-section-title" data-i18n="topoTitle">Agent 通信拓扑</h2>
+      <div class="toolbar-spacer"></div>
+      <button onclick="loadTopology()" class="oc-btn oc-btn-secondary oc-btn-sm toolbar-btn" data-i18n-title="refresh" title="刷新">
+        <svg class="oc-btn-icon-svg toolbar-refresh-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+          <path d="M13.5 8a5.5 5.5 0 1 1-1.61-3.89M13.5 2.5v2.5h-2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span data-i18n="refresh">刷新</span>
+      </button>
+    </div>
+
+    <div class="oc-card topo-legend">
+      <div class="topo-legend-item">
+        <svg class="topo-legend-line topo-legend-line-thick" viewBox="0 0 32 6" preserveAspectRatio="none" aria-hidden="true"><line x1="0" y1="3" x2="32" y2="3" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
+        <span class="topo-legend-label" data-i18n="thickLine">粗线 = 高频调用(≥5次)</span>
+      </div>
+      <div class="topo-legend-item">
+        <svg class="topo-legend-line topo-legend-line-thin" viewBox="0 0 32 6" preserveAspectRatio="none" aria-hidden="true"><line x1="0" y1="3" x2="32" y2="3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <span class="topo-legend-label" data-i18n="thinLine">细线 = 低频调用</span>
+      </div>
+      <div class="topo-legend-item">
+        <svg class="topo-legend-line topo-legend-line-dashed" viewBox="0 0 32 6" preserveAspectRatio="none" aria-hidden="true"><line x1="0" y1="3" x2="32" y2="3" stroke="currentColor" stroke-width="1" stroke-dasharray="4 3" stroke-linecap="round"/></svg>
+        <span class="topo-legend-label" data-i18n="dashedLine">虚线 = 配置但未调用</span>
+      </div>
+      <div class="topo-legend-divider" aria-hidden="true"></div>
+      <div class="topo-legend-item">
+        <span class="topo-legend-badge">数字</span>
+        <span class="topo-legend-label" data-i18n="numberLabel">= 实际调用次数</span>
+      </div>
+    </div>
+
+    <div class="oc-card topo-canvas-card">
+      <canvas id="topoCanvas"></canvas>
+    </div>
+
+    <div id="topoStats" class="oc-stat-grid"></div>
+  </div>
+
+  <!-- 模块说明页 -->
+  <div id="tab-about" class="oc-tab-content">
+    <div class="about-card">
+      <h2 data-i18n="aboutTitle">Robots 模块 v1.3.0</h2>
+      <p data-i18n="aboutDesc">Agent 管理中心，从 Dashboard 中独立拆分出来的功能模块。支持 Agent 配置管理、模型测试、状态监控、健康告警、AI 智能修复、工作流追踪、通信拓扑、深浅色主题切换。</p>
+      <h3 data-i18n="archDesign">架构设计</h3>
+      <ul>
+        <li data-i18n-html="independentService"><b>独立服务</b> — 纯 Node.js HTTP 服务器，零外部依赖</li>
+        <li data-i18n-html="iframeEmbed"><b>iframe 嵌入</b> — Dashboard (port 7000) 通过 iframe 加载本模块</li>
+        <li data-i18n-html="postMessageComm"><b>postMessage 通信</b> — 跨模块导航通过 <code>window.parent.postMessage</code></li>
+      </ul>
+      <h3 data-i18n="healthMonitorAI">健康监控与 AI 修复</h3>
+      <ul>
+        <li data-i18n-html="authState"><b>auth-state.json</b> — 读取模型调用错误计数和失败时间</li>
+        <li data-i18n-html="jobsState"><b>jobs-state.json</b> — 读取 Cron 任务连续失败次数和诊断信息</li>
+        <li data-i18n-html="healthScoreCalc"><b>健康评分</b> — 综合认证错误(40%)、响应异常(30%)、活跃度(30%)</li>
+        <li data-i18n-html="alertLevel"><b>告警级别</b> — healthy(≥80) / warning(≥50) / critical(<50)</li>
+        <li data-i18n-html="aiFix"><b>AI 智能修复</b> — 调用系统默认大模型生成具体修复步骤</li>
+      </ul>
+      <h3 data-i18n="themeSystem">主题系统</h3>
+      <ul>
+        <li data-i18n-html="darkTheme"><b>深色主题</b> — 柔和暗色，纯色卡片 + 阴影分层，高可读性</li>
+        <li data-i18n-html="lightTheme"><b>浅色主题</b> — 暖灰色调，不刺眼，适合白天使用</li>
+        <li data-i18n-html="autoSave"><b>自动保存</b> — 主题偏好保存到 localStorage，刷新后保持</li>
+      </ul>
+      <h3 data-i18n="workflowPanel">工作流面板</h3>
+      <ul>
+        <li data-i18n-html="sessionParse"><b>会话解析</b> — 从最新 .jsonl 文件提取 user/assistant/toolCall/toolResult 步骤</li>
+        <li data-i18n-html="subagentTrack"><b>子代理追踪</b> — 识别 dispatchAgent/spawn 调用</li>
+        <li data-i18n-html="liveRefresh"><b>实时刷新</b> — 面板打开时自动 10 秒刷新</li>
+      </ul>
+      <h3 data-i18n="commTopology">通信拓扑</h3>
+      <ul>
+        <li data-i18n-html="staticConfig"><b>静态配置</b> — 从 openclaw.json 的 subagents.allowAgents 读取权限</li>
+        <li data-i18n-html="runtimeStats"><b>运行时统计</b> — 从 .jsonl 文件统计 dispatchAgent/spawn 实际调用次数</li>
+        <li data-i18n-html="visualization"><b>可视化</b> — Canvas 绘制有向图，线宽表示调用频率，节点带发光效果</li>
+      </ul>
+      <h3 data-i18n="apiEndpoints">主要 API 端点</h3>
+      <pre><code>GET  /api/agents              # Agent 列表（含健康评分、Cron 状态）
+GET  /api/health              # 全局健康概览（含告警列表）
+POST /api/ai-fix              # AI 智能修复（调用默认大模型）
+GET  /api/agent/:id/workflow  # Agent 工作流步骤
+GET  /api/topology            # Agent 通信拓扑（节点+边+调用次数）
+GET  /api/models-list         # 可用模型列表
+GET  /api/gateway-health      # Gateway 健康检查
+PUT  /api/agent/:id/model     # 更新 Agent 模型配置</code></pre>
+    </div>
+  </div>
+
+</div>
+
+<!-- 批量配置模型浮层 -->
+<div id="batchModelConfigModal" class="modal-overlay" style="display:none;" role="dialog" aria-modal="true">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 class="modal-title" data-i18n="batchModelConfigTitle">批量配置所有机器人模型</h3>
+      <button class="modal-close" onclick="closeBatchModelConfigModal()" aria-label="关闭">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="oc-form-group">
+        <label data-i18n="batchModelConfigPrimary">统一主模型</label>
+        <select id="batchPrimaryModelSelect" class="oc-select full-width"></select>
+      </div>
+      <div class="oc-form-group">
+        <label data-i18n="batchModelConfigFallbacks">统一备用模型</label>
+        <div id="batchFallbackPanel"></div>
+      </div>
+      <div id="batchModelConfigSummary" class="robots-batch-summary"></div>
+    </div>
+    <div class="modal-footer oc-flex-gap-8">
+      <button onclick="saveBatchModelConfig()" id="batchModelConfigSaveBtn" class="oc-btn oc-btn-primary robots-batch-save" data-i18n="batchModelConfigSave">保存到所有机器人</button>
+      <button onclick="closeBatchModelConfigModal()" class="oc-btn" data-i18n="close">关闭</button>
+    </div>
+  </div>
+</div>
+
+<!-- 工作流浮层（oc-modal-overlay + oc-card 套件） -->
+<div id="wfOverlay" class="wf-overlay">
+  <div class="oc-card wf-panel" role="dialog" aria-labelledby="wfTitle">
+    <div class="oc-card-header wf-header">
+      <div class="wf-header-text">
+        <h2 class="oc-section-title" id="wfTitle" data-i18n="workflowTitle">工作流</h2>
+      </div>
+      <div class="wf-actions">
+        <button onclick="refreshWorkflow()" class="oc-btn oc-btn-secondary oc-btn-sm toolbar-btn" data-i18n-title="refresh" title="刷新">
+          <svg class="oc-btn-icon-svg toolbar-refresh-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+            <path d="M13.5 8a5.5 5.5 0 1 1-1.61-3.89M13.5 2.5v2.5h-2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span data-i18n="refresh">刷新</span>
+        </button>
+        <button onclick="closeWorkflow()" class="oc-btn oc-btn-secondary oc-btn-sm toolbar-btn" data-i18n-title="close" title="关闭">
+          <svg class="oc-btn-icon-svg" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+            <path d="M3.5 3.5l9 9M12.5 3.5l-9 9" stroke-linecap="round"/>
+          </svg>
+          <span data-i18n="close">关闭</span>
+        </button>
+      </div>
+    </div>
+    <div class="wf-info" data-i18n="workflowInfo">
+      数据来源：最新会话的 .jsonl 日志文件 · 只显示最近 300 条消息 · 实时刷新(10s)
+    </div>
+    <div class="wf-steps" id="wfSteps"></div>
+  </div>
+</div>
+
+<script>
+function switchTab(tab) {
+  document.querySelectorAll('.oc-tab').forEach(function(t) { t.classList.remove('active'); });
+  document.querySelectorAll('.oc-tab-content').forEach(function(c) { c.classList.remove('active'); });
+  var tabEl = document.querySelector('.oc-tab[data-tab="' + tab + '"]');
+  var contentEl = document.getElementById('tab-' + tab);
+  if (tabEl) tabEl.classList.add('active');
+  if (contentEl) contentEl.classList.add('active');
+  if (tab === 'topology') loadTopology();
+}
+</script>
+<script defer src="agents.js?v=20261010-fm-docs-real-pct"></script>
+<script>
+var translations = {
+  zh: {
+    pageTitle: '机器人管理',
+    pageSubtitle: '所有 Agent 配置与状态 · 实时监控',
+    docTitle: '机器人管理 - OpenClaw',
+    tabList: '🤖 机器人列表',
+    tabTopology: '🌐 通信拓扑',
+    tabAbout: 'ℹ️ 模块说明',
+    healthHealthy: '健康',
+    healthWarning: '警告',
+    healthCritical: '异常',
+    healthGateway: 'Gateway',
+    agentsCountZero: '0 个机器人',
+    agentsCount: '{count} 个机器人',
+    searchPlaceholder: '搜索机器人...',
+    testPlatform: '测试平台',
+    restartGateway: '重启 Gateway',
+    manualRefresh: '手动刷新',
+    refresh10s: '10秒',
+    refresh30s: '30秒',
+    refresh1m: '1分钟',
+    refresh5m: '5分钟',
+    refresh: '刷新',
+    activeRobots: '活跃机器人',
+    totalRobots: '机器人总数',
+    totalTokens: '总 Tokens',
+    totalMessages: '总消息数',
+    avgResponse: '平均响应',
+    glossaryTitle: '名词解释',
+    working: '工作中',
+    slacking: '摸鱼',
+    offDuty: '下班了',
+    primaryModel: '主模型',
+    tempWorker: '临时工',
+    liveWork: '实时工作',
+    healthScore: '健康评分',
+    workingDesc: '<span class="oc-badge oc-badge-success glossary-term">工作中</span><span class="glossary-desc">最后活跃时间 &lt; 5 分钟</span>',
+    slackingDesc: '<span class="oc-badge oc-badge-warning glossary-term">摸鱼</span><span class="glossary-desc">最后活跃时间 5 分钟 ~ 24 小时</span>',
+    offDutyDesc: '<span class="oc-badge oc-badge-default glossary-term">下班了</span><span class="glossary-desc">最后活跃时间 &gt; 24 小时</span>',
+    primaryModelDesc: '<span class="oc-badge oc-badge-primary glossary-term">主模型</span><span class="glossary-desc">Agent 默认使用的大模型</span>',
+    tempWorkerDesc: '<span class="oc-badge oc-badge-purple glossary-term">临时工</span><span class="glossary-desc">Agent 动态创建的子代理</span>',
+    liveWorkDesc: '<span class="oc-badge oc-badge-cyan glossary-term">实时工作</span><span class="glossary-desc">Agent 当前正在执行的活动</span>',
+    healthScoreDesc: '<span class="oc-badge oc-badge-danger glossary-term">健康评分</span><span class="glossary-desc">满分100，&lt;50异常，&lt;80警告，≥80健康</span>',
+    topoTitle: 'Agent 通信拓扑',
+    thickLine: '粗线 = 高频调用(≥5次)',
+    thinLine: '细线 = 低频调用',
+    dashedLine: '虚线 = 配置但未调用',
+    numberLabel: '= 实际调用次数',
+    aboutTitle: 'Robots 模块 v1.3.0',
+    aboutDesc: 'Agent 管理中心，从 Dashboard 中独立拆分出来的功能模块。支持 Agent 配置管理、模型测试、状态监控、健康告警、AI 智能修复、工作流追踪、通信拓扑、深浅色主题切换。',
+    archDesign: '架构设计',
+    independentService: '<b>独立服务</b> — 纯 Node.js HTTP 服务器，零外部依赖',
+    iframeEmbed: '<b>iframe 嵌入</b> — Dashboard (port 7000) 通过 iframe 加载本模块',
+    postMessageComm: '<b>postMessage 通信</b> — 跨模块导航通过 <code>window.parent.postMessage</code>',
+    healthMonitorAI: '健康监控与 AI 修复',
+    authState: '<b>auth-state.json</b> — 读取模型调用错误计数和失败时间',
+    jobsState: '<b>jobs-state.json</b> — 读取 Cron 任务连续失败次数和诊断信息',
+    healthScoreCalc: '<b>健康评分</b> — 综合认证错误(40%)、响应异常(30%)、活跃度(30%)',
+    alertLevel: '<b>告警级别</b> — healthy(≥80) / warning(≥50) / critical(<50)',
+    aiFix: '<b>AI 智能修复</b> — 调用系统默认大模型生成具体修复步骤',
+    themeSystem: '主题系统',
+    darkTheme: '<b>深色主题</b> — 柔和暗色，纯色卡片 + 阴影分层，高可读性',
+    lightTheme: '<b>浅色主题</b> — 暖灰色调，不刺眼，适合白天使用',
+    autoSave: '<b>自动保存</b> — 主题偏好保存到 localStorage，刷新后保持',
+    workflowPanel: '工作流面板',
+    sessionParse: '<b>会话解析</b> — 从最新 .jsonl 文件提取 user/assistant/toolCall/toolResult 步骤',
+    subagentTrack: '<b>子代理追踪</b> — 识别 dispatchAgent/spawn 调用',
+    liveRefresh: '<b>实时刷新</b> — 面板打开时自动 10 秒刷新',
+    commTopology: '通信拓扑',
+    staticConfig: '<b>静态配置</b> — 从 openclaw.json 的 subagents.allowAgents 读取权限',
+    runtimeStats: '<b>运行时统计</b> — 从 .jsonl 文件统计 dispatchAgent/spawn 实际调用次数',
+    visualization: '<b>可视化</b> — Canvas 绘制有向图，线宽表示调用频率，节点带发光效果',
+    apiEndpoints: '主要 API 端点',
+    workflowTitle: '工作流',
+    workflowInfo: '数据来源：最新会话的 .jsonl 日志文件 · 只显示最近 300 条消息 · 实时刷新(10s)',
+    close: '关闭',
+    copySuccess: '分析结果已复制到剪贴板',
+    copyFail: '复制失败，请手动复制',
+    loadFailed: '加载失败',
+    retry: '重试',
+    gatewayNormal: '正常',
+    gatewayDegraded: '降级',
+    gatewayOffline: '离线',
+    alertSummaryWithCritical: '{critical} 个异常 {warning} 个警告 · 点击查看详情与修复建议',
+    alertSummaryWarningOnly: '{warning} 个警告 · 点击查看详情与修复建议',
+    testComplete: '测试完成',
+    testFailed: '测试失败',
+    confirmRestart: '确定要重启 Gateway 吗？这会中断所有正在进行的会话。',
+    restarting: '重启中...',
+    gatewayRestarted: 'Gateway 已重启',
+    restartFailed: '重启失败',
+    restartFailedReason: '重启失败: {reason}',
+    waiting: '等待中',
+    tokens: 'Tokens',
+    messages: '消息',
+    sessions: '会话',
+    response: '响应',
+    test: '测试',
+    save: '保存',
+    workflow: '工作流',
+    chatSession: '会话',
+    cronAlert: 'Cron 告警',
+    detail: '详情',
+    agentTaskTracking: 'Agent 任务追踪',
+    primaryModelLabel: '主模型:',
+    idle: '空闲',
+    noWorkflowData: '暂无工作流数据',
+    user: '用户',
+    reply: '回复',
+    tool: '工具',
+    subagent: '子代理',
+    result: '结果',
+    loadFailedMsg: '加载失败',
+    agentNodes: 'Agent 节点',
+    activeCallChains: '活跃调用链',
+    unusedConfig: '未使用配置',
+    callFrequencyRank: '调用频率排行',
+    feishuGroupBinding: '飞书群绑定',
+    feishuGroup: '飞书群',
+    globalFallbackModels: '全局备用模型',
+    batchModelConfig: '批量配置模型',
+    batchModelConfigTitle: '批量配置所有机器人模型',
+    batchModelConfigPrimary: '统一主模型',
+    batchModelConfigFallbacks: '统一备用模型',
+    batchModelConfigSave: '保存到所有机器人',
+    keepCurrentPrimary: '保留各机器人当前主模型',
+    keepCurrent: '保留当前',
+    agentsWillBeUpdated: '个机器人将被更新',
+    fallbackModels: '备用模型',
+    none: '无',
+    batchModelSaved: '批量模型配置已保存',
+    unsavedChanges: '有未保存更改',
+    noFallbackModels: '暂无备用模型',
+    noChangesToSave: '没有需要保存的更改',
+    fallbackSaved: '备用模型配置已保存',
+    saveFailed: '保存失败',
+    saveFailedReason: '保存失败: {reason}',
+    modelTestTitle: '模型测试 - {name}',
+    modelsToTest: '将要测试的模型：',
+    clickToTest: '点击下方按钮开始测试...',
+    startTest: '开始测试',
+    testing: '测试中...',
+    retest: '重新测试',
+    requestFailed: '请求失败',
+    requestFailedReason: '请求失败: {reason}',
+    saving: '保存中...',
+    configSaved: '配置已保存',
+    saved: '已保存',
+    failed: '失败',
+    error: '错误',
+    unknownError: '未知错误',
+    healthAlertDetail: '健康告警详情',
+    criticalLabel: '[异常]',
+    warningLabel: '[警告]',
+    fixSuggestion: '修复建议',
+    aiAnalysis: 'AI 智能分析',
+    aiAnalyzing: 'AI 分析中...',
+    aiAnalysisResult: 'AI 分析结果',
+    copyBtn: '复制',
+    aiAnalysisFailed: 'AI 分析失败',
+    aiAnalysisRequestFailed: 'AI 分析请求失败',
+    aiAnalysisRequestFailedReason: 'AI 分析请求失败: {reason}',
+    cronTaskDetail: 'Cron 任务详情',
+    failCount: '失败 x{count}',
+    lastStatus: '最近状态',
+    nextRun: '下次执行',
+    unknown: '未知',
+    fixSuggestionSteps: '1. 检查 Cron 任务配置的模型是否可用<br>2. 检查 Agent 的模型配置是否正确<br>3. 在 Config Recovery (17151) 中查看配置备份<br>4. 检查模型提供商的 API Key 是否有效',
+    confirm: '确认',
+    cancel: '取消',
+    ok: '确定',
+    fixGuideCron: '<b>修复建议：</b>检查 Cron 任务配置的模型是否可用，或检查 Agent 的模型配置。可在 Config Recovery (17151) 中查看配置备份。',
+    fixGuideAuth: '<b>修复建议：</b>检查 Agent 的认证配置（agent/auth-state.json），确认 API Key 有效。',
+    fixGuideSlow: '<b>修复建议：</b>响应时间异常，可能是模型负载高或网络问题。考虑切换备用模型。',
+    fixGuideOffline: '<b>修复建议：</b>Agent 不活跃但有定时任务，检查 Gateway 是否正常运行。',
+    healthScoreTitle: '健康评分: {score}/100\n{issues}',
+    toggleTheme: '切换主题',
+    openSession: '打开会话',
+    skills: '技能'
+  },
+  en: {
+    pageTitle: 'Robot Management',
+    pageSubtitle: 'All Agent Config & Status · Real-time Monitoring',
+    docTitle: 'Robot Management - OpenClaw',
+    tabList: '🤖 Robot List',
+    tabTopology: '🌐 Comm Topology',
+    tabAbout: 'ℹ️ Module Guide',
+    healthHealthy: 'Healthy',
+    healthWarning: 'Warning',
+    healthCritical: 'Critical',
+    healthGateway: 'Gateway',
+    agentsCountZero: '0 robots',
+    agentsCount: '{count} robots',
+    searchPlaceholder: 'Search robots...',
+    testPlatform: 'Test Platform',
+    restartGateway: 'Restart Gateway',
+    manualRefresh: 'Manual',
+    refresh10s: '10s',
+    refresh30s: '30s',
+    refresh1m: '1min',
+    refresh5m: '5min',
+    refresh: 'Refresh',
+    activeRobots: 'Active Robots',
+    totalTokens: 'Total Tokens',
+    totalMessages: 'Total Messages',
+    avgResponse: 'Avg Response',
+    glossaryTitle: 'Glossary',
+    working: 'Working',
+    slacking: 'Idle',
+    offDuty: 'Offline',
+    primaryModel: 'Primary Model',
+    tempWorker: 'Temp Agent',
+    liveWork: 'Live Activity',
+    healthScore: 'Health Score',
+    workingDesc: '<span class="oc-badge oc-badge-success glossary-term">Working</span><span class="glossary-desc">Last active &lt; 5 min</span>',
+    slackingDesc: '<span class="oc-badge oc-badge-warning glossary-term">Idle</span><span class="glossary-desc">Last active 5min ~ 24h</span>',
+    offDutyDesc: '<span class="oc-badge oc-badge-default glossary-term">Offline</span><span class="glossary-desc">Last active &gt; 24h</span>',
+    primaryModelDesc: '<span class="oc-badge oc-badge-primary glossary-term">Primary Model</span><span class="glossary-desc">Agent default LLM</span>',
+    tempWorkerDesc: '<span class="oc-badge oc-badge-purple glossary-term">Temp Agent</span><span class="glossary-desc">Agent dynamic sub-agent</span>',
+    liveWorkDesc: '<span class="oc-badge oc-badge-cyan glossary-term">Live Activity</span><span class="glossary-desc">Agent current activity</span>',
+    healthScoreDesc: '<span class="oc-badge oc-badge-danger glossary-term">Health Score</span><span class="glossary-desc">Max 100, &lt;50 critical, &lt;80 warning, ≥80 healthy</span>',
+    topoTitle: 'Agent Comm Topology',
+    thickLine: 'Thick = High frequency (≥5)',
+    thinLine: 'Thin = Low frequency',
+    dashedLine: 'Dashed = Configured but unused',
+    numberLabel: '= Actual call count',
+    aboutTitle: 'Robots Module v1.3.0',
+    aboutDesc: 'Agent management center, independently split from Dashboard. Supports Agent config management, model testing, status monitoring, health alerts, AI smart fix, workflow tracking, comm topology, dark/light theme switching.',
+    archDesign: 'Architecture',
+    independentService: '<b>Independent Service</b> — Pure Node.js HTTP server, zero external dependencies',
+    iframeEmbed: '<b>iframe Embed</b> — Dashboard (port 7000) loads this module via iframe',
+    postMessageComm: '<b>postMessage Comm</b> — Cross-module navigation via <code>window.parent.postMessage</code>',
+    healthMonitorAI: 'Health Monitor & AI Fix',
+    authState: '<b>auth-state.json</b> — Read model call error count and failure time',
+    jobsState: '<b>jobs-state.json</b> — Read Cron task consecutive failure count and diagnostics',
+    healthScoreCalc: '<b>Health Score</b> — Auth errors (40%), response anomalies (30%), activity (30%)',
+    alertLevel: '<b>Alert Level</b> — healthy (≥80) / warning (≥50) / critical (<50)',
+    aiFix: '<b>AI Smart Fix</b> — Call system default LLM to generate specific fix steps',
+    themeSystem: 'Theme System',
+    darkTheme: '<b>Dark Theme</b> — Soft dark, solid cards + shadow layers, high readability',
+    lightTheme: '<b>Light Theme</b> — Warm gray tones, easy on eyes, suitable for daytime',
+    autoSave: '<b>Auto Save</b> — Theme preference saved to localStorage, persists after refresh',
+    workflowPanel: 'Workflow Panel',
+    sessionParse: '<b>Session Parse</b> — Extract user/assistant/toolCall/toolResult steps from latest .jsonl file',
+    subagentTrack: '<b>Sub-agent Track</b> — Identify dispatchAgent/spawn calls',
+    liveRefresh: '<b>Live Refresh</b> — Auto 10s refresh when panel is open',
+    commTopology: 'Comm Topology',
+    staticConfig: '<b>Static Config</b> — Read permissions from openclaw.json subagents.allowAgents',
+    runtimeStats: '<b>Runtime Stats</b> — Count dispatchAgent/spawn actual calls from .jsonl files',
+    visualization: '<b>Visualization</b> — Canvas directed graph, line width = call frequency, glowing nodes',
+    apiEndpoints: 'API Endpoints',
+    workflowTitle: 'Workflow',
+    workflowInfo: 'Source: Latest session .jsonl log · Shows last 300 messages · Auto-refresh (10s)',
+    close: 'Close',
+    copySuccess: 'Analysis copied to clipboard',
+    copyFail: 'Copy failed, please copy manually',
+    loadFailed: 'Load Failed',
+    retry: 'Retry',
+    gatewayNormal: 'Normal',
+    gatewayDegraded: 'Degraded',
+    gatewayOffline: 'Offline',
+    alertSummaryWithCritical: '{critical} critical {warning} warnings · Click for details & fix suggestions',
+    alertSummaryWarningOnly: '{warning} warnings · Click for details & fix suggestions',
+    testComplete: 'Test Complete',
+    testFailed: 'Test Failed',
+    confirmRestart: 'Are you sure you want to restart Gateway? This will interrupt all ongoing sessions.',
+    restarting: 'Restarting...',
+    gatewayRestarted: 'Gateway Restarted',
+    restartFailed: 'Restart Failed',
+    restartFailedReason: 'Restart failed: {reason}',
+    waiting: 'Waiting',
+    tokens: 'Tokens',
+    messages: 'Messages',
+    sessions: 'Sessions',
+    response: 'Response',
+    test: 'Test',
+    save: 'Save',
+    workflow: 'Workflow',
+    chatSession: 'Chat',
+    cronAlert: 'Cron Alert',
+    detail: 'Detail',
+    agentTaskTracking: 'Agent Task Tracking',
+    primaryModelLabel: 'Primary:',
+    idle: 'Idle',
+    noWorkflowData: 'No workflow data',
+    user: 'User',
+    reply: 'Reply',
+    tool: 'Tool',
+    subagent: 'Sub-agent',
+    result: 'Result',
+    loadFailedMsg: 'Load failed',
+    agentNodes: 'Agent Nodes',
+    activeCallChains: 'Active Call Chains',
+    unusedConfig: 'Unused Config',
+    callFrequencyRank: 'Call Frequency Rank',
+    feishuGroupBinding: 'Feishu Group Binding',
+    feishuGroup: 'Feishu Group',
+    globalFallbackModels: 'Global Fallback Models',
+    batchModelConfig: 'Batch Config Models',
+    batchModelConfigTitle: 'Batch Configure All Agent Models',
+    batchModelConfigPrimary: 'Unified Primary Model',
+    batchModelConfigFallbacks: 'Unified Fallback Models',
+    batchModelConfigSave: 'Save to All Agents',
+    keepCurrentPrimary: 'Keep each agent current primary model',
+    keepCurrent: 'Keep current',
+    agentsWillBeUpdated: 'agents will be updated',
+    fallbackModels: 'Fallback models',
+    none: 'None',
+    batchModelSaved: 'Batch model config saved',
+    unsavedChanges: 'Unsaved changes',
+    noFallbackModels: 'No fallback models',
+    noChangesToSave: 'No changes to save',
+    fallbackSaved: 'Fallback model config saved',
+    saveFailed: 'Save failed',
+    saveFailedReason: 'Save failed: {reason}',
+    modelTestTitle: 'Model Test - {name}',
+    modelsToTest: 'Models to test:',
+    clickToTest: 'Click the button below to start testing...',
+    startTest: 'Start Test',
+    testing: 'Testing...',
+    retest: 'Retest',
+    requestFailed: 'Request failed',
+    requestFailedReason: 'Request failed: {reason}',
+    saving: 'Saving...',
+    configSaved: 'Config Saved',
+    saved: 'Saved',
+    failed: 'Failed',
+    error: 'Error',
+    unknownError: 'Unknown error',
+    healthAlertDetail: 'Health Alert Details',
+    criticalLabel: '[Critical]',
+    warningLabel: '[Warning]',
+    fixSuggestion: 'Fix Suggestion',
+    aiAnalysis: 'AI Smart Analysis',
+    aiAnalyzing: 'AI Analyzing...',
+    aiAnalysisResult: 'AI Analysis Result',
+    copyBtn: 'Copy',
+    aiAnalysisFailed: 'AI Analysis Failed',
+    aiAnalysisRequestFailed: 'AI analysis request failed',
+    aiAnalysisRequestFailedReason: 'AI analysis request failed: {reason}',
+    cronTaskDetail: 'Cron Task Detail',
+    failCount: 'Failed x{count}',
+    lastStatus: 'Last Status',
+    nextRun: 'Next Run',
+    unknown: 'Unknown',
+    fixSuggestionSteps: '1. Check if the Cron task model is available<br>2. Check if the Agent model config is correct<br>3. View config backups in Config Recovery (17151)<br>4. Check if the model provider API Key is valid',
+    confirm: 'Confirm',
+    cancel: 'Cancel',
+    ok: 'OK',
+    fixGuideCron: '<b>Fix:</b> Check if the Cron task model is available, or check the Agent model config. View config backups in Config Recovery (17151).',
+    fixGuideAuth: '<b>Fix:</b> Check the Agent auth config (agent/auth-state.json), confirm API Key is valid.',
+    fixGuideSlow: '<b>Fix:</b> Abnormal response time, possibly high model load or network issue. Consider switching to a fallback model.',
+    fixGuideOffline: '<b>Fix:</b> Agent is inactive but has scheduled tasks. Check if Gateway is running normally.',
+    healthScoreTitle: 'Health Score: {score}/100\n{issues}',
+    toggleTheme: 'Toggle Theme',
+    openSession: 'Open Session',
+    skills: 'Skills'
+  }
+};
+
+var currentLang = localStorage.getItem('openclaw-lang') || 'zh';
+
+function t(key, params) {
+  var lang = currentLang;
+  var val = (translations[lang] && translations[lang][key]) || (translations.zh && translations.zh[key]) || key;
+  if (params) {
+    Object.keys(params).forEach(function(k) {
+      val = val.replace(new RegExp('\\{' + k + '\\}', 'g'), params[k]);
+    });
+  }
+  return val;
+}
+
+function setLang(lang) {
+  currentLang = lang;
+  localStorage.setItem('openclaw-lang', lang);
+  document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+  document.querySelectorAll('[data-i18n]').forEach(function(el) {
+    var key = el.getAttribute('data-i18n');
+    var val = t(key);
+    if (val && val !== key) el.textContent = val;
+  });
+  document.querySelectorAll('[data-i18n-html]').forEach(function(el) {
+    var key = el.getAttribute('data-i18n-html');
+    var val = t(key);
+    if (val && val !== key) el.innerHTML = val;
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(function(el) {
+    var key = el.getAttribute('data-i18n-placeholder');
+    var val = t(key);
+    if (val && val !== key) el.placeholder = val;
+  });
+  document.querySelectorAll('[data-i18n-title]').forEach(function(el) {
+    var key = el.getAttribute('data-i18n-title');
+    var val = t(key);
+    if (val && val !== key) el.title = val;
+  });
+  document.title = t('docTitle');
+}
+
+window.onShellLangChange = function(lang) {
+  setLang(lang);
+};
+
+setLang(currentLang);
+
+// ===== 中/En 按钮（与 applist/ai-growth/memory/config-recovery/mirror 一致） =====
+function toggleLocale() {
+  var next = currentLang === 'zh' ? 'en' : 'zh';
+  setLang(next);
+  var label = document.getElementById('langLabel');
+  if (label) label.textContent = '中/En';
+}
+(function() {
+  var label = document.getElementById('langLabel');
+  if (label) label.textContent = '中/En';
+})();
+
+// ===== 主题切换逻辑由 /cockpit-theme.js 统一接管 (基于 .oc-tool-btn.theme 类自动绑定) =====
+</script>
+<script>
+window.addEventListener('message', function(e) {
+  if (e.data && e.data.type === 'openclaw-lang') {
+    if (window.onShellLangChange) window.onShellLangChange(e.data.lang);
+  }
+});
+</script>
+
+
+
+
+</body>
+</html>

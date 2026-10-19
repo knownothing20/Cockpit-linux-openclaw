@@ -1,0 +1,543 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Styleguide — OpenClaw Cockpit Shell</title>
+<link rel="stylesheet" href="/unified-theme.css?v=20261010-fm-docs-real-pct">
+<link rel="stylesheet" href="/unified-components.css?v=20261010-fm-docs-real-pct">
+<link rel="stylesheet" href="/cockpit-ui-polish.css?v=20261010-fm-docs-real-pct">
+<script defer src="/cockpit-theme.js"></script>
+<style>
+  /* 布局样式 — 仅用于 styleguide 页面排版，视觉值一律用 token */
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: var(--oc-font-sans);
+    background: var(--oc-bg-canvas);
+    color: var(--oc-text-primary);
+    padding: var(--oc-page-pad-y) var(--oc-page-pad-x);
+    line-height: 1.6;
+  }
+  .sg-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--oc-space-6);
+  }
+  .sg-header h1 { font-size: var(--oc-text-display); font-weight: 700; margin: 0; }
+  .sg-header .sub { font-size: var(--oc-text-sm); color: var(--oc-text-tertiary); margin-top: 4px; }
+  .sg-section {
+    margin-bottom: var(--oc-space-8);
+  }
+  .sg-section h2 {
+    font-size: var(--oc-text-xl);
+    font-weight: 600;
+    margin: 0 0 var(--oc-space-4);
+    padding-bottom: var(--oc-space-2);
+    border-bottom: 1px solid var(--oc-border);
+  }
+  .sg-section h3 {
+    font-size: var(--oc-text-md);
+    font-weight: 600;
+    margin: var(--oc-space-4) 0 var(--oc-space-2);
+    color: var(--oc-text-secondary);
+  }
+  .sg-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: var(--oc-space-3);
+  }
+  .sg-swatch {
+    background: var(--oc-bg-surface);
+    border: 1px solid var(--oc-border);
+    border-radius: var(--oc-radius-md);
+    overflow: hidden;
+  }
+  .sg-swatch-color {
+    height: 56px;
+    border-bottom: 1px solid var(--oc-border);
+  }
+  .sg-swatch-info {
+    padding: var(--oc-space-2) var(--oc-space-3);
+  }
+  .sg-swatch-name {
+    font-family: var(--oc-font-mono);
+    font-size: var(--oc-text-xs);
+    color: var(--oc-text-secondary);
+    word-break: break-all;
+  }
+  .sg-swatch-val {
+    font-family: var(--oc-font-mono);
+    font-size: var(--oc-text-xs);
+    color: var(--oc-text-tertiary);
+    margin-top: 2px;
+  }
+  .sg-spacing-row {
+    display: flex;
+    align-items: center;
+    gap: var(--oc-space-3);
+    margin-bottom: var(--oc-space-2);
+  }
+  .sg-spacing-bar {
+    background: var(--oc-accent);
+    border-radius: var(--oc-radius-sm);
+    height: 20px;
+  }
+  .sg-spacing-label {
+    font-family: var(--oc-font-mono);
+    font-size: var(--oc-text-xs);
+    color: var(--oc-text-secondary);
+    min-width: 120px;
+  }
+  .sg-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--oc-space-2);
+    align-items: center;
+  }
+  .sg-row > * { margin: 0; }
+  .sg-component-group {
+    background: var(--oc-bg-surface);
+    border: 1px solid var(--oc-border);
+    border-radius: var(--oc-radius-lg);
+    padding: var(--oc-space-4);
+    margin-bottom: var(--oc-space-3);
+  }
+  .sg-label {
+    font-size: var(--oc-text-xs);
+    font-weight: 600;
+    color: var(--oc-text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin-bottom: var(--oc-space-2);
+  }
+  .sg-modal-static {
+    position: relative;
+    z-index: auto;
+    opacity: 1;
+    visibility: visible;
+    background: var(--oc-bg-overlay);
+    backdrop-filter: none;
+    padding: var(--oc-space-6);
+    border-radius: var(--oc-radius-lg);
+    margin-bottom: var(--oc-space-3);
+  }
+  .sg-modal-static .oc-modal { transform: none; }
+  .sg-toast-static {
+    position: relative;
+    top: auto; right: auto;
+    z-index: auto;
+    margin-bottom: var(--oc-space-2);
+  }
+  .sg-stat-demo { max-width: 600px; }
+  .sg-card-demo { max-width: 360px; }
+  .sg-form-demo { max-width: 420px; }
+</style>
+</head>
+<body>
+
+<div class="sg-header">
+  <div>
+    <h1>Styleguide</h1>
+    <div class="sub">OpenClaw Cockpit Shell — 设计 Token 与共享组件预览</div>
+  </div>
+  <button class="oc-btn oc-btn-secondary" onclick="window.CockpitTheme && window.CockpitTheme.toggle()">
+    🌓 切换主题
+  </button>
+</div>
+
+<!-- ═══════ Token 色板 ═══════ -->
+<div class="sg-section">
+  <h2>Token 色板</h2>
+
+  <h3>背景 Background</h3>
+  <div class="sg-grid">
+    <div class="sg-swatch"><div class="sg-swatch-color" style="background:var(--oc-bg-canvas)"></div><div class="sg-swatch-info"><div class="sg-swatch-name">--oc-bg-canvas</div></div></div>
+    <div class="sg-swatch"><div class="sg-swatch-color" style="background:var(--oc-bg-surface)"></div><div class="sg-swatch-info"><div class="sg-swatch-name">--oc-bg-surface</div></div></div>
+    <div class="sg-swatch"><div class="sg-swatch-color" style="background:var(--oc-bg-elevated)"></div><div class="sg-swatch-info"><div class="sg-swatch-name">--oc-bg-elevated</div></div></div>
+    <div class="sg-swatch"><div class="sg-swatch-color" style="background:var(--oc-bg-input)"></div><div class="sg-swatch-info"><div class="sg-swatch-name">--oc-bg-input</div></div></div>
+    <div class="sg-swatch"><div class="sg-swatch-color" style="background:var(--oc-bg-muted)"></div><div class="sg-swatch-info"><div class="sg-swatch-name">--oc-bg-muted</div></div></div>
+    <div class="sg-swatch"><div class="sg-swatch-color" style="background:var(--oc-bg-overlay)"></div><div class="sg-swatch-info"><div class="sg-swatch-name">--oc-bg-overlay</div></div></div>
+    <div class="sg-swatch"><div class="sg-swatch-color" style="background:var(--oc-bg-shell)"></div><div class="sg-swatch-info"><div class="sg-swatch-name">--oc-bg-shell</div></div></div>
+    <div class="sg-swatch"><div class="sg-swatch-color" style="background:var(--oc-bg-sidebar)"></div><div class="sg-swatch-info"><div class="sg-swatch-name">--oc-bg-sidebar</div></div></div>
+  </div>
+
+  <h3>文本 Text</h3>
+  <div class="sg-grid">
+    <div class="sg-swatch"><div class="sg-swatch-color" style="background:var(--oc-text-primary)"></div><div class="sg-swatch-info"><div class="sg-swatch-name">--oc-text-primary</div></div></div>
+    <div class="sg-swatch"><div class="sg-swatch-color" style="background:var(--oc-text-secondary)"></div><div class="sg-swatch-info"><div class="sg-swatch-name">--oc-text-secondary</div></div></div>
+    <div class="sg-swatch"><div class="sg-swatch-color" style="background:var(--oc-text-tertiary)"></div><div class="sg-swatch-info"><div class="sg-swatch-name">--oc-text-tertiary</div></div></div>
+    <div class="sg-swatch"><div class="sg-swatch-color" style="background:var(--oc-text-muted)"></div><div class="sg-swatch-info"><div class="sg-swatch-name">--oc-text-muted</div></div></div>
+    <div class="sg-swatch"><div class="sg-swatch-color" style="background:var(--oc-text-disabled)"></div><div class="sg-swatch-info"><div class="sg-swatch-name">--oc-text-disabled</div></div></div>
+  </div>
+
+  <h3>语义色 Semantic</h3>
+  <div class="sg-grid">
+    <div class="sg-swatch"><div class="sg-swatch-color" style="background:var(--oc-accent)"></div><div class="sg-swatch-info"><div class="sg-swatch-name">--oc-accent</div></div></div>
+    <div class="sg-swatch"><div class="sg-swatch-color" style="background:var(--oc-accent-soft)"></div><div class="sg-swatch-info"><div class="sg-swatch-name">--oc-accent-soft</div></div></div>
+    <div class="sg-swatch"><div class="sg-swatch-color" style="background:var(--oc-success)"></div><div class="sg-swatch-info"><div class="sg-swatch-name">--oc-success</div></div></div>
+    <div class="sg-swatch"><div class="sg-swatch-color" style="background:var(--oc-success-soft)"></div><div class="sg-swatch-info"><div class="sg-swatch-name">--oc-success-soft</div></div></div>
+    <div class="sg-swatch"><div class="sg-swatch-color" style="background:var(--oc-warning)"></div><div class="sg-swatch-info"><div class="sg-swatch-name">--oc-warning</div></div></div>
+    <div class="sg-swatch"><div class="sg-swatch-color" style="background:var(--oc-warning-soft)"></div><div class="sg-swatch-info"><div class="sg-swatch-name">--oc-warning-soft</div></div></div>
+    <div class="sg-swatch"><div class="sg-swatch-color" style="background:var(--oc-danger)"></div><div class="sg-swatch-info"><div class="sg-swatch-name">--oc-danger</div></div></div>
+    <div class="sg-swatch"><div class="sg-swatch-color" style="background:var(--oc-danger-soft)"></div><div class="sg-swatch-info"><div class="sg-swatch-name">--oc-danger-soft</div></div></div>
+    <div class="sg-swatch"><div class="sg-swatch-color" style="background:var(--oc-purple)"></div><div class="sg-swatch-info"><div class="sg-swatch-name">--oc-purple</div></div></div>
+    <div class="sg-swatch"><div class="sg-swatch-color" style="background:var(--oc-purple-soft)"></div><div class="sg-swatch-info"><div class="sg-swatch-name">--oc-purple-soft</div></div></div>
+    <div class="sg-swatch"><div class="sg-swatch-color" style="background:var(--oc-cyan)"></div><div class="sg-swatch-info"><div class="sg-swatch-name">--oc-cyan</div></div></div>
+    <div class="sg-swatch"><div class="sg-swatch-color" style="background:var(--oc-cyan-soft)"></div><div class="sg-swatch-info"><div class="sg-swatch-name">--oc-cyan-soft</div></div></div>
+  </div>
+
+  <h3>边框 Border</h3>
+  <div class="sg-grid">
+    <div class="sg-swatch"><div class="sg-swatch-color" style="background:var(--oc-border)"></div><div class="sg-swatch-info"><div class="sg-swatch-name">--oc-border</div></div></div>
+    <div class="sg-swatch"><div class="sg-swatch-color" style="background:var(--oc-border-hover)"></div><div class="sg-swatch-info"><div class="sg-swatch-name">--oc-border-hover</div></div></div>
+    <div class="sg-swatch"><div class="sg-swatch-color" style="background:var(--oc-border-strong)"></div><div class="sg-swatch-info"><div class="sg-swatch-name">--oc-border-strong</div></div></div>
+  </div>
+</div>
+
+<!-- ═══════ 间距标尺 ═══════ -->
+<div class="sg-section">
+  <h2>间距标尺 Spacing</h2>
+  <div class="sg-component-group">
+    <div class="sg-spacing-row"><div class="sg-spacing-label">--oc-space-1</div><div class="sg-spacing-bar" style="width:var(--oc-space-1)"></div></div>
+    <div class="sg-spacing-row"><div class="sg-spacing-label">--oc-space-2</div><div class="sg-spacing-bar" style="width:var(--oc-space-2)"></div></div>
+    <div class="sg-spacing-row"><div class="sg-spacing-label">--oc-space-3</div><div class="sg-spacing-bar" style="width:var(--oc-space-3)"></div></div>
+    <div class="sg-spacing-row"><div class="sg-spacing-label">--oc-space-4</div><div class="sg-spacing-bar" style="width:var(--oc-space-4)"></div></div>
+    <div class="sg-spacing-row"><div class="sg-spacing-label">--oc-space-5</div><div class="sg-spacing-bar" style="width:var(--oc-space-5)"></div></div>
+    <div class="sg-spacing-row"><div class="sg-spacing-label">--oc-space-6</div><div class="sg-spacing-bar" style="width:var(--oc-space-6)"></div></div>
+    <div class="sg-spacing-row"><div class="sg-spacing-label">--oc-space-8</div><div class="sg-spacing-bar" style="width:var(--oc-space-8)"></div></div>
+    <div class="sg-spacing-row"><div class="sg-spacing-label">--oc-page-pad-x</div><div class="sg-spacing-bar" style="width:var(--oc-page-pad-x)"></div></div>
+    <div class="sg-spacing-row"><div class="sg-spacing-label">--oc-page-pad-y</div><div class="sg-spacing-bar" style="width:var(--oc-page-pad-y)"></div></div>
+  </div>
+</div>
+
+<!-- ═══════ 按钮 ═══════ -->
+<div class="sg-section">
+  <h2>按钮 .oc-btn</h2>
+
+  <div class="sg-component-group">
+    <div class="sg-label">变体 Variants</div>
+    <div class="sg-row">
+      <button class="oc-btn">Default</button>
+      <button class="oc-btn oc-btn-primary">Primary</button>
+      <button class="oc-btn oc-btn-secondary">Secondary</button>
+      <button class="oc-btn oc-btn-ghost">Ghost</button>
+      <button class="oc-btn oc-btn-success">Success</button>
+      <button class="oc-btn oc-btn-danger">Danger</button>
+      <button class="oc-btn" disabled>Disabled</button>
+    </div>
+  </div>
+
+  <div class="sg-component-group">
+    <div class="sg-label">尺寸 Sizes</div>
+    <div class="sg-row">
+      <button class="oc-btn oc-btn-sm oc-btn-primary">Small</button>
+      <button class="oc-btn oc-btn-primary">Default</button>
+      <button class="oc-btn oc-btn-icon oc-btn-secondary">⚙</button>
+    </div>
+  </div>
+
+  <div class="sg-component-group">
+    <div class="sg-label">按钮组 Button Group</div>
+    <div class="oc-btn-group">
+      <button class="oc-btn">Left</button>
+      <button class="oc-btn">Center</button>
+      <button class="oc-btn">Right</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ 卡片 ═══════ -->
+<div class="sg-section">
+  <h2>卡片 .oc-card</h2>
+  <div class="sg-row">
+    <div class="oc-card sg-card-demo">
+      <div class="oc-card-header"><h3>标准卡片</h3></div>
+      <div class="oc-card-body"><p style="margin:0;color:var(--oc-text-secondary);font-size:var(--oc-text-sm)">卡片内容区域，用于展示信息块。</p></div>
+      <div class="oc-card-footer"><span style="font-size:var(--oc-text-xs);color:var(--oc-text-tertiary)">Footer</span><button class="oc-btn oc-btn-sm oc-btn-primary">操作</button></div>
+    </div>
+    <div class="oc-card oc-card-accent sg-card-demo">
+      <div class="oc-card-header"><h3>Accent 卡片</h3></div>
+      <div class="oc-card-body"><p style="margin:0;color:var(--oc-text-secondary);font-size:var(--oc-text-sm)">带左侧 accent 色条的卡片。</p></div>
+    </div>
+    <div class="oc-card oc-card-flat sg-card-demo">
+      <div class="oc-card-header"><h3>Flat 卡片</h3></div>
+      <div class="oc-card-body"><p style="margin:0;color:var(--oc-text-secondary);font-size:var(--oc-text-sm)">扁平透明卡片，hover 时显示背景。</p></div>
+    </div>
+    <div class="oc-card oc-card-success sg-card-demo">
+      <div class="oc-card-header"><h3>Success 卡片</h3></div>
+      <div class="oc-card-body"><p style="margin:0;color:var(--oc-text-secondary);font-size:var(--oc-text-sm)">带左侧 success 色条的卡片。</p></div>
+    </div>
+    <div class="oc-card oc-card-warning sg-card-demo">
+      <div class="oc-card-header"><h3>Warning 卡片</h3></div>
+      <div class="oc-card-body"><p style="margin:0;color:var(--oc-text-secondary);font-size:var(--oc-text-sm)">带左侧 warning 色条的卡片。</p></div>
+    </div>
+    <div class="oc-card oc-card-danger sg-card-demo">
+      <div class="oc-card-header"><h3>Danger 卡片</h3></div>
+      <div class="oc-card-body"><p style="margin:0;color:var(--oc-text-secondary);font-size:var(--oc-text-sm)">带左侧 danger 色条的卡片。</p></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ 徽章 ═══════ -->
+<div class="sg-section">
+  <h2>徽章 .oc-badge</h2>
+  <div class="sg-component-group">
+    <div class="sg-row">
+      <span class="oc-badge oc-badge-default">Default</span>
+      <span class="oc-badge oc-badge-primary">Primary</span>
+      <span class="oc-badge oc-badge-success">Success</span>
+      <span class="oc-badge oc-badge-warning">Warning</span>
+      <span class="oc-badge oc-badge-danger">Danger</span>
+      <span class="oc-badge oc-badge-purple">Purple</span>
+      <span class="oc-badge oc-badge-cyan">Cyan</span>
+      <span class="oc-badge oc-badge-outline">Outline</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ 表单 ═══════ -->
+<div class="sg-section">
+  <h2>表单 .oc-input / .oc-select / .oc-textarea</h2>
+  <div class="sg-component-group sg-form-demo">
+    <div class="oc-form-group">
+      <label>文本输入 <span class="required">*</span></label>
+      <input class="oc-input" placeholder="请输入文本">
+    </div>
+    <div class="oc-form-group">
+      <label>下拉选择</label>
+      <select class="oc-select"><option>选项一</option><option>选项二</option></select>
+    </div>
+    <div class="oc-form-group">
+      <label>文本域</label>
+      <textarea class="oc-textarea" placeholder="多行文本输入"></textarea>
+    </div>
+    <div class="oc-form-group">
+      <label>小尺寸输入</label>
+      <input class="oc-input oc-input-sm" placeholder="小尺寸">
+    </div>
+    <div class="oc-form-group">
+      <label>错误状态</label>
+      <input class="oc-input oc-input-error" value="错误内容">
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ Tabs ═══════ -->
+<div class="sg-section">
+  <h2>标签页 .oc-tabs</h2>
+  <div class="sg-component-group">
+    <div class="sg-label">标准 Tabs</div>
+    <div class="oc-tabs" style="margin-bottom:var(--oc-space-3)">
+      <button class="oc-tab active">Tab 1</button>
+      <button class="oc-tab">Tab 2</button>
+      <button class="oc-tab">Tab 3</button>
+    </div>
+  </div>
+  <div class="sg-component-group">
+    <div class="sg-label">下划线 Tabs</div>
+    <div class="oc-tabs-underline">
+      <button class="oc-tab active">Active</button>
+      <button class="oc-tab">Inactive</button>
+      <button class="oc-tab">Inactive</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ 统计卡片 ═══════ -->
+<div class="sg-section">
+  <h2>统计卡片 .oc-stat-item</h2>
+  <div class="sg-component-group sg-stat-demo">
+    <div class="oc-stat-grid">
+      <div class="oc-stat-item"><span style="font-size:var(--oc-text-xs);color:var(--oc-text-tertiary)">总量</span><span style="font-size:var(--oc-text-xl);font-weight:700">1,024</span></div>
+      <div class="oc-stat-item"><span style="font-size:var(--oc-text-xs);color:var(--oc-text-tertiary)">活跃</span><span style="font-size:var(--oc-text-xl);font-weight:700;color:var(--oc-success)">832</span></div>
+      <div class="oc-stat-item"><span style="font-size:var(--oc-text-xs);color:var(--oc-text-tertiary)">告警</span><span style="font-size:var(--oc-text-xl);font-weight:700;color:var(--oc-warning)">12</span></div>
+      <div class="oc-stat-item"><span style="font-size:var(--oc-text-xs);color:var(--oc-text-tertiary)">失败</span><span style="font-size:var(--oc-text-xl);font-weight:700;color:var(--oc-danger)">4</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ Modal (静态展开) ═══════ -->
+<div class="sg-section">
+  <h2>弹窗 .oc-modal（静态展开态）</h2>
+  <div class="sg-modal-static oc-modal-overlay active">
+    <div class="oc-modal">
+      <div class="oc-modal-header">
+        <h3>弹窗标题</h3>
+        <button class="oc-modal-close">×</button>
+      </div>
+      <div class="oc-modal-body">
+        <p style="margin:0 0 var(--oc-space-3);color:var(--oc-text-secondary)">这是弹窗内容区域，展示静态展开状态供预览。</p>
+        <div class="oc-form-group">
+          <label>示例输入</label>
+          <input class="oc-input" placeholder="输入内容">
+        </div>
+      </div>
+      <div class="oc-modal-footer">
+        <button class="oc-btn oc-btn-secondary">取消</button>
+        <button class="oc-btn oc-btn-primary">确认</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ Toast ═══════ -->
+<div class="sg-section">
+  <h2>提示 .oc-toast</h2>
+  <div class="sg-component-group">
+    <div class="sg-row" style="flex-direction:column;align-items:stretch;gap:var(--oc-space-2)">
+      <div class="oc-toast sg-toast-static oc-toast-info"><span class="oc-toast-icon">ℹ</span><span class="oc-toast-message">Info 提示消息</span></div>
+      <div class="oc-toast sg-toast-static oc-toast-success"><span class="oc-toast-icon">✓</span><span class="oc-toast-message">Success 操作成功</span></div>
+      <div class="oc-toast sg-toast-static oc-toast-warning"><span class="oc-toast-icon">⚠</span><span class="oc-toast-message">Warning 警告信息</span></div>
+      <div class="oc-toast sg-toast-static oc-toast-error"><span class="oc-toast-icon">✕</span><span class="oc-toast-message">Error 错误信息</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ 其他组件 ═══════ -->
+<div class="sg-section">
+  <h2>其他组件</h2>
+
+  <div class="sg-component-group">
+    <div class="sg-label">状态点 .oc-status-dot</div>
+    <div class="sg-row">
+      <span><span class="oc-status-dot healthy"></span>Healthy</span>
+      <span><span class="oc-status-dot warning"></span>Warning</span>
+      <span><span class="oc-status-dot danger"></span>Danger</span>
+      <span><span class="oc-status-dot unknown"></span>Unknown</span>
+      <span><span class="oc-status-dot running"></span>Running</span>
+      <span><span class="oc-status-dot stopped"></span>Stopped</span>
+      <span><span class="oc-status-dot available"></span>Available</span>
+    </div>
+  </div>
+
+  <div class="sg-component-group">
+    <div class="sg-label">进度条 .oc-progress</div>
+    <div style="max-width:400px">
+      <div class="oc-progress" style="margin-bottom:var(--oc-space-2)"><div class="oc-progress-fill" style="width:60%"></div></div>
+      <div class="oc-progress" style="margin-bottom:var(--oc-space-2)"><div class="oc-progress-fill success" style="width:80%"></div></div>
+      <div class="oc-progress" style="margin-bottom:var(--oc-space-2)"><div class="oc-progress-fill warning" style="width:45%"></div></div>
+      <div class="oc-progress"><div class="oc-progress-fill danger" style="width:25%"></div></div>
+    </div>
+  </div>
+
+  <div class="sg-component-group">
+    <div class="sg-label">空状态 .oc-empty</div>
+    <div class="oc-empty" style="background:var(--oc-bg-surface);border:1px solid var(--oc-border);border-radius:var(--oc-radius-lg)">
+      <div class="oc-empty-icon">📭</div>
+      <h4>暂无数据</h4>
+      <p>当前没有可显示的内容</p>
+    </div>
+  </div>
+
+  <div class="sg-component-group">
+    <div class="sg-label">页面标题 .oc-page-header</div>
+    <div class="oc-page-header">
+      <div>
+        <div class="oc-page-title">页面标题</div>
+        <div class="oc-page-subtitle">页面副标题描述</div>
+      </div>
+      <button class="oc-btn oc-btn-primary">操作按钮</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════ 通用内容组件 ═══════ -->
+<div class="sg-section">
+  <h2>通用内容组件 .oc-card-title / .oc-meter-* / .oc-collapse</h2>
+
+  <div class="sg-component-group">
+    <div class="sg-label">卡片标题 .oc-card-title + .oc-card-title-icon</div>
+    <div class="oc-card">
+      <div class="oc-card-header">
+        <h3 class="oc-card-title"><span class="oc-card-title-icon">🧠</span><span>内存总览</span></h3>
+        <div class="header-actions"><button class="oc-btn oc-btn-sm">刷新</button></div>
+      </div>
+      <div class="oc-card-body"><span class="oc-hint-text">标题可带 emoji 图标；右侧用 .header-actions 放操作按钮或说明文字</span></div>
+    </div>
+  </div>
+
+  <div class="sg-component-group">
+    <div class="sg-label">计量条 .oc-meters / .oc-meter-row（原生 &lt;progress&gt; + 语义色）</div>
+    <div class="oc-meters" style="max-width:420px">
+      <div class="oc-meter-row">
+        <span class="oc-meter-label">已用</span>
+        <progress class="oc-meter-track oc-meter--danger" max="100" value="62.5"></progress>
+        <span class="oc-meter-value">5.0 GB (62.5%)</span>
+      </div>
+      <div class="oc-meter-row">
+        <span class="oc-meter-label">缓存</span>
+        <progress class="oc-meter-track oc-meter--accent" max="100" value="25"></progress>
+        <span class="oc-meter-value">2.0 GB (25.0%)</span>
+      </div>
+      <div class="oc-meter-row">
+        <span class="oc-meter-label">缓冲</span>
+        <progress class="oc-meter-track oc-meter--warning" max="100" value="1.6"></progress>
+        <span class="oc-meter-value">128 MB (1.6%)</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="sg-component-group">
+    <div class="sg-label">可折叠列表 .oc-collapse（点击标题切换 .is-open）</div>
+    <div class="oc-card">
+      <div class="oc-card-body oc-card-body--flush">
+        <div class="oc-collapse">
+          <div class="oc-collapse-item is-open">
+            <div class="oc-collapse-header" onclick="this.parentNode.classList.toggle('is-open')">
+              <span class="oc-collapse-arrow">▶</span>
+              <span class="oc-collapse-title">系统服务</span>
+              <span class="oc-collapse-meta">246 MB</span>
+              <span class="oc-collapse-count">2 进程</span>
+            </div>
+            <div class="oc-collapse-body">
+              <div class="oc-collapse-row"><span class="oc-collapse-pid">PID 101</span><span class="oc-collapse-cmd">systemd</span><span class="oc-collapse-mem">12 MB</span></div>
+              <div class="oc-collapse-row"><span class="oc-collapse-pid">PID 303</span><span class="oc-collapse-cmd">dockerd</span><span class="oc-collapse-mem">234 MB</span></div>
+            </div>
+          </div>
+          <div class="oc-collapse-item">
+            <div class="oc-collapse-header" onclick="this.parentNode.classList.toggle('is-open')">
+              <span class="oc-collapse-arrow">▶</span>
+              <span class="oc-collapse-title">开发工具</span>
+              <span class="oc-collapse-meta">1.2 GB</span>
+              <span class="oc-collapse-count">2 进程</span>
+            </div>
+            <div class="oc-collapse-body">
+              <div class="oc-collapse-row"><span class="oc-collapse-pid">PID 202</span><span class="oc-collapse-cmd">node</span><span class="oc-collapse-mem">941 MB</span></div>
+              <div class="oc-collapse-row"><span class="oc-collapse-pid">PID 505</span><span class="oc-collapse-cmd">chromium</span><span class="oc-collapse-mem">330 MB</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sg-component-group">
+    <div class="sg-label">空态与提示 .oc-empty-row · .oc-empty-hint · .oc-hint-text</div>
+    <div class="oc-card">
+      <div class="oc-card-body oc-card-body--flush">
+        <div class="oc-empty-row">暂无进程数据（.oc-empty-row：表格单元格空态）</div>
+        <div class="oc-empty-hint">暂无分组数据（.oc-empty-hint：区块空态）</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sg-component-group">
+    <div class="sg-label">弹窗尺寸与语义 .oc-modal-sm · .oc-modal--danger</div>
+    <div class="sg-modal-static oc-modal-overlay">
+      <div class="oc-modal oc-modal-sm oc-modal--danger">
+        <div class="oc-modal-header"><h3>确认终止进程</h3></div>
+        <div class="oc-modal-body">窄弹窗（max-width:420px）+ 顶部危险色条，用于不可逆操作的二次确认。</div>
+        <div class="oc-modal-footer">
+          <button class="oc-btn oc-btn-secondary">取消</button>
+          <button class="oc-btn oc-btn-danger">继续</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

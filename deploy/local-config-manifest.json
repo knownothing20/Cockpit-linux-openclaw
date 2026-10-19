@@ -1,0 +1,38 @@
+[
+  {
+    "example": "config.example.json",
+    "target": "config.json"
+  },
+  {
+    "example": "sub-modules/applist/config.example.json",
+    "target": "sub-modules/applist/config.json"
+  },
+  {
+    "example": "sub-modules/config-recovery/config.example.json",
+    "target": "sub-modules/config-recovery/config.json"
+  },
+  {
+    "example": "sub-modules/file-manager/config.example.json",
+    "target": "sub-modules/file-manager/config.json"
+  },
+  {
+    "example": "sub-modules/memory/config.example.json",
+    "target": "sub-modules/memory/config.json"
+  },
+  {
+    "example": "sub-modules/robots/config.example.json",
+    "target": "sub-modules/robots/config.json"
+  },
+  {
+    "example": "sub-modules/skill-manager/config.example.json",
+    "target": "sub-modules/skill-manager/config.json"
+  },
+  {
+    "example": "sub-modules/workspace-rule-panel/config.example.json",
+    "target": "sub-modules/workspace-rule-panel/config.json"
+  },
+  {
+    "example": "sub-modules/config-recovery/provider.local.example.json",
+    "target": "sub-modules/config-recovery/provider.local.json"
+  }
+]

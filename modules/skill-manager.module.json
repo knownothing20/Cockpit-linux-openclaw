@@ -1,0 +1,20 @@
+{
+  "id": "skill-manager",
+  "displayName": "Skill Manager",
+  "description": "OpenClaw skill management",
+  "type": "openclaw-app",
+  "navSection": "openclaw",
+  "integration": "native",
+  "mountPath": "/apps/skill-manager",
+  "embedPath": "/",
+  "healthPath": "/",
+  "apiPrefix": "/api/skill-manager",
+  "capabilities": [
+    "skills",
+    "registry"
+  ],
+  "showInNav": true,
+  "nativeReady": false,
+  "standalone": true,
+  "order": 140
+}

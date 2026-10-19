@@ -1,0 +1,21 @@
+{
+  "id": "config-recovery",
+  "displayName": "Config Recovery",
+  "description": "Configuration backup and recovery",
+  "type": "openclaw-app",
+  "navSection": "system",
+  "integration": "native",
+  "mountPath": "/apps/config-recovery",
+  "embedPath": "/",
+  "healthPath": "/",
+  "apiPrefix": "/api/config-recovery",
+  "capabilities": [
+    "backup",
+    "restore",
+    "audit"
+  ],
+  "showInNav": true,
+  "nativeReady": false,
+  "standalone": true,
+  "order": 50
+}

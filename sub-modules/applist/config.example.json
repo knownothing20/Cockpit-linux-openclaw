@@ -1,0 +1,14 @@
+{
+  "showInNav": true,
+  "name": "applist",
+  "port": 17149,
+  "description": "AppList - 独立软件管理服务",
+  "start": "node server.js",
+  "level": "system",
+  "navSection": "overview",
+  "scanPaths": [
+    "~/.openclaw/workspace-main/services",
+    "~/.openclaw/scripts",
+    "~/.openclaw/shared-skills"
+  ]
+}

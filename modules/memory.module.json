@@ -1,0 +1,21 @@
+{
+  "id": "memory",
+  "displayName": "Memory Monitor",
+  "description": "内存占用监控 - 进程级内存分析、软件分组、进程终止",
+  "type": "openclaw-app",
+  "navSection": "system",
+  "integration": "native",
+  "mountPath": "/apps/memory",
+  "embedPath": "/",
+  "healthPath": "/api/health",
+  "apiPrefix": "/api/memory",
+  "capabilities": [
+    "monitor",
+    "process",
+    "kill"
+  ],
+  "showInNav": true,
+  "nativeReady": false,
+  "standalone": true,
+  "order": 20
+}

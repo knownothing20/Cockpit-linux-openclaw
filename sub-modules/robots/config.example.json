@@ -1,0 +1,10 @@
+{
+  "name": "openclaw-robots",
+  "displayName": "OpenClaw Robots",
+  "description": "OpenClaw Robots & Agents Management Module",
+  "port": 8100,
+  "start": "node src/server.js",
+  "level": "normal",
+  "service": "robots",
+  "showInNav": true
+}

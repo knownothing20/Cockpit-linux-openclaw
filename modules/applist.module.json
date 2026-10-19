@@ -1,0 +1,21 @@
+{
+  "id": "applist",
+  "displayName": "AppList",
+  "description": "Software discovery and management",
+  "type": "openclaw-app",
+  "navSection": "system",
+  "integration": "native",
+  "mountPath": "/apps/applist",
+  "embedPath": "/",
+  "healthPath": "/",
+  "apiPrefix": "/api/applist",
+  "capabilities": [
+    "discovery",
+    "systemd",
+    "ports"
+  ],
+  "showInNav": true,
+  "nativeReady": false,
+  "standalone": true,
+  "order": 10
+}

@@ -1,0 +1,7 @@
+{
+  "port": 17152,
+  "host": "0.0.0.0",
+  "skillManagerPy": "${PROJECT_ROOT}/sub-modules/skill-manager/skill_manager.py",
+  "sharedSkillsDir": "${HOME}/.openclaw/shared-skills",
+  "registryFile": "${HOME}/.openclaw/shared-skills/registry.json"
+}

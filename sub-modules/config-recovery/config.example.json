@@ -1,0 +1,10 @@
+{
+  "name": "config-recovery",
+  "displayName": "Config Recovery",
+  "description": "配置管理中心 - 自动巡检、备份恢复、变更审计、飞书通知",
+  "port": 17151,
+  "start": "node server.js",
+  "service": "config-recovery.service",
+  "level": "system",
+  "showInNav": true
+}

@@ -1,0 +1,21 @@
+{
+  "id": "models-manager",
+  "displayName": "Models Manager",
+  "description": "AI model registry, usage statistics and connectivity testing",
+  "type": "openclaw-app",
+  "navSection": "openclaw",
+  "integration": "native",
+  "mountPath": "/apps/models-manager",
+  "embedPath": "/",
+  "healthPath": "/health",
+  "apiPrefix": "/api/models-manager",
+  "capabilities": [
+    "models",
+    "stats",
+    "testing"
+  ],
+  "showInNav": true,
+  "nativeReady": false,
+  "standalone": true,
+  "order": 150
+}

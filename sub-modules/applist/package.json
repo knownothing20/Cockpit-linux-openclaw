@@ -1,0 +1,14 @@
+{
+  "name": "applist",
+  "version": "1.0.0",
+  "description": "AppList - 独立软件管理服务",
+  "main": "server.js",
+  "port": 17149,
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": ["applist", "software", "manager", "openclaw"],
+  "author": "OpenClaw Team",
+  "license": "MIT"
+}

@@ -1,0 +1,8 @@
+<!DOCTYPE html>
+<html><head><script>
+const theme = location.search.includes('dark') ? 'dark' : 'light';
+const target = location.search.split('to=')[1] || '/';
+localStorage.setItem('openclaw-theme', theme);
+localStorage.setItem('openclaw-profile', 'openclaw');
+setTimeout(()=>location.replace(target), 200);
+</script></head><body>loading</body></html>

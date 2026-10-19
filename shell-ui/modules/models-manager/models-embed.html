@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>模型管理</title>
+  <link rel="stylesheet" href="/unified-theme.css?v=20261010-fm-docs-real-pct">
+  <link rel="stylesheet" href="/unified-components.css?v=20261010-fm-docs-real-pct">
+  <link rel="stylesheet" href="/cockpit-ui-polish.css?v=20261010-fm-docs-real-pct">
+  <link rel="stylesheet" href="style.css?v=20261010-fm-docs-real-pct">
+</head>
+<body class="models-manager">
+  <div id="models-container"></div>
+  <script>var _apiBase = window.__MODELS_API_BASE__ || '';</script>
+  <script defer src="models-embed.js?v=20261010-fm-docs-real-pct"></script>
+  <script>
+    (function() {
+      var c = document.getElementById('models-container');
+      function loadFragment() {
+        fetch(_apiBase + '/pages/models-fragment.html?v=20261010-fm-docs-real-pct')
+          .then(function(r) { return r.text(); })
+          .then(function(h) {
+            c.innerHTML = h;
+            if (typeof loadModelsManager === 'function') loadModelsManager();
+          })
+          .catch(function(e) {
+            c.innerHTML = '<div class="models-empty">加载失败: ' + e.message + '</div>';
+          });
+      }
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', loadFragment);
+      } else {
+        loadFragment();
+      }
+    })();
+  </script>
+</body>
+</html>

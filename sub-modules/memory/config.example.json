@@ -1,0 +1,10 @@
+{
+  "name": "memory",
+  "displayName": "Memory Monitor",
+  "description": "内存占用监控 - 进程级内存分析、软件分组、进程终止",
+  "port": 8200,
+  "start": "node src/server.js",
+  "service": "memory.service",
+  "level": "system",
+  "showInNav": true
+}

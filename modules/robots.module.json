@@ -1,0 +1,21 @@
+{
+  "id": "robots",
+  "displayName": "Robots",
+  "description": "Agent and model management",
+  "type": "openclaw-app",
+  "navSection": "openclaw",
+  "integration": "native",
+  "mountPath": "/apps/robots",
+  "embedPath": "/",
+  "healthPath": "/api/health",
+  "apiPrefix": "/api/robots",
+  "capabilities": [
+    "agents",
+    "models",
+    "gateway"
+  ],
+  "showInNav": true,
+  "nativeReady": false,
+  "standalone": true,
+  "order": 110
+}

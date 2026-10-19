@@ -1,0 +1,10 @@
+{
+  "name": "Recovery",
+  "version": "1.0.0",
+  "description": "配置恢复工具 - 自动备份、故障恢复",
+  "main": "server.js",
+  "port": 17151,
+  "scripts": {
+    "start": "node server.js"
+  }
+}

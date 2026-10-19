@@ -1,0 +1,12 @@
+{
+  "name": "workspace-rule-panel",
+  "displayName": "Workspace Rule Panel",
+  "description": "Workspace 规则监控面板",
+  "port": 7091,
+  "start": "node server.js",
+  "level": "system",
+  "service": "workspace-rule-panel.service",
+  "showInNav": true,
+  "isCore": true,
+  "updatedAt": "2026-05-12T15:52:06.231Z"
+}

@@ -1,0 +1,10 @@
+{
+  "name": "openclaw-file-manager",
+  "displayName": "OpenClaw File Manager",
+  "description": "Unified File Browser & Agent Memory Manager",
+  "port": 8200,
+  "start": "node src/server.js",
+  "level": "normal",
+  "service": "file-manager.service",
+  "showInNav": false
+}

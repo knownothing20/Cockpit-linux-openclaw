@@ -1,0 +1,13 @@
+[Unit]
+Description=OpenClaw Cockpit Shell
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/workspace/Cockpit-linux-openclaw
+# Replace this with the absolute Node executable used by this installation.
+ExecStart=/usr/bin/node server.js
+Restart=no
+
+[Install]
+WantedBy=default.target

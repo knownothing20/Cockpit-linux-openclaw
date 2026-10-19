@@ -1,0 +1,28 @@
+{
+  "name": "openclaw-cockpit-shell",
+  "version": "0.1.0",
+  "description": "OpenClaw Cockpit Shell - Modular dashboard shell with proxy integration",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "PORT=7001 node server.js",
+    "test": "bash scripts/lint-tokens.sh && node scripts/cockpit-css-audit.js && node scripts/audit-registry.js && node scripts/audit-smoke.js",
+    "verify:style-audit": "node scripts/audit-unified-style-elements.js --check",
+    "verify:cockpit-browser": "node scripts/validate-cockpit-pages.js",
+    "verify:cockpit-screenshots": "node scripts/compare-cockpit-screenshots.js",
+    "verify:cockpit-style": "npm run verify:style-audit && npm run verify:cockpit-browser && npm run verify:cockpit-screenshots",
+    "privacy:check": "python3 scripts/check-privacy.py --history",
+    "privacy:staged": "python3 scripts/check-privacy.py --staged",
+    "privacy:test": "python3 -B tests/test_privacy_gate.py",
+    "privacy:install": "sh scripts/install-privacy-hook.sh"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.10.0",
+    "compression": "^1.8.1",
+    "express": "^4.18.2",
+    "js-yaml": "^4.1.1"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}

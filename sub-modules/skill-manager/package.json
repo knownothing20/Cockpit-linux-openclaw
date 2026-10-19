@@ -1,0 +1,10 @@
+{
+  "name": "openclaw-skill-manager",
+  "version": "1.0.0",
+  "description": "OpenClaw Skill Manager - 技能管理面板（独立服务，可嵌入 Dashboard）",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {}
+}

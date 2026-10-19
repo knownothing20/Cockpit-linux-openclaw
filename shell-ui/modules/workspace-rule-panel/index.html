@@ -1,0 +1,1628 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+
+<link rel="stylesheet" href="/unified-theme.css?v=20261010-fm-docs-real-pct">
+  <link rel="stylesheet" href="/unified-components.css?v=20261010-fm-docs-real-pct">
+  <link rel="stylesheet" href="/cockpit-ui-polish.css?v=20261010-fm-docs-real-pct">
+
+
+<meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Workspace 规则监控面板</title>
+<script defer src="/cockpit-theme.js"></script>
+<style>
+    :root {
+  color-scheme: light dark;
+  --bg: var(--oc-bg-canvas);
+  --card: var(--oc-bg-surface);
+  --card-hover: var(--oc-bg-elevated);
+  --text: var(--oc-text-primary);
+  --text2: var(--oc-text-secondary);
+  --muted: var(--oc-text-tertiary);
+  --ok: var(--oc-success);
+  --fail: var(--oc-danger);
+  --warn: var(--oc-warning);
+  --line: var(--oc-border);
+  --accent2: var(--oc-accent);
+  --tag-bg: var(--oc-bg-elevated);
+  --progress-bg: var(--oc-bg-elevated);
+  --progress-ok: var(--oc-success);
+  --progress-fail: var(--oc-danger);
+  --bg-code: var(--oc-bg-muted);
+  --text-code: var(--oc-text-secondary);
+  --bg-overlay: var(--oc-bg-overlay);
+  --glow-ok: var(--oc-success-soft);
+  --glow-ok-none: transparent;
+  --tag-ok-bg: var(--oc-success-soft);
+  --tag-ok-border: var(--oc-success-soft);
+  --tag-fail-bg: var(--oc-danger-soft);
+  --tag-fail-border: var(--oc-danger-soft);
+  --tag-warn-bg: var(--oc-warning-soft);
+  --tag-warn-border: var(--oc-warning-soft);
+  --tag-accent-bg: var(--oc-accent-soft);
+  --tag-accent-border: var(--oc-accent-soft);
+  --tag-shared-bg: var(--oc-purple-soft);
+  --tag-shared-color: var(--oc-purple);
+  --tag-shared-border: var(--oc-purple-soft);
+  --tag-skills-bg: var(--oc-cyan-soft);
+  --tag-skills-color: var(--oc-cyan);
+  --tag-skills-border: var(--oc-cyan-soft);
+  --nav-active-bg: var(--oc-accent-soft);
+  --btn-primary-bg: var(--oc-accent-soft);
+  --btn-primary-border: var(--oc-accent-soft);
+  --btn-primary-hover: var(--oc-accent-soft);
+}
+* { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; height: 100%; }
+    body {
+      font-family: var(--oc-font-sans);
+      background: var(--bg);
+      color: var(--text);
+      overflow: hidden;
+    }
+    /* v2.3.88: 修复滚动 — 标准 flex scroll pattern: 父固定 100vh + 子 min-height:0 + overflow:auto */
+    .app {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;       /* 固定 100vh (原来 min-height, 内容多时撑高导致 iframe 内 document 滚, 但 iframe 自身 height:100% 父级 = 不滚) */
+      overflow: hidden;    /* .app 不溢出, 让 .main 自己滚 */
+      width: 100%;
+    }
+
+    /* Sidebar → top page header (v2.3.84 改方向: 左右 → 上下, 跟 robots 对齐) */
+    .sidebar {
+      width: auto;
+      background: var(--bg);
+      border-right: none;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      padding: 16px 28px 0;
+    }
+    .sidebar-head {
+      padding: 0 0 12px;
+      border-bottom: 1px solid var(--line);
+    }
+    /* oc-ph 系列 — 跟 ai-growth 同款 */
+    .oc-ph { display: flex; align-items: center; gap: 16px; width: 100%; }
+    .oc-ph-main { display: flex; align-items: center; gap: 14px; flex: 1; min-width: 0; }
+    .oc-ph-icon { width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; border-radius: 10px; background: color-mix(in srgb, var(--oc-ph-color, var(--oc-accent)) 14%, transparent); color: var(--oc-ph-color, var(--oc-accent)); flex-shrink: 0; }
+    .oc-ph-text { min-width: 0; flex: 1; }
+    .oc-ph-eyebrow { font-size: var(--oc-text-xs); font-weight: 700; color: var(--text2); letter-spacing: 0.08em; line-height: 1.2; }
+    .oc-ph-title { font-size: var(--oc-text-2xl); font-weight: 700; color: var(--text); line-height: 1.2; margin: 2px 0 4px; }
+    .oc-ph-subtitle { font-size: var(--oc-text-sm); color: var(--text2); line-height: 1.5; margin: 0; }
+    .oc-ph-side { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+    .nav {
+      display: flex;
+      flex-direction: row;
+      margin: 16px 0 0;  /* v2.3.86: 顶部 16px 跟 sidebar-head 拉开, 底部 0 (polish 自带 margin-bottom: var(--oc-space-5) = 20px) */
+      flex: 0 0 auto;
+      overflow-x: auto;
+    }
+    /* v2.3.85: 删掉自定义 .nav-item 样式, 让 polish.css 的 .oc-tab 通用样式生效. */
+    .nav-icon { width: 18px; height: 18px; display: inline-flex; align-items: center; justify-content: center; font-size: var(--oc-text-base); }
+    .nav-status { margin-left: auto; width: 8px; height: 8px; border-radius: 50%; background: var(--ok); }
+    .nav-status.warn { background: var(--warn); }
+    .nav-status.fail { background: var(--fail); }
+
+    .sidebar-foot {
+      display: none;  /* v2.3.84: live-dot + "就绪" 移到 oc-ph-side */
+    }
+
+    /* Main */
+    .main {
+      flex: 1;
+      min-height: 0;        /* v2.3.88: flex item 默认 min-height:auto = min-content, 会阻止缩小 → 加 0 让 overflow-y: auto 生效 */
+      overflow-y: auto;
+      padding: 24px 28px 40px;
+      /* v2.15.0 (2026-10-01): 隐藏模块内滚动条.
+         它是「居中容器」自己的滚动条 —— 宽视口下容器 1100 居中, 滚动条会贴在容器右缘
+         (1580 宽视口下离窗口右缘还有 158px 空白), 看着像凭空多出来的一条, 且与
+         applist/memory 等「帧边缘滚动」的模块观感不一致.
+         改为 overlay 滚动: 滚轮 / 触摸 / PgDn 照常, 但不占位、不显示.
+         同时去掉 scrollbar-gutter: stable —— 那 15px 常驻预留会让内容列只有 1037,
+         比页头 (1052) 窄一截; 隐掉滚动条后内容列恢复满宽, 与页头左右严格对齐. */
+      scrollbar-width: none;        /* Firefox / Chrome 121+ */
+      -ms-overflow-style: none;     /* 旧 Edge / IE */
+    }
+    .main::-webkit-scrollbar { width: 0; height: 0; }   /* WebKit / Blink */
+    .main-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .main-header h2 { margin: 0; font-size: var(--oc-text-3xl); font-weight: 600; }
+    .main-header .sub { color: var(--text2); font-size: var(--oc-text-md); margin-top: 4px; }
+    .btns { display: flex; gap: 8px; align-items: center; }
+    button {
+      border: 1px solid var(--line);
+      background: var(--tag-bg);
+      border-radius: var(--radius-btn);
+      padding: 8px 16px;
+      cursor: pointer;
+      color: var(--text);
+      font-weight: 600;
+      font-size: var(--oc-text-md);
+      transition: all 0.15s;
+    }
+    button:hover { border-color: var(--accent); }
+    button.primary {
+      background: var(--btn-primary-bg);
+      color: var(--accent);
+      border-color: var(--btn-primary-border);
+    }
+    button.primary:hover { background: var(--btn-primary-hover); }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .live-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--ok);
+      animation: pulse 2s infinite;
+      margin-right: 6px;
+    }
+    .live-dot.off { background: var(--fail); animation: none; }
+    @keyframes pulse {
+      0% { opacity: 1; box-shadow: 0 0 0 0 var(--glow-ok); }
+      70% { opacity: 0.8; box-shadow: 0 0 0 6px var(--glow-ok-none); }
+      100% { opacity: 1; box-shadow: 0 0 0 0 var(--glow-ok-none); }
+    }
+
+    /* Cards */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    /* v2.3.87: metric card 完整视觉 (之前只有 .grid 容器, .card 本身没样式) */
+    body.workspace-rule-panel .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px 20px;       /* v2.3.90: 14→18 上下, 16→20 左右, 让数值标签跟边框有明显间距 */
+      display: flex;
+      flex-direction: column;
+      gap: 10px;                /* v2.3.90: 6→10, k 标签跟 v 数值之间更大呼吸感 */
+      box-shadow: var(--shadow);
+      min-height: 96px;         /* v2.3.90: 76→96, 适配更大 padding + gap */
+      box-sizing: border-box;
+    }
+    /* v2.3.91: CRITICAL — index.html inline JS (line 1026, 1058, 1124, 1163) 用的 <div class="oc-card">,
+       不是 <div class="card">! sub-modules/.../app.js 是另一份, 没被加载.
+       .oc-card 来自 unified-components.css:23, 仅有 background/border/radius, 没有 padding/gap.
+       补上 padding/flex/gap/min-height, 让 5 张 metric card 跟 4 个 tab 都有内部间距. */
+    body.workspace-rule-panel .oc-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: var(--shadow);
+      min-height: 96px;
+      box-sizing: border-box;
+      transition: all 0.2s ease;
+    }
+    body.workspace-rule-panel .oc-card:hover {
+      border-color: var(--accent);
+    }
+    body.workspace-rule-panel .card .k {
+      color: var(--muted);
+      font-size: var(--oc-text-sm);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      line-height: 1.2;
+    }
+    body.workspace-rule-panel .card .v {
+      font-size: var(--oc-icon-xl);
+      font-weight: 700;
+      line-height: 1.1;
+      color: var(--text);
+    }
+    body.workspace-rule-panel .card .v.ok { color: var(--ok); }
+    body.workspace-rule-panel .card .v.fail { color: var(--fail); }
+    body.workspace-rule-panel .card .v.warn { color: var(--warn); }
+    /* v2.3.89: Hook tab 的 .v 里有 <span class="tag"> 状态 chip, .v 28px 字号会覆盖 .tag, 加这条还原 */
+    body.workspace-rule-panel .card .v .tag {
+      font-size: var(--oc-text-xs);
+      font-weight: 600;
+      letter-spacing: 0;
+      text-transform: none;
+    }
+    /* Panel */
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-card);
+      margin-bottom: 24px;        /* v2.3.92: 16→24, 2 个 panel 之间有清晰间距, 避免"双层描边嵌套"错觉 */
+      overflow: hidden;
+      /* v2.3.93: 去掉 box-shadow + backdrop-filter: blur(12px), v2.3.87 我加的 box-shadow + backdrop 双重层叠
+         在浅色主题下让 panel 看起来"浮在另一层淡灰色背景卡片上" + 圆角 = 用户视觉上"外层 + 内层嵌套框".
+         回归简洁的圆角边框卡片, 只靠 border + radius 跟周围 main 背景区分, 不再有"双层"视觉. */
+    }
+    .panel-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 4px 12px;             /* v2.3.96: 14px 18px → 8px 4px 12px, 缩小 padding 变"普通页面小标题" 风格, 不再像 panel 内部组件 */
+      background: transparent;           /* v2.3.96: 去掉 var(--bg-elevated), panel-head 改成"透明标题区" 不再是带 elevated 背景的卡片, 用户反馈"panel-head 跟列表套在一个框里" 的根因 */
+      border: 0;                         /* v2.3.96: 去掉 1px border-bottom 跟 panel 边框同时存在造成的"双层描边" */
+      border-radius: 0;
+      margin-bottom: 12px;               /* v2.3.96: 跟下面 panel 拉开 12px 间距, 视觉上 panel-head 跟 panel-body 完全独立 */
+    }
+    .panel-head h3 { margin: 0; font-size: var(--oc-text-lg); font-weight: 600; }
+    .panel-body { padding: 0; }
+    .panel-stack {                       /* v2.3.96: 新增容器, 包 panel-head 跟 panel, 让两者在 DOM 上独立 (之前 panel-head 在 panel 内部, 视觉上"套在同一个框里" 怎么改 CSS 都没用) */
+      margin-bottom: 24px;               /* 跟原来 .panel margin-bottom 一致 */
+    }
+    .panel-stack .panel { margin-bottom: 0; }   /* 内部 panel 不再 margin, 由 .panel-stack 统一控制 */
+
+    /* Table - replaced by .oc-table / .oc-table-wrap */
+    .oc-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .oc-table { width: 100%; border-collapse: collapse; font-size: var(--oc-text-md); table-layout: auto; }
+    th, td {
+      text-align: left;
+      border-bottom: 1px solid var(--line);
+      padding: 12px 14px;  /* v2.3.87: 12px 上下 (原 10px) 让表格更舒展 */
+      vertical-align: middle;
+    }
+    th {
+      color: var(--muted); font-weight: 600; font-size: var(--oc-text-sm);
+      text-transform: uppercase; letter-spacing: 0.3px;
+      position: sticky; top: 0; z-index: 1;  /* v2.3.87: 表头滚动时吸顶 */
+      background: var(--card);  /* v2.3.94: 改成 --card 跟 .panel 同样背景, 不再用 --bg-elevated, 避免 thead 形成独立 elevated 矩形被 panel 圆角 12px + 1px 边框包围 → 视觉上"thead 嵌在 panel 内部嵌套" */
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--bg-elevated); }
+    .ok { color: var(--ok); font-weight: 700; }
+    .fail { color: var(--fail); font-weight: 700; }
+    .warn { color: var(--warn); font-weight: 700; }
+    .mono { font-family: var(--oc-font-mono); font-size: var(--oc-text-sm); }
+    .tag {
+      display: inline-flex;  /* v2.3.87: 改 inline-block → inline-flex, 内容居中 + nowrap */
+      align-items: center;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: var(--oc-text-xs);
+      font-weight: 600;
+      background: var(--tag-bg);
+      color: var(--text2);
+      border: 1px solid var(--border);
+      white-space: nowrap;  /* v2.3.87: 防止中文 2 字 (软件/失败) 在窄列断行 */
+    }
+    .tag.ok { background: var(--tag-ok-bg); color: var(--accent-success); border-color: var(--tag-ok-border); }
+    .tag.fail { background: var(--tag-fail-bg); color: var(--accent-danger); border-color: var(--tag-fail-border); }
+    .tag.warn { background: var(--tag-warn-bg); color: var(--accent-warning); border-color: var(--tag-warn-border); }
+    .tag.software { background: var(--tag-accent-bg); color: var(--accent); border-color: var(--tag-accent-border); }
+    .tag.shared { background: var(--tag-shared-bg); color: var(--tag-shared-color); border-color: var(--tag-shared-border); }
+    .tag.skills { background: var(--tag-skills-bg); color: var(--tag-skills-color); border-color: var(--tag-skills-border); }
+
+    /* Progress bar */
+    .progress-track {
+      width: 100%;
+      height: 6px;
+      border: 0;
+      background: var(--progress-bg);
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: 4px;
+    }
+    .progress-track::-webkit-progress-bar {
+      background: var(--progress-bg);
+    }
+    .progress-track::-webkit-progress-value,
+    .progress-track::-moz-progress-bar {
+      border-radius: 3px;
+      transition: width 0.4s ease;
+    }
+    .progress-track.ok::-webkit-progress-value { background: var(--progress-ok); }
+    .progress-track.ok::-moz-progress-bar { background: var(--progress-ok); }
+    .progress-track.fail::-webkit-progress-value { background: var(--progress-fail); }
+    .progress-track.fail::-moz-progress-bar { background: var(--progress-fail); }
+    .wrp-ph-icon { --oc-ph-color:var(--oc-accent); }
+    .wrp-prompt-hint { margin:0 0 10px; color:var(--text2); font-size:var(--oc-text-md); }
+    .wrp-coverage-cell { align-items:center; }
+    .wrp-coverage-value { min-width:36px; }
+    .wrp-coverage-progress { width:80px; }
+    .wrp-action-row { flex-wrap:nowrap; }
+    .wrp-coverage-head { min-width:120px; }
+    .wrp-empty-row { text-align:center; color:var(--muted); padding:30px; }
+    /* 被 gitignore 的运行期数据目录（如 software/data）：不进项目清单，但显式说明，避免「静默隐藏」 */
+    .wrp-excluded-note { display:none; margin-top:10px; padding:0 2px; color:var(--muted); font-size:var(--oc-text-sm); line-height:1.6; }
+    .wrp-excluded-note.is-visible { display:block; }
+    .wrp-excluded-note .mono { color:var(--muted); }
+
+    /* Pre / log */
+    .pre {
+      white-space: pre-wrap;
+      background: var(--bg-code);
+      color: var(--text-code);
+      margin: 0;
+      padding: 14px 18px;
+      font-size: var(--oc-text-sm);
+      font-family: var(--oc-font-mono);
+      max-height: 300px;
+      overflow: auto;
+      scrollbar-width: none;        /* v2.15.0: 同上, overlay 化 */
+      line-height: 1.6;
+    }
+
+    /* Sync service cards */
+    .svc-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 14px;
+      padding: 0;
+      margin-bottom: 20px;
+      align-items: stretch;  /* v2.3.89: 显式声明 (grid 默认 stretch, 但保险) */
+    }
+    .svc-card {
+      background: var(--tag-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-card);
+      padding: 18px 20px;       /* v2.3.90: 16→18 上下, 加左右 20px (原来没设左右), 跟 .card 视觉一致 */
+      backdrop-filter: blur(12px);
+      box-shadow: var(--shadow);
+      /* v2.3.89: 让 3 个 svc-card 高度一致 (grid item 撑满 stretch 后, 内部 flex column 推内容) */
+      display: flex;
+      flex-direction: column;
+      box-sizing: border-box;
+    }
+    .svc-card .svc-title { font-size: var(--oc-text-base); font-weight: 600; margin-bottom: 10px; }
+    .svc-card .svc-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      border-bottom: 1px solid var(--line);
+      font-size: var(--oc-text-md);
+      gap: 12px;
+    }
+    .svc-card .svc-row:last-child { border-bottom: none; }
+    .svc-card .svc-label { color: var(--text2); }
+    .svc-card .svc-row .mono { font-family: var(--oc-font-mono); font-size: var(--oc-text-sm); }
+    /* v2.3.89: 让 status dot 跟右侧文字对齐 (systemdActive / inotifyRunning) */
+    .svc-card .svc-row .live-dot { flex-shrink: 0; }
+
+    /* Tabs content visibility */
+    .oc-tab-content { display: none; }
+    .oc-tab-content.active { display: block; }
+
+    /* Section filter */
+    .filter-bar {
+      display: flex;
+      gap: 8px;
+      padding: 12px 18px;
+      border-bottom: 1px solid var(--line);
+      background: var(--bg-elevated);
+    }
+    .filter-btn {
+      padding: 8px 16px;
+      border-radius: var(--radius-btn);
+      font-size: var(--oc-text-md);
+      cursor: pointer;
+      border: 1px solid var(--line);
+      background: transparent;
+      color: var(--text2);
+    }
+    .filter-btn.active { background: var(--tag-bg); color: var(--text); border-color: var(--accent); }
+
+    .foot {
+      margin-top: 20px;
+      color: var(--muted);
+      font-size: var(--oc-text-sm);
+      text-align: right;
+    }
+
+    /* Action buttons */
+    .action-btn {
+      padding: 8px 16px; border-radius: var(--radius-btn);
+      font-size: var(--oc-text-md); cursor: pointer;
+      border: 1px solid var(--line); background: transparent; color: var(--text2);
+      font-weight: 500;
+      white-space: nowrap;  /* v2.3.87: 防止中文 2 字 (补齐/同步) 在窄列断行 */
+      display: inline-flex; align-items: center; justify-content: center;
+      transition: all 0.15s ease;
+    }
+    .action-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--bg-elevated); }
+    .action-btn.primary { background: var(--btn-primary-bg); color: var(--accent); border-color: var(--btn-primary-border); }
+    .action-btn.ok { background: var(--tag-ok-bg); color: var(--ok); border-color: var(--tag-ok-border); }
+
+    /* v2.3.87: main-header 右侧 .btns 按钮通用样式 (跟 .action-btn 视觉对齐) */
+    .btns button {
+      padding: 8px 16px; border-radius: var(--radius-btn);
+      font-size: var(--oc-text-md); cursor: pointer;
+      border: 1px solid var(--line); background: transparent; color: var(--text2);
+      font-weight: 500;
+      white-space: nowrap;
+      display: inline-flex; align-items: center; justify-content: center;
+      transition: all 0.15s ease;
+    }
+    .btns button:hover { border-color: var(--accent); color: var(--accent); background: var(--bg-elevated); }
+    .btns button.primary { background: var(--btn-primary-bg); color: var(--accent); border-color: var(--btn-primary-border); }
+    .btns button:disabled { opacity: 0.5; cursor: not-allowed; }
+    /* v37: 检测按钮的即时反馈 —— 选中态（当前模式）+ 加载态（检测中） */
+    .btns button.loading { opacity: 1; color: var(--accent); border-color: var(--accent); }
+    .btn-spin {
+      width: 12px; height: 12px; margin-right: 6px;
+      border: 2px solid currentColor; border-top-color: transparent;
+      border-radius: 50%; display: none;
+      animation: btn-spin 0.7s linear infinite;
+    }
+    .btns button.loading .btn-spin { display: inline-block; }
+    @keyframes btn-spin { to { transform: rotate(360deg); } }
+
+    /* v37: 常驻检测状态条 —— 结果不再只落在页面最底部的 .foot */
+    .check-status {
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 16px; padding: 9px 14px;
+      border: 1px solid var(--line); border-radius: var(--radius-btn);
+      background: var(--tag-bg); color: var(--text2);
+      font-size: var(--oc-text-md); line-height: 1.4;
+    }
+    .check-status .cs-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      flex: none; background: var(--ok);
+    }
+    .check-status.busy { border-color: var(--btn-primary-border); color: var(--accent); }
+    .check-status.busy .cs-dot { background: var(--accent); animation: pulse 1s infinite; }
+    .check-status.fail { border-color: var(--tag-fail-border); color: var(--accent-danger); background: var(--tag-fail-bg); }
+    .check-status.fail .cs-dot { background: var(--accent-danger); }
+
+    /* Modal: 使用 .oc-modal 共享组件，仅保留模块特有 textarea 样式 */
+    .oc-modal textarea {
+      width: 100%; min-height: 320px;
+      background: var(--bg-code); color: var(--text-code);
+      border: 1px solid var(--line); border-radius: 8px;
+      padding: 12px; font-family: var(--oc-font-mono); font-size: var(--oc-text-md);
+      resize: vertical; line-height: 1.6;
+    }
+    /* Toast — 使用 unified-components.css 共享 .toast 垫片 + body>.toast 定位。
+       .toast-title/.toast-body 为子元素样式（共享组件未定义 title/body 结构）。 */
+    .toast-title { font-weight: 600; margin-bottom: 6px; }
+    .toast-body { font-size: var(--oc-text-md); color: var(--text2); }
+
+    @media (max-width: 860px) {
+      /* v2.3.85: sidebar 不再是 56px 收起 (现在是水平 header), 改缩小 padding + 隐藏副标题 */
+      .sidebar { padding: 12px 16px 0; }
+      .sidebar-head .oc-ph-subtitle { display: none; }
+      .main { padding: 16px; }
+    }
+  </style>
+    <style id= module-tab-overshadow>
+    /* v2.3.86: 删掉强制覆盖, 让 polish.css 的 .oc-tabs-underline 完全胜出.
+       之前 line 380-415 把 border/background/box-shadow/border-radius/border-bottom-color
+       全强制归零, 导致 polish 的"边框容器 + 选中态白底阴影"样式完全失效.
+       保留这条 <style> 块是占位, 后续如果父级 shell.css 干扰可以重新加局部 reset. */
+    </style>
+</head>
+<body class="workspace-rule-panel">
+  <div class="app">
+    <aside class="sidebar">
+      <div class="sidebar-head">
+        <div class="oc-ph">
+          <div class="oc-ph-main">
+            <div class="oc-ph-icon wrp-ph-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            </div>
+            <div class="oc-ph-text">
+              <div class="oc-ph-eyebrow">RULES</div>
+              <h1 class="oc-ph-title" data-i18n="sidebar.title">规则监控面板</h1>
+              <p class="oc-ph-subtitle" data-i18n="sidebar.subtitle">统一检查 OpenClaw 工作区规则落地：根规则文件、项目文档覆盖、Git Hook 拦截与 AI 规则同步服务。</p>
+            </div>
+          </div>
+          <!-- v2.3.85: 右上角工具栏 (跟 robots 同款) -->
+          <div class="oc-ph-side" aria-label="页面工具">
+            <button class="oc-tool-btn lang" id="wrpLangToggle" type="button" onclick="toggleWrpLang()" title="切换语言">中/En</button>
+            <button class="oc-tool-btn theme" id="wrpThemeToggle" type="button" title="切换主题">☽</button>
+          </div>
+        </div>
+      </div>
+      <nav class="oc-tabs oc-tabs-underline nav" id="nav">
+        <div class="oc-tab active" data-tab="overview">
+          <span class="nav-icon">📈</span>
+          <span class="nav-label" data-i18n="nav.overview">概览</span>
+          <span class="nav-status" id="navStatus-overview"></span>
+        </div>
+        <div class="oc-tab" data-tab="projects">
+          <span class="nav-icon">📁</span>
+          <span class="nav-label" data-i18n="nav.projects">项目规则</span>
+          <span class="nav-status" id="navStatus-projects"></span>
+        </div>
+        <div class="oc-tab" data-tab="hooks">
+          <span class="nav-icon">🔒</span>
+          <span class="nav-label" data-i18n="nav.hooks">Hook 状态</span>
+          <span class="nav-status" id="navStatus-hooks"></span>
+        </div>
+        <div class="oc-tab" data-tab="sync">
+          <span class="nav-icon">♻</span>
+          <span class="nav-label" data-i18n="nav.sync">AI 同步服务</span>
+          <span class="nav-status" id="navStatus-sync"></span>
+        </div>
+        <span class="oc-tabs-aside" id="tabsAside"></span>
+      </nav>
+      <div class="sidebar-foot" id="sidebarFoot">
+        <span class="live-dot"></span><span data-i18n="sidebar.ready">就绪</span>
+      </div>
+    </aside>
+
+    <main class="main">
+      <!-- v37: 跨页签常驻的检测状态条（点击检测后立即在此反馈） -->
+      <div class="check-status" id="checkStatus"><span class="cs-dot"></span><span id="checkStatusText"></span></div>
+
+      <!-- Overview Tab -->
+      <div class="oc-tab-content active" id="tab-overview">
+        <div class="main-header">
+          <div>
+            <h2 data-i18n="overview.title">工作区概览</h2>
+            <div class="sub" data-i18n="overview.sub">根规则文件、目录结构与整体健康状态</div>
+          </div>
+          <div class="btns">
+            <button id="quickBtn" class="primary"><span class="btn-spin"></span><span class="btn-label" data-i18n="overview.quickCheck">快速检测</span></button>
+            <button id="deepBtn"><span class="btn-spin"></span><span class="btn-label" data-i18n="overview.deepCheck">深度检测</span></button>
+          </div>
+        </div>
+        <div class="grid" id="summaryGrid"></div>
+
+        <div class="panel-stack">
+          <div class="panel-head"><h3 data-i18n="overview.rootRules">根规则文件</h3></div>
+          <div class="panel">
+            <div class="panel-body"><div class="oc-table-wrap"><table id="rootRulesTable" class="oc-table"></table></div></div>
+          </div>
+        </div>
+
+        <div class="panel-stack">
+          <div class="panel-head"><h3 data-i18n="overview.requiredReading">必读入口清单</h3></div>
+          <div class="panel">
+            <div class="panel-body"><div class="oc-table-wrap"><table id="requiredReadingTable" class="oc-table"></table></div></div>
+          </div>
+        </div>
+
+        <div class="panel-stack">
+          <div class="panel-head"><h3 data-i18n="overview.rootDirCoverage">根目录规则覆盖</h3></div>
+          <div class="panel">
+            <div class="panel-body"><div class="oc-table-wrap"><table id="rootDirRulesTable" class="oc-table"></table></div></div>
+          </div>
+        </div>
+
+        <div class="panel-stack">
+          <div class="panel-head"><h3 data-i18n="overview.structureDocs">规范目录与说明文档</h3></div>
+          <div class="panel">
+            <div class="panel-body"><div class="oc-table-wrap"><table id="structureTable" class="oc-table"></table></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Projects Tab -->
+      <div class="oc-tab-content" id="tab-projects">
+        <div class="main-header">
+          <div>
+            <h2 data-i18n="projects.title">项目规则覆盖</h2>
+            <div class="sub" data-i18n="projects.sub">software / shared-skills / skills 下所有子项目的规则文件状态</div>
+          </div>
+          <div class="btns">
+            <button id="batchBootstrapBtn" class="primary" data-i18n="projects.batchBootstrap">批量补齐缺失</button>
+            <button id="syncTriggerBtn" data-i18n="projects.manualSync">手动同步规则</button>
+          </div>
+        </div>
+        <div class="grid" id="projectSummaryGrid"></div>
+        <div class="filter-bar" id="projectFilter">
+          <div class="filter-btn active" data-filter="all" data-i18n="filter.all">全部</div>
+          <div class="filter-btn" data-filter="software" data-i18n="filter.software">software</div>
+          <div class="filter-btn" data-filter="shared-skills" data-i18n="filter.sharedSkills">shared-skills</div>
+          <div class="filter-btn" data-filter="skills" data-i18n="filter.skills">skills</div>
+          <div class="filter-btn" data-filter="missing" data-i18n="filter.missing">缺规则</div>
+        </div>
+        <div class="panel">
+          <div class="panel-body"><div class="oc-table-wrap"><table id="projectsTable" class="oc-table"></table></div><div id="projectsExcluded" class="wrp-excluded-note"></div></div>
+        </div>
+      </div>
+
+      <!-- Hooks Tab -->
+      <div class="oc-tab-content" id="tab-hooks">
+        <div class="main-header">
+          <div>
+            <h2 data-i18n="hooks.title">Git Hook 状态</h2>
+            <div class="sub" data-i18n="hooks.sub">pre-commit 钩子配置与运行时检测</div>
+          </div>
+          <div class="btns">
+            <button id="deepBtn2" class="primary"><span class="btn-spin"></span><span class="btn-label" data-i18n="overview.deepCheck">深度检测</span></button>
+          </div>
+        </div>
+        <div class="grid" id="hookSummaryGrid"></div>
+        <div class="panel-stack">
+          <div class="panel-head"><h3 data-i18n="hooks.configDetail">Hook 配置详情</h3></div>
+          <div class="panel">
+            <div class="panel-body"><div class="oc-table-wrap"><table id="hookTable" class="oc-table"></table></div></div>
+          </div>
+        </div>
+        <div class="panel-stack">
+          <div class="panel-head"><h3 data-i18n="hooks.deepLog">深度检测日志</h3></div>
+          <div class="panel">
+            <pre class="pre" id="hookLog"></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sync Service Tab -->
+      <div class="oc-tab-content" id="tab-sync">
+        <div class="main-header">
+          <div>
+            <h2 data-i18n="sync.title">AI 规则同步服务</h2>
+            <div class="sub" data-i18n="sync.sub">自动同步脚本、inotify 实时监听与 systemd 服务状态</div>
+          </div>
+          <div class="btns">
+            <button id="syncTriggerBtn2" class="primary" data-i18n="sync.manualSync">手动同步</button>
+            <button id="refreshSyncBtn" data-i18n="sync.refreshStatus">刷新状态</button>
+          </div>
+        </div>
+        <div class="svc-grid" id="syncSvcGrid"></div>
+        <div class="panel-stack">
+          <div class="panel-head"><h3 data-i18n="sync.rootDirDetail">根目录规则覆盖详情</h3></div>
+          <div class="panel">
+            <div class="panel-body"><div class="oc-table-wrap"><table id="syncRootDirTable" class="oc-table"></table></div></div>
+          </div>
+        </div>
+        <div class="panel-stack">
+          <div class="panel-head"><h3 data-i18n="sync.recentLog">最近同步日志</h3></div>
+          <div class="panel">
+            <pre class="pre" id="syncLog"></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="foot" id="foot"></div>
+    </main>
+  </div>
+
+  <!-- Modal: AI Prompt -->
+  <div class="oc-modal-overlay" id="promptModal">
+    <div class="oc-modal oc-modal-lg">
+      <div class="oc-modal-header">
+        <h3 data-i18n="modal.aiPrompt">🤖 AI 补齐提示词</h3>
+        <button class="oc-modal-close" id="promptModalClose">&times;</button>
+      </div>
+      <div class="oc-modal-body">
+        <p class="wrp-prompt-hint" data-i18n="modal.promptHint">复制以下提示词发送给 AI agent（Claude/GPT 等），AI 将基于现有代码生成完整文档。</p>
+        <textarea id="promptText" readonly></textarea>
+      </div>
+      <div class="oc-modal-footer">
+        <button id="copyPromptBtn" class="primary" data-i18n="modal.copyPrompt">复制提示词</button>
+        <button id="closePromptBtn" data-i18n="modal.close">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    var translations = {
+      zh: {
+        'title': 'Workspace 规则监控面板',
+        'sidebar.title': '规则监控面板',
+        'sidebar.ready': '就绪',
+        'sidebar.subtitle': '统一检查 OpenClaw 工作区规则落地：根规则文件、项目文档覆盖、Git Hook 拦截与 AI 规则同步服务。',
+        'nav.overview': '概览',
+        'nav.projects': '项目规则',
+        'nav.hooks': 'Hook 状态',
+        'nav.sync': 'AI 同步服务',
+        'overview.title': '工作区概览',
+        'overview.sub': '根规则文件、目录结构与整体健康状态',
+        'overview.quickCheck': '快速检测',
+        'overview.deepCheck': '深度检测',
+        'overview.rootRules': '根规则文件',
+        'overview.requiredReading': '必读入口清单',
+        'overview.rootDirCoverage': '根目录规则覆盖',
+        'overview.structureDocs': '规范目录与说明文档',
+        'projects.title': '项目规则覆盖',
+        'projects.sub': 'software / shared-skills / skills 下所有子项目的规则文件状态',
+        'projects.batchBootstrap': '批量补齐缺失',
+        'projects.manualSync': '手动同步规则',
+        'filter.all': '全部',
+        'filter.software': 'software',
+        'filter.sharedSkills': 'shared-skills',
+        'filter.skills': 'skills',
+        'filter.missing': '缺规则',
+        'hooks.title': 'Git Hook 状态',
+        'hooks.sub': 'pre-commit 钩子配置与运行时检测',
+        'hooks.configDetail': 'Hook 配置详情',
+        'hooks.deepLog': '深度检测日志',
+        'hooks.deepLogPlaceholder': '尚未执行深度检测。点击"深度检测"运行 Hook 模拟提交测试。',
+        'sync.title': 'AI 规则同步服务',
+        'sync.sub': '自动同步脚本、inotify 实时监听与 systemd 服务状态',
+        'sync.manualSync': '手动同步',
+        'sync.refreshStatus': '刷新状态',
+        'sync.rootDirDetail': '根目录规则覆盖详情',
+        'sync.recentLog': '最近同步日志',
+        'sync.loading': '加载中...',
+        'sync.noLog': '暂无日志。',
+        'modal.aiPrompt': '🤖 AI 补齐提示词',
+        'modal.promptHint': '复制以下提示词发送给 AI agent（Claude/GPT 等），AI 将基于现有代码生成完整文档。',
+        'modal.copyPrompt': '复制提示词',
+        'modal.close': '关闭',
+        'badge.pass': 'PASS',
+        'badge.fail': 'FAIL',
+        'badge.yes': 'YES',
+        'badge.no': 'NO',
+        'status.running': '运行中',
+        'status.notRunning': '未运行',
+        'status.enabled': '已启用',
+        'status.notEnabled': '未启用',
+        'card.overallStatus': '总体状态',
+        'card.checkItems': '检查项',
+        'card.projectCount': '项目总数',
+        'card.missingRules': '缺规则项目',
+        'card.missingDocs': '缺文档项目',
+        'card.ruleCoverage': '规则覆盖',
+        'card.coverageRate': '覆盖率',
+        'th.file': '文件',
+        'th.status': '状态',
+        'th.size': '大小',
+        'th.mtime': '修改时间',
+        'th.directory': '目录',
+        'th.path': '路径',
+        'th.ruleEntry': '入口副本',
+        'th.allCovered': '全部覆盖',
+        'th.checkItem': '检查项',
+        'th.type': '类型',
+        'th.project': '项目',
+        'th.source': '来源',
+        'th.ruleCoverage': '规则覆盖',
+        'th.complete': '完整',
+        'th.localRule': '本地规则',
+        'th.changelog': 'changelog',
+        'th.whitepaper': 'WHITEPAPER',
+        'th.readme': 'README',
+        'th.missing': '缺失',
+        'th.action': '操作',
+        'th.value': '值',
+        'th.localOverride': '本地覆盖',
+        'th.entryState': '入口状态',
+        'label.custom': '定制',
+        'label.stale': '待同步',
+        'hook.hooksPathConfig': 'hooksPath 配置',
+        'hook.precommitExists': 'pre-commit 存在',
+        'hook.precommitExecutable': 'pre-commit 可执行',
+        'hook.syntaxCheckPassed': '语法检查通过',
+        'hook.row.hooksPath': 'hooksPath',
+        'hook.row.precommitExists': 'pre-commit 存在',
+        'hook.row.precommitExecutable': 'pre-commit 可执行',
+        'hook.row.bashSyntax': 'bash -n 语法检查',
+        'label.empty': '(空)',
+        'label.required': 'required',
+        'sync.scriptTitle': '同步脚本',
+        'sync.systemdTitle': 'systemd 服务',
+        'sync.inotifyTitle': 'inotify 监听',
+        'sync.serviceName': '服务名',
+        'sync.serviceStatus': '状态',
+        'sync.autoStart': '开机自启',
+        'sync.runStatus': '运行状态',
+        'sync.listenDir': '监听目录',
+        'btn.bootstrap': '补齐',
+        'btn.aiPrompt': 'AI 提示词',
+        'table.noMatch': '无匹配项目',
+        'projects.excluded': '已排除 {n} 个非项目目录（被 gitignore，不参与文档检查）：',
+        'toast.copied': '已复制',
+        'toast.promptCopied': 'AI 提示词已复制到剪贴板',
+        'toast.promptFetchFailed': '获取提示词失败',
+        'toast.bootstrapComplete': '补齐完成',
+        'toast.bootstrapFailed': '补齐失败',
+        'toast.noBootstrapNeeded': '无需补齐',
+        'toast.allDocsComplete': '所有项目文档已齐全',
+        'toast.batchComplete': '批量补齐完成',
+        'toast.processed': '处理了 {n} 个项目',
+        'toast.created': '已创建: {items}',
+        'toast.skipped': '跳过: {items}',
+        'toast.none': '无',
+        'foot.checking': '正在执行 {mode} 检测...',
+        'foot.lastUpdate': '最后更新：{time} | mode={mode}',
+        'foot.checkFailed': '检测失败：{error}',
+        'check.idle': '尚未检测 —— 点右上角「快速检测」或「深度检测」开始',
+        'check.busy': '正在执行{mode}检测… 已用 {secs}s',
+        'check.done': '{time} · {mode}检测 · 总体 {overall} · {pass}/{total} 项通过 · 项目 {projects} 个',
+        'check.failed': '{time} · {mode}检测 · 失败：{error}',
+        'btn.checking': '检测中…',
+        'mode.quick': '快速',
+        'mode.deep': '深度',
+        'toast.checkDoneTitle': '检测完成',
+        'toast.checkFailTitle': '检测失败',
+        'toast.checkDoneBody': '{mode}检测：总体 {overall}，{pass}/{total} 项通过',
+        'toast.checkFailBody': '检测请求失败：{error}',
+        'toast.checkTimeout': '检测超时（{secs}s）：后端可能正忙或服务刚重启，请重试',
+        'foot.syncing': '正在手动同步规则...',
+        'foot.syncComplete': '同步完成，正在刷新状态...',
+        'foot.syncFailed': '同步失败：{error}',
+        'foot.refreshingSync': '刷新同步状态...',
+        'foot.syncRefreshed': '同步状态已刷新：{time}',
+        'foot.refreshFailed': '刷新失败：{error}',
+        'foot.bootstrapping': '正在为 {project} 补齐 {types}...',
+        'log.manualSyncComplete': '手动同步完成',
+        'log.statusSuccess': '状态: 成功',
+        'log.statusFailed': '状态: 失败 (exit {code})',
+        'log.error': '错误: {error}',
+        'log.output': '--- 输出 ---',
+        'log.noOutput': '(无输出)',
+        'log.deepPass': 'deep.pass: {value}',
+        'log.deepBlocked': 'deep.blocked: {value}',
+        'log.deepError': 'deep.error: {value}',
+        'log.noOutputAlt': '(no output)'
+      },
+      en: {
+        'title': 'Workspace Rule Monitor',
+        'sidebar.title': 'Rule Monitor',
+        'sidebar.ready': 'Ready',
+        'sidebar.subtitle': 'Unified checks for OpenClaw workspace governance: root rule files, project documentation coverage, Git hook enforcement, and AI rule sync service.',
+        'nav.overview': 'Overview',
+        'nav.projects': 'Project Rules',
+        'nav.hooks': 'Hook Status',
+        'nav.sync': 'AI Sync Service',
+        'overview.title': 'Workspace Overview',
+        'overview.sub': 'Root rule files, directory structure & overall health status',
+        'overview.quickCheck': 'Quick Check',
+        'overview.deepCheck': 'Deep Check',
+        'overview.rootRules': 'Root Rule Files',
+        'overview.requiredReading': 'Required Reading',
+        'overview.rootDirCoverage': 'Root Directory Rule Coverage',
+        'overview.structureDocs': 'Spec Directories & Documentation',
+        'projects.title': 'Project Rule Coverage',
+        'projects.sub': 'Rule file status for all sub-projects under software / shared-skills / skills',
+        'projects.batchBootstrap': 'Batch Fill Missing',
+        'projects.manualSync': 'Manual Sync Rules',
+        'filter.all': 'All',
+        'filter.software': 'software',
+        'filter.sharedSkills': 'shared-skills',
+        'filter.skills': 'skills',
+        'filter.missing': 'Missing Rules',
+        'hooks.title': 'Git Hook Status',
+        'hooks.sub': 'pre-commit hook configuration & runtime detection',
+        'hooks.configDetail': 'Hook Configuration Details',
+        'hooks.deepLog': 'Deep Check Log',
+        'hooks.deepLogPlaceholder': 'Deep check not yet performed. Click "Deep Check" to run a Hook simulated commit test.',
+        'sync.title': 'AI Rule Sync Service',
+        'sync.sub': 'Auto-sync scripts, inotify real-time monitoring & systemd service status',
+        'sync.manualSync': 'Manual Sync',
+        'sync.refreshStatus': 'Refresh Status',
+        'sync.rootDirDetail': 'Root Directory Rule Coverage Details',
+        'sync.recentLog': 'Recent Sync Log',
+        'sync.loading': 'Loading...',
+        'sync.noLog': 'No logs yet.',
+        'modal.aiPrompt': '🤖 AI Fill Prompt',
+        'modal.promptHint': 'Copy the prompt below and send it to an AI agent (Claude/GPT, etc.). The AI will generate complete documentation based on existing code.',
+        'modal.copyPrompt': 'Copy Prompt',
+        'modal.close': 'Close',
+        'badge.pass': 'PASS',
+        'badge.fail': 'FAIL',
+        'badge.yes': 'YES',
+        'badge.no': 'NO',
+        'status.running': 'Running',
+        'status.notRunning': 'Not Running',
+        'status.enabled': 'Enabled',
+        'status.notEnabled': 'Disabled',
+        'card.overallStatus': 'Overall Status',
+        'card.checkItems': 'Check Items',
+        'card.projectCount': 'Total Projects',
+        'card.missingRules': 'Missing Rules',
+        'card.missingDocs': 'Missing Docs',
+        'card.ruleCoverage': 'Rule Coverage',
+        'card.coverageRate': 'Coverage Rate',
+        'th.file': 'File',
+        'th.status': 'Status',
+        'th.size': 'Size',
+        'th.mtime': 'Modified',
+        'th.directory': 'Directory',
+        'th.path': 'Path',
+        'th.ruleEntry': 'Entry Copies',
+        'th.allCovered': 'All Covered',
+        'th.checkItem': 'Check Item',
+        'th.type': 'Type',
+        'th.project': 'Project',
+        'th.source': 'Source',
+        'th.ruleCoverage': 'Rule Coverage',
+        'th.complete': 'Complete',
+        'th.localRule': 'Local Rule',
+        'th.changelog': 'changelog',
+        'th.whitepaper': 'WHITEPAPER',
+        'th.readme': 'README',
+        'th.missing': 'Missing',
+        'th.action': 'Action',
+        'th.value': 'Value',
+        'th.localOverride': 'Local Override',
+        'th.entryState': 'Entry State',
+        'label.custom': 'custom',
+        'label.stale': 'stale',
+        'hook.hooksPathConfig': 'hooksPath Config',
+        'hook.precommitExists': 'pre-commit Exists',
+        'hook.precommitExecutable': 'pre-commit Executable',
+        'hook.syntaxCheckPassed': 'Syntax Check Passed',
+        'hook.row.hooksPath': 'hooksPath',
+        'hook.row.precommitExists': 'pre-commit exists',
+        'hook.row.precommitExecutable': 'pre-commit executable',
+        'hook.row.bashSyntax': 'bash -n syntax',
+        'label.empty': '(empty)',
+        'label.required': 'required',
+        'sync.scriptTitle': 'Sync Script',
+        'sync.systemdTitle': 'systemd Service',
+        'sync.inotifyTitle': 'inotify Monitor',
+        'sync.serviceName': 'Service Name',
+        'sync.serviceStatus': 'Status',
+        'sync.autoStart': 'Auto Start',
+        'sync.runStatus': 'Run Status',
+        'sync.listenDir': 'Listen Dir',
+        'btn.bootstrap': 'Fill',
+        'btn.aiPrompt': 'AI Prompt',
+        'table.noMatch': 'No matching projects',
+        'projects.excluded': 'Excluded {n} non-project director(s) (gitignored, not doc-checked):',
+        'toast.copied': 'Copied',
+        'toast.promptCopied': 'AI prompt copied to clipboard',
+        'toast.promptFetchFailed': 'Failed to fetch prompt',
+        'toast.bootstrapComplete': 'Fill Complete',
+        'toast.bootstrapFailed': 'Fill Failed',
+        'toast.noBootstrapNeeded': 'No Fill Needed',
+        'toast.allDocsComplete': 'All project docs are complete',
+        'toast.batchComplete': 'Batch Fill Complete',
+        'toast.processed': 'Processed {n} projects',
+        'toast.created': 'Created: {items}',
+        'toast.skipped': 'Skipped: {items}',
+        'toast.none': 'None',
+        'foot.checking': 'Running {mode} check...',
+        'foot.lastUpdate': 'Last updated: {time} | mode={mode}',
+        'foot.checkFailed': 'Check failed: {error}',
+        'check.idle': 'Not checked yet — use Quick Check / Deep Check at the top right',
+        'check.busy': 'Running {mode} check...  {secs}s elapsed',
+        'check.done': '{time} · {mode} check · overall {overall} · {pass}/{total} passed · {projects} projects',
+        'check.failed': '{time} · {mode} check · failed: {error}',
+        'btn.checking': 'Checking...',
+        'mode.quick': 'Quick',
+        'mode.deep': 'Deep',
+        'toast.checkDoneTitle': 'Check complete',
+        'toast.checkFailTitle': 'Check failed',
+        'toast.checkDoneBody': '{mode} check: overall {overall}, {pass}/{total} passed',
+        'toast.checkFailBody': 'Check request failed: {error}',
+        'toast.checkTimeout': 'Check timed out ({secs}s): the backend may be busy or just restarted, please retry',
+        'foot.syncing': 'Manually syncing rules...',
+        'foot.syncComplete': 'Sync complete, refreshing status...',
+        'foot.syncFailed': 'Sync failed: {error}',
+        'foot.refreshingSync': 'Refreshing sync status...',
+        'foot.syncRefreshed': 'Sync status refreshed: {time}',
+        'foot.refreshFailed': 'Refresh failed: {error}',
+        'foot.bootstrapping': 'Filling {types} for {project}...',
+        'log.manualSyncComplete': 'Manual sync complete',
+        'log.statusSuccess': 'Status: Success',
+        'log.statusFailed': 'Status: Failed (exit {code})',
+        'log.error': 'Error: {error}',
+        'log.output': '--- Output ---',
+        'log.noOutput': '(no output)',
+        'log.deepPass': 'deep.pass: {value}',
+        'log.deepBlocked': 'deep.blocked: {value}',
+        'log.deepError': 'deep.error: {value}',
+        'log.noOutputAlt': '(no output)'
+      }
+    };
+
+    var currentLang = localStorage.getItem('openclaw-lang') || 'zh';
+
+    function t(key, params) {
+      var str = (translations[currentLang] && translations[currentLang][key]) || (translations['zh'] && translations['zh'][key]) || key;
+      if (params) {
+        Object.keys(params).forEach(function(k) {
+          str = str.replace(new RegExp('\\{' + k + '\\}', 'g'), params[k]);
+        });
+      }
+      return str;
+    }
+
+    function setLang(lang) {
+      currentLang = lang;
+      localStorage.setItem('openclaw-lang', lang);
+      document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+      document.querySelectorAll('[data-i18n]').forEach(function(el) {
+        var key = el.getAttribute('data-i18n');
+        var text = t(key);
+        if (text !== key) el.textContent = text;
+      });
+      document.title = t('title');
+      if (lastData) {
+        renderOverview(lastData);
+        renderProjectSummary(lastData);
+        renderProjects(lastData);
+        renderHooks(lastData);
+        renderSyncService(lastData);
+        updateNavStatus(lastData);
+        updateTabsAside(lastData);
+        $('foot').textContent = t('foot.lastUpdate', { time: new Date(lastData.generatedAt).toLocaleString(), mode: lastData.mode });
+        renderCheckStatusIdle();
+      }
+    }
+
+    window.onShellLangChange = function(lang) {
+      setLang(lang);
+    };
+
+    window.addEventListener('message', function(e) {
+      if (e.data && e.data.type === 'openclaw-lang') {
+        setLang(e.data.lang);
+      }
+    });
+
+    // v2.3.84: 主题切换逻辑由 /cockpit-theme.js 统一接管 (基于 .oc-tool-btn.theme 类自动绑定).
+
+    // v2.3.84: 语言切换 — 跟 ai-growth 同款, postMessage 给父级 (已有 onShellLangChange 接收回调)
+    function toggleWrpLang() {
+      if (window.parent && window.parent !== window) {
+        try { window.parent.postMessage({ type: 'openclaw-lang-toggle' }, '*'); } catch(e) {}
+      }
+    }
+
+    // --- Utils ---
+    var $ = function(id) { return document.getElementById(id); };
+    var safe = function(v) { return String(v ?? '').replace(/[&<>"']/g, function(s) { return ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[s]; }); };
+    var badge = function(ok) { return ok ? '<span class="tag ok">' + t('badge.pass') + '</span>' : '<span class="tag fail">' + t('badge.fail') + '</span>'; };
+    var warnBadge = function(ok) { return ok ? '<span class="tag ok">' + t('badge.yes') + '</span>' : '<span class="tag warn">' + t('badge.no') + '</span>'; };
+    // 入口状态三态：custom=刻意项目定制（sync 不覆盖）、stale=管理副本落后（待 sync 收敛）、-=与根一致
+    var entryStateTag = function(p) {
+      if (p.hasLocalOverride) return '<span class="tag warn">' + t('label.custom') + '</span>';
+      if (p.hasStaleEntries) return '<span class="tag">' + t('label.stale') + '</span>';
+      return '<span class="tag ok">-</span>';
+    };
+    var statusDot = function(ok) { return '<span class="live-dot' + (ok ? '' : ' off') + '"></span>' + (ok ? t('status.running') : t('status.notRunning')); };
+
+    var lastData = null;
+    var currentProjectFilter = 'all';
+
+    // --- Tabs ---
+    function initTabs() {
+      document.querySelectorAll('.oc-tab').forEach(function(item) {
+        item.addEventListener('click', function() {
+          document.querySelectorAll('.oc-tab').forEach(function(i) { i.classList.remove('active'); });
+          document.querySelectorAll('.oc-tab-content').forEach(function(tc) { tc.classList.remove('active'); });
+          item.classList.add('active');
+          $('tab-' + item.dataset.tab).classList.add('active');
+          updateTabsAside(lastData);
+        });
+      });
+    }
+
+    // --- Overview ---
+    function renderOverview(data) {
+      var s = data.summary;
+      var cells = [
+        [t('card.overallStatus'), s.overall === 'pass' ? '<span class="tag ok">' + t('badge.pass') + '</span>' : '<span class="tag fail">' + t('badge.fail') + '</span>', s.overall === 'pass' ? 'ok' : 'fail'],
+        [t('card.checkItems'), s.passCount + '/' + s.totalChecks, ''],
+        [t('card.projectCount'), s.projectCount, ''],
+        [t('card.missingRules'), s.projectsMissingRules ?? 0, (s.projectsMissingRules ?? 0) === 0 ? 'ok' : 'fail'],
+        [t('card.missingDocs'), s.projectsMissingDocs, (s.projectsMissingDocs ?? 0) === 0 ? 'ok' : 'warn'],
+      ];
+      $('summaryGrid').innerHTML = cells.map(function(c) {
+        return '<div class="oc-card"><div class="k">' + c[0] + '</div><div class="v' + (c[2] ? ' ' + c[2] : '') + '">' + c[1] + '</div></div>';
+      }).join('');
+
+      $('rootRulesTable').innerHTML =
+        '<thead><tr><th>' + t('th.file') + '</th><th>' + t('th.status') + '</th><th>' + t('th.size') + '</th><th>' + t('th.mtime') + '</th></tr></thead>' +
+        '<tbody>' + (data.rootRules || []).map(function(i) {
+          return '<tr><td class="mono">' + safe(i.name) + '</td><td>' + badge(i.exists) + '</td><td>' + safe(i.size) + '</td><td class="mono">' + safe(i.mtime || '-') + '</td></tr>';
+        }).join('') + '</tbody>';
+
+      $('requiredReadingTable').innerHTML =
+        '<thead><tr><th>' + t('th.path') + '</th><th>' + t('th.status') + '</th><th>' + t('th.size') + '</th><th>' + t('th.mtime') + '</th></tr></thead>' +
+        '<tbody>' + (data.requiredReading || []).map(function(i) {
+          return '<tr><td class="mono">' + safe(i.path) + '</td><td>' + badge(i.exists) + '</td><td>' + safe(i.size) + '</td><td class="mono">' + safe(i.mtime || '-') + '</td></tr>';
+        }).join('') + '</tbody>';
+
+      var rdr = data.syncStatus?.rootDirRules || [];
+      $('rootDirRulesTable').innerHTML =
+        '<thead><tr><th>' + t('th.directory') + '</th><th>' + t('th.path') + '</th><th>' + t('th.ruleEntry') + '</th><th>' + t('th.allCovered') + '</th></tr></thead>' +
+        '<tbody>' + rdr.map(function(d) {
+          return '<tr><td><span class="tag">' + safe(d.name) + '</span></td><td class="mono">' + safe(d.path) + '</td><td>' + d.ruleEntriesPresent + '/' + d.ruleEntriesTotal + '</td><td>' + badge(d.allRuleEntriesPresent) + '</td></tr>';
+        }).join('') + '</tbody>';
+
+      $('structureTable').innerHTML =
+        '<thead><tr><th>' + t('th.checkItem') + '</th><th>' + t('th.type') + '</th><th>' + t('th.status') + '</th><th>' + t('th.mtime') + '</th></tr></thead>' +
+        '<tbody>' + (data.structure || []).map(function(i) {
+          return '<tr><td class="mono">' + safe(i.path) + '</td><td>' + (i.required ? '<span class="tag warn">' + t('label.required') + '</span>' : '-') + '</td><td>' + badge(i.ok) + '</td><td class="mono">' + safe(i.mtime || '-') + '</td></tr>';
+        }).join('') + '</tbody>';
+    }
+
+    // --- Projects ---
+    function renderProjectSummary(data) {
+      var projects = data.projects || [];
+      var total = projects.length;
+      var ok = projects.filter(function(p) { return p.allRuleEntriesPresent; }).length;
+      var pct = total ? Math.round((ok / total) * 100) : 0;
+      var cells = [
+        [t('card.ruleCoverage'), ok + '/' + total, pct === 100 ? 'ok' : 'warn'],
+        [t('card.coverageRate'), pct + '%', pct === 100 ? 'ok' : 'warn'],
+        [t('filter.software'), projects.filter(function(p) { return p.label === 'software'; }).length, ''],
+        [t('filter.sharedSkills'), projects.filter(function(p) { return p.label === 'shared-skills'; }).length, ''],
+        [t('filter.skills'), projects.filter(function(p) { return p.label === 'skills'; }).length, ''],
+      ];
+      $('projectSummaryGrid').innerHTML = cells.map(function(c) {
+        return '<div class="oc-card"><div class="k">' + c[0] + '</div><div class="v' + (c[2] ? ' ' + c[2] : '') + '">' + c[1] + '</div></div>';
+      }).join('');
+    }
+
+    function renderProjects(data) {
+      var all = data.projects || [];
+      var filtered = all;
+      if (currentProjectFilter !== 'all') {
+        if (currentProjectFilter === 'missing') {
+          filtered = all.filter(function(p) { return !p.allRuleEntriesPresent; });
+        } else {
+          filtered = all.filter(function(p) { return p.label === currentProjectFilter; });
+        }
+      }
+      var rows = filtered.map(function(p) {
+        var pct = p.ruleEntriesTotal ? Math.round((p.ruleEntriesPresent / p.ruleEntriesTotal) * 100) : 0;
+        var labelMap = { software: 'software', 'shared-skills': 'shared', skills: 'skills' };
+        var missingTypes = p.missing.map(function(m) { return ({ changelog: 'CHANGELOG', WHITEPAPER: 'WHITEPAPER', README: 'README' })[m]; }).filter(Boolean);
+        var hasMissing = missingTypes.length > 0;
+        var actionBtns = hasMissing
+          ? '<button class="action-btn primary" data-action="bootstrap" data-project="' + safe(p.project) + '" data-label="' + safe(p.label) + '" data-types=\'' + JSON.stringify(missingTypes) + '\'>' + t('btn.bootstrap') + '</button><button class="action-btn" data-action="prompt" data-project="' + safe(p.project) + '" data-label="' + safe(p.label) + '" data-types=\'' + JSON.stringify(missingTypes) + '\'>' + t('btn.aiPrompt') + '</button>'
+          : '<button class="action-btn" data-action="prompt" data-project="' + safe(p.project) + '" data-label="' + safe(p.label) + '" data-types=\'["README","WHITEPAPER","CHANGELOG"]\'>' + t('btn.aiPrompt') + '</button>';
+        return '<tr>' +
+          '<td class="mono">' + safe(p.project) + '</td>' +
+          '<td><span class="tag ' + (labelMap[p.label] || '') + '">' + safe(p.label) + '</span></td>' +
+          '<td><div class="oc-flex-gap-8 wrp-coverage-cell"><span class="wrp-coverage-value">' + pct + '%</span><progress class="progress-track wrp-coverage-progress ' + (pct === 100 ? 'ok' : 'fail') + '" max="100" value="' + pct + '" aria-label="' + t('th.ruleCoverage') + '"></progress></div></td>' +
+          '<td>' + badge(p.allRuleEntriesPresent) + '</td>' +
+          '<td>' + warnBadge(p.localRuleConfigured) + '</td>' +
+          '<td>' + entryStateTag(p) + '</td>' +
+          '<td>' + badge(p.hasChangelog) + '</td>' +
+          '<td>' + badge(p.hasWhitepaper) + '</td>' +
+          '<td>' + badge(p.hasReadme) + '</td>' +
+          '<td>' + (p.missing.length ? '<span class="tag warn">' + safe(p.missing.join(', ')) + '</span>' : '<span class="tag ok">-</span>') + '</td>' +
+          '<td><div class="oc-flex-gap-6 wrp-action-row">' + actionBtns + '</div></td>' +
+          '</tr>';
+      }).join('');
+      $('projectsTable').innerHTML =
+        '<thead><tr>' +
+        '<th>' + t('th.project') + '</th><th>' + t('th.source') + '</th><th class="wrp-coverage-head">' + t('th.ruleCoverage') + '</th>' +
+        '<th>' + t('th.complete') + '</th><th>' + t('th.localRule') + '</th><th>' + t('th.entryState') + '</th><th>' + t('th.changelog') + '</th><th>' + t('th.whitepaper') + '</th><th>' + t('th.readme') + '</th><th>' + t('th.missing') + '</th><th>' + t('th.action') + '</th>' +
+        '</tr></thead>' +
+        '<tbody>' + (rows || '<tr><td colspan="11" class="wrp-empty-row">' + t('table.noMatch') + '</td></tr>') + '</tbody>';
+      var excl = (data.excluded || []).filter(function(e) {
+        return currentProjectFilter === 'all' || e.label === currentProjectFilter;
+      });
+      var exclEl = $('projectsExcluded');
+      if (exclEl) {
+        if (excl.length) {
+          exclEl.innerHTML = safe(t('projects.excluded', { n: excl.length })) + ' ' +
+            excl.map(function(e) { return '<span class="mono">' + safe(e.label + '/' + e.project) + '</span>'; }).join(', ');
+          exclEl.classList.add('is-visible');
+        } else {
+          exclEl.innerHTML = '';
+          exclEl.classList.remove('is-visible');
+        }
+      }
+      attachProjectActions();
+    }
+
+    function initProjectFilter() {
+      document.querySelectorAll('#projectFilter .filter-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          document.querySelectorAll('#projectFilter .filter-btn').forEach(function(b) { b.classList.remove('active'); });
+          btn.classList.add('active');
+          currentProjectFilter = btn.dataset.filter;
+          if (lastData) renderProjects(lastData);
+        });
+      });
+    }
+
+    // --- Hooks ---
+    function renderHooks(data) {
+      var hooks = data.hooks || {};
+      var q = hooks.quick || {};
+      var cells = [
+        [t('hook.hooksPathConfig'), q.hookPathConfigured, 'ok'],
+        [t('hook.precommitExists'), q.scriptExists, ''],
+        [t('hook.precommitExecutable'), q.scriptExecutable, ''],
+        [t('hook.syntaxCheckPassed'), q.syntaxOk, ''],
+      ];
+      $('hookSummaryGrid').innerHTML = cells.map(function(c) {
+        return '<div class="oc-card"><div class="k">' + c[0] + '</div><div class="v' + (c[2] ? ' ' + c[2] : '') + '">' + (c[1] ? '<span class="tag ok">' + t('badge.yes') + '</span>' : '<span class="tag fail">' + t('badge.no') + '</span>') + '</div></div>';
+      }).join('');
+
+      var hookRows = [
+        [t('hook.row.hooksPath'), q.hookPath || t('label.empty'), q.hookPathConfigured],
+        [t('hook.row.precommitExists'), String(q.scriptExists), q.scriptExists],
+        [t('hook.row.precommitExecutable'), String(q.scriptExecutable), q.scriptExecutable],
+        [t('hook.row.bashSyntax'), String(q.syntaxOk), q.syntaxOk],
+      ].map(function(r) {
+        return '<tr><td>' + safe(r[0]) + '</td><td class="mono">' + safe(r[1]) + '</td><td>' + badge(r[2]) + '</td></tr>';
+      }).join('');
+      $('hookTable').innerHTML =
+        '<thead><tr><th>' + t('th.checkItem') + '</th><th>' + t('th.value') + '</th><th>' + t('th.status') + '</th></tr></thead>' +
+        '<tbody>' + hookRows + '</tbody>';
+
+      if (hooks.deep && hooks.deep.ran) {
+        var info = [
+          t('log.deepPass', { value: hooks.deep.pass }),
+          t('log.deepBlocked', { value: hooks.deep.blocked }),
+          t('log.deepError', { value: hooks.deep.error || '-' }),
+          '',
+          hooks.deep.outputPreview || t('log.noOutputAlt'),
+        ].join('\n');
+        $('hookLog').textContent = info;
+      } else {
+        $('hookLog').textContent = t('hooks.deepLogPlaceholder');
+      }
+    }
+
+    // --- Sync Service ---
+    function renderSyncService(data) {
+      var s = data.syncStatus || {};
+
+      $('syncSvcGrid').innerHTML =
+        '<div class="svc-card">' +
+          '<div class="svc-title">📈 ' + t('sync.scriptTitle') + '</div>' +
+          '<div class="svc-row"><span class="svc-label">sync-ai-rules.sh</span>' + (s.syncScriptExists ? badge(true) : badge(false)) + '</div>' +
+          '<div class="svc-row"><span class="svc-label">watch-ai-rules.sh</span>' + (s.watchScriptExists ? badge(true) : badge(false)) + '</div>' +
+        '</div>' +
+        '<div class="svc-card">' +
+          '<div class="svc-title">♻ ' + t('sync.systemdTitle') + '</div>' +
+          '<div class="svc-row"><span class="svc-label">' + t('sync.serviceName') + '</span><span class="mono">' + safe('openclaw-ai-rules-watcher') + '</span></div>' +
+          '<div class="svc-row"><span class="svc-label">' + t('sync.serviceStatus') + '</span>' + statusDot(s.systemdActive) + '</div>' +
+          '<div class="svc-row"><span class="svc-label">' + t('sync.autoStart') + '</span>' + (s.systemdEnabled ? '<span class="tag ok">' + t('status.enabled') + '</span>' : '<span class="tag warn">' + t('status.notEnabled') + '</span>') + '</div>' +
+        '</div>' +
+        '<div class="svc-card">' +
+          '<div class="svc-title">👁 ' + t('sync.inotifyTitle') + '</div>' +
+          '<div class="svc-row"><span class="svc-label">' + t('sync.runStatus') + '</span>' + statusDot(s.inotifyRunning) + '</div>' +
+          '<div class="svc-row"><span class="svc-label">PID</span><span class="mono">' + (s.inotifyPid ?? '-') + '</span></div>' +
+          '<div class="svc-row"><span class="svc-label">' + t('sync.listenDir') + '</span><span class="mono">software, shared-skills, skills</span></div>' +
+        '</div>';
+
+      var rdr = s.rootDirRules || [];
+      $('syncRootDirTable').innerHTML =
+        '<thead><tr><th>' + t('th.directory') + '</th><th>' + t('th.path') + '</th><th>' + t('th.ruleEntry') + '</th><th>' + t('th.allCovered') + '</th><th>' + t('th.entryState') + '</th></tr></thead>' +
+        '<tbody>' + rdr.map(function(d) {
+          return '<tr><td><span class="tag">' + safe(d.name) + '</span></td><td class="mono">' + safe(d.path) + '</td><td>' + d.ruleEntriesPresent + '/' + d.ruleEntriesTotal + '</td><td>' + badge(d.allRuleEntriesPresent) + '</td><td>' + entryStateTag(d) + '</td></tr>';
+        }).join('') + '</tbody>';
+
+      $('syncLog').textContent = s.lastSyncLog || t('sync.noLog');
+    }
+
+    // --- Nav Status Indicators ---
+    // --- 页签右槽计数器（v2.19.0 外壳统一：与软件管理「共 N 个 · 更新于 H:MM」同构）---
+    function updateTabsAside(data) {
+      var el = document.getElementById('tabsAside');
+      if (!el) return;
+      if (!data) { el.textContent = ''; return; }
+      var active = document.querySelector('.oc-tab.active');
+      var key = active ? active.dataset.tab : 'overview';
+      var s = data.summary || {};
+      var txt;
+      if (key === 'projects') {
+        var ps = data.projects || [];
+        var okp = ps.filter(function(p) { return p.allRuleEntriesPresent; }).length;
+        txt = '共 ' + ps.length + ' 个项目 · 覆盖 ' + okp + '/' + ps.length;
+      } else if (key === 'hooks') {
+        var hq = (data.hooks || {}).quick || {};
+        var hp = [hq.hookPathConfigured, hq.scriptExists, hq.scriptExecutable, hq.syntaxOk].filter(Boolean).length;
+        txt = 'Hook 检查 ' + hp + '/4 项通过';
+      } else if (key === 'sync') {
+        var sy = data.syncStatus || {};
+        var sp = [sy.syncScriptExists, sy.watchScriptExists, sy.systemdActive, sy.inotifyRunning].filter(Boolean).length;
+        txt = '同步服务 ' + sp + '/4 项就绪';
+      } else {
+        txt = '共 ' + (s.projectCount || 0) + ' 个项目';
+      }
+      el.textContent = txt;
+    }
+
+    function updateNavStatus(data) {
+      var setStatus = function(id, ok) {
+        var el = $(id);
+        if (!el) return;
+        el.className = 'nav-status' + (ok === null ? '' : ok ? '' : ' fail');
+      };
+      var s = data.summary || {};
+      setStatus('navStatus-overview', s.overall === 'pass');
+      setStatus('navStatus-projects', (s.projectsMissingRules ?? 0) === 0);
+      var h = data.hooks?.quick || {};
+      setStatus('navStatus-hooks', h.hookPathConfigured && h.scriptExists && h.scriptExecutable && h.syntaxOk);
+      var sy = data.syncStatus || {};
+      setStatus('navStatus-sync', sy.systemdActive && sy.inotifyRunning);
+    }
+
+    // --- 检测状态条 / 按钮反馈（v37）---
+    var checkTimer = null;
+    var checkState = { mode: 'quick', busy: false, error: null };
+
+    function setCheckStatus(kind, text) {
+      var box = $('checkStatus');
+      if (!box) return;
+      box.className = 'check-status' + (kind ? ' ' + kind : '');
+      $('checkStatusText').textContent = text;
+    }
+
+    function renderCheckStatusIdle() {
+      if (checkState.busy) return;
+      if (checkState.error) {
+        setCheckStatus('fail', t('check.failed', { time: checkState.time, mode: t('mode.' + checkState.mode), error: checkState.error }));
+      } else if (checkState.time) {
+        setCheckStatus('', t('check.done', {
+          time: checkState.time, mode: t('mode.' + checkState.mode), overall: checkState.overall,
+          pass: checkState.pass, total: checkState.total, projects: checkState.projects,
+        }));
+      } else {
+        setCheckStatus('', t('check.idle'));
+      }
+    }
+
+    // 当前模式的选中态：此前 quickBtn 恒带 .primary，点「深度检测」页面毫无视觉变化
+    function setActiveMode(mode) {
+      [['quickBtn', 'quick'], ['deepBtn', 'deep']].forEach(function(pair) {
+        var b = $(pair[0]);
+        if (b) b.classList.toggle('primary', pair[1] === mode);
+      });
+    }
+
+    function setBtnLoading(ids, loading) {
+      ids.forEach(function(id) {
+        var b = $(id);
+        if (!b) return;
+        b.classList.toggle('loading', loading);
+        b.disabled = loading;
+        var lb = b.querySelector('.btn-label');
+        if (!lb) return;
+        if (loading) {
+          if (!lb.dataset.idleText) lb.dataset.idleText = lb.textContent;
+          lb.textContent = t('btn.checking');
+        } else {
+          var key = lb.getAttribute('data-i18n');
+          var idle = key ? t(key) : '';
+          if (!key || idle === key) idle = lb.dataset.idleText || lb.textContent;
+          lb.textContent = idle;
+        }
+      });
+    }
+
+    // --- Load / Trigger ---
+    async function load(mode, opts) {
+      if (checkState.busy) return;              // 防重复点击
+      var silent = Boolean(opts && opts.silent);
+      checkState.mode = mode;
+      checkState.busy = true;
+      setActiveMode(mode);                      // ① 立刻高亮被点的按钮
+      // ② 只有「被点的那一个」转圈 + 文案变化，另一个仅置灰（此前两个都显示"检测中…"，看不出点的是哪个）
+      var allCheck = ['quickBtn', 'deepBtn', 'deepBtn2'];
+      var activeIds = mode === 'deep' ? ['deepBtn', 'deepBtn2'] : ['quickBtn'];
+      allCheck.forEach(function(id) { var el = $(id); if (el) el.disabled = true; });
+      setBtnLoading(activeIds, true);
+      $('foot').textContent = t('foot.checking', { mode: t('mode.' + mode) });
+
+      var t0 = Date.now();
+      var tick = function() {
+        setCheckStatus('busy', t('check.busy', { mode: t('mode.' + mode), secs: Math.round((Date.now() - t0) / 1000) }));
+      };
+      tick();
+      checkTimer = setInterval(tick, 1000);     // ③ 状态条跑秒表（有反应 = 看得见）
+
+      var limitSec = mode === 'deep' ? 180 : 60; // ④ 超时兜底，避免按钮永久禁用
+      var ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+      var to = setTimeout(function() { if (ctrl) ctrl.abort(); }, limitSec * 1000);
+
+      try {
+        var resp = await fetch('/api/check?mode=' + mode, { cache: 'no-store', signal: ctrl ? ctrl.signal : undefined });
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        var data = await resp.json();
+        lastData = data;
+        renderOverview(data);
+        renderProjectSummary(data);
+        renderProjects(data);
+        renderHooks(data);
+        renderSyncService(data);
+        updateNavStatus(data);
+        updateTabsAside(data);
+        checkState.error = null;
+        checkState.time = new Date(data.generatedAt).toLocaleString();
+        checkState.overall = String(data.summary.overall).toUpperCase();
+        checkState.pass = data.summary.passCount;
+        checkState.total = data.summary.totalChecks;
+        checkState.projects = data.summary.projectCount;
+        $('foot').textContent = t('foot.lastUpdate', { time: checkState.time, mode: data.mode });
+        if (!silent) {
+          showToast(t('toast.checkDoneTitle'), t('toast.checkDoneBody', {   // ⑤ 结果 toast
+            mode: t('mode.' + data.mode), overall: checkState.overall,
+            pass: checkState.pass, total: checkState.total,
+          }), false);
+        }
+      } catch (err) {
+        var msg = (err && err.name === 'AbortError')
+          ? t('toast.checkTimeout', { secs: limitSec })
+          : String((err && err.message) || err);
+        checkState.error = msg;
+        checkState.time = new Date().toLocaleString();
+        $('foot').textContent = t('foot.checkFailed', { error: msg });
+        showToast(t('toast.checkFailTitle'), t('toast.checkFailBody', {   // ⑥ 失败不再静默
+          error: msg,
+        }), true);
+      } finally {
+        clearInterval(checkTimer);
+        clearTimeout(to);
+        checkState.busy = false;
+        setBtnLoading(activeIds, false);
+        allCheck.forEach(function(id) { var el = $(id); if (el) el.disabled = false; });
+        renderCheckStatusIdle();
+      }
+    }
+
+    async function triggerSync() {
+      var btns = [document.getElementById('syncTriggerBtn'), document.getElementById('syncTriggerBtn2')];
+      btns.forEach(function(b) { if (b) b.disabled = true; });
+      $('foot').textContent = t('foot.syncing');
+      try {
+        var resp = await fetch('/api/sync/trigger', { method: 'POST', cache: 'no-store' });
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        var result = await resp.json();
+        $('syncLog').textContent = [
+          '[' + new Date(result.triggeredAt).toLocaleString() + '] ' + t('log.manualSyncComplete'),
+          result.exitCode === 0 ? t('log.statusSuccess') : t('log.statusFailed', { code: result.exitCode }),
+          result.error ? t('log.error', { error: result.error }) : '',
+          t('log.output'),
+          result.output || t('log.noOutput'),
+        ].join('\n');
+        $('foot').textContent = t('foot.syncComplete');
+        await load('quick');
+      } catch (err) {
+        $('foot').textContent = t('foot.syncFailed', { error: err.message });
+      } finally {
+        btns.forEach(function(b) { if (b) b.disabled = false; });
+      }
+    }
+
+    async function refreshSyncOnly() {
+      $('foot').textContent = t('foot.refreshingSync');
+      try {
+        var resp = await fetch('/api/sync/status', { cache: 'no-store' });
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        var s = await resp.json();
+        if (lastData) {
+          lastData.syncStatus = s;
+          renderSyncService(lastData);
+        }
+        $('foot').textContent = t('foot.syncRefreshed', { time: new Date().toLocaleString() });
+      } catch (err) {
+        $('foot').textContent = t('foot.refreshFailed', { error: err.message });
+      }
+    }
+
+    // --- Modal & Bootstrap ---
+    function showToast(title, body, isError) {
+      var toast = document.createElement('div');
+      toast.className = 'toast oc-toast oc-toast-' + (isError ? 'error' : 'success');
+      var titleEl = document.createElement('div');
+      titleEl.className = 'toast-title';
+      titleEl.textContent = title;
+      var bodyEl = document.createElement('div');
+      bodyEl.className = 'toast-body';
+      bodyEl.textContent = body;
+      toast.appendChild(titleEl);
+      toast.appendChild(bodyEl);
+      document.body.appendChild(toast);
+      setTimeout(function() {
+        toast.classList.add('oc-toast-exit');
+        setTimeout(function() { toast.remove(); }, 300);
+      }, 4700);
+    }
+
+    function openPromptModal(prompt) {
+      $('promptText').value = prompt;
+      $('promptModal').classList.add('active');
+    }
+    function closePromptModal() {
+      $('promptModal').classList.remove('active');
+    }
+    $('promptModalClose').addEventListener('click', closePromptModal);
+    $('closePromptBtn').addEventListener('click', closePromptModal);
+    $('promptModal').addEventListener('click', function(e) { if (e.target === $('promptModal')) closePromptModal(); });
+    $('copyPromptBtn').addEventListener('click', async function() {
+      try {
+        await navigator.clipboard.writeText($('promptText').value);
+        showToast(t('toast.copied'), t('toast.promptCopied'));
+      } catch {
+        $('promptText').select();
+        document.execCommand('copy');
+        showToast(t('toast.copied'), t('toast.promptCopied'));
+      }
+    });
+
+    async function fetchPrompt(project, label, types) {
+      try {
+        var typesParam = types.join(',');
+        var resp = await fetch('/api/projects/' + encodeURIComponent(project) + '/' + encodeURIComponent(label) + '/prompt?types=' + typesParam, { cache: 'no-store' });
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        var data = await resp.json();
+        openPromptModal(data.prompt);
+      } catch (err) {
+        showToast(t('toast.promptFetchFailed'), err.message, true);
+      }
+    }
+
+    async function doBootstrap(project, label, types) {
+      $('foot').textContent = t('foot.bootstrapping', { project: project, types: types.join(', ') });
+      try {
+        var resp = await fetch('/api/projects/bootstrap', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ project: project, label: label, types: types }),
+        });
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        var result = await resp.json();
+        var created = result.results.filter(function(r) { return r.created; });
+        var skipped = result.results.filter(function(r) { return !r.created; });
+        var lines = [
+          t('toast.created', { items: created.map(function(r) { return r.type; }).join(', ') || t('toast.none') }),
+          skipped.length ? t('toast.skipped', { items: skipped.map(function(r) { return r.type + '(' + r.reason + ')'; }).join(', ') }) : '',
+        ].filter(Boolean);
+        showToast(t('toast.bootstrapComplete'), lines.join('\n'));
+        await load('quick');
+      } catch (err) {
+        showToast(t('toast.bootstrapFailed'), err.message, true);
+        $('foot').textContent = t('foot.checkFailed', { error: err.message });
+      }
+    }
+
+    function attachProjectActions() {
+      document.querySelectorAll('[data-action="bootstrap"]').forEach(function(btn) {
+        btn.addEventListener('click', async function(e) {
+          e.stopPropagation();
+          var project = btn.dataset.project;
+          var label = btn.dataset.label;
+          var types = JSON.parse(btn.dataset.types || '[]');
+          await doBootstrap(project, label, types);
+        });
+      });
+      document.querySelectorAll('[data-action="prompt"]').forEach(function(btn) {
+        btn.addEventListener('click', async function(e) {
+          e.stopPropagation();
+          var project = btn.dataset.project;
+          var label = btn.dataset.label;
+          var types = JSON.parse(btn.dataset.types || '[]');
+          await fetchPrompt(project, label, types);
+        });
+      });
+    }
+
+    async function batchBootstrapMissing() {
+      if (!lastData) return;
+      var missing = (lastData.projects || []).filter(function(p) { return p.missing.length > 0; });
+      if (!missing.length) {
+        showToast(t('toast.noBootstrapNeeded'), t('toast.allDocsComplete'));
+        return;
+      }
+      var mapMissingType = function(m) { return ({ changelog: 'CHANGELOG', WHITEPAPER: 'WHITEPAPER', README: 'README' })[m]; };
+      for (var i = 0; i < missing.length; i++) {
+        var p = missing[i];
+        var types = p.missing.map(mapMissingType).filter(Boolean);
+        if (types.length) {
+          await doBootstrap(p.project, p.label, types);
+        }
+      }
+      showToast(t('toast.batchComplete'), t('toast.processed', { n: missing.length }));
+    }
+
+    // --- Init ---
+    initTabs();
+    initProjectFilter();
+    $('quickBtn').addEventListener('click', function() { load('quick'); });
+    $('deepBtn').addEventListener('click', function() { load('deep'); });
+    $('deepBtn2').addEventListener('click', function() { load('deep'); });
+    $('syncTriggerBtn').addEventListener('click', triggerSync);
+    $('syncTriggerBtn2').addEventListener('click', triggerSync);
+    $('refreshSyncBtn').addEventListener('click', refreshSyncOnly);
+    $('batchBootstrapBtn').addEventListener('click', batchBootstrapMissing);
+    setLang(currentLang);
+    setActiveMode('quick');
+    renderCheckStatusIdle();
+    load('quick', { silent: true });   // 首屏静默检测：不弹 toast，但状态条有反馈
+  </script>
+
+
+
+</body>
+</html>

@@ -1,0 +1,21 @@
+{
+  "id": "file-manager",
+  "displayName": "File Manager",
+  "description": "File management and browser",
+  "type": "openclaw-app",
+  "navSection": "system",
+  "integration": "native",
+  "mountPath": "/apps/file-manager",
+  "embedPath": "/",
+  "healthPath": "/",
+  "apiPrefix": "/api/file-manager",
+  "capabilities": [
+    "files",
+    "browse",
+    "upload"
+  ],
+  "showInNav": true,
+  "nativeReady": false,
+  "standalone": true,
+  "order": 30
+}

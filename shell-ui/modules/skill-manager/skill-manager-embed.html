@@ -1,0 +1,1217 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Skill Manager - OpenClaw</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+
+/* ─── Theme Variables ─── */
+:root{
+  color-scheme: light dark;
+  --bg: var(--oc-bg-canvas);
+  --bg2: var(--oc-bg-surface);
+  --bg3: var(--oc-bg-elevated);
+  --bg-card: var(--oc-bg-surface);
+  --bg-hover: var(--oc-bg-muted);
+  --border: var(--oc-border);
+  --border-glow: var(--oc-accent-ring);
+  --text: var(--oc-text-primary);
+  --text2: var(--oc-text-secondary);
+  --muted: var(--oc-text-tertiary);
+  --accent: var(--oc-accent);
+  --accent2: var(--oc-accent-hover);
+  --accent-glow: var(--oc-accent-ring);
+  --green: var(--oc-success);
+  --red: var(--oc-danger);
+  --yellow: var(--oc-warning);
+  --purple: var(--oc-purple);
+  --blue: var(--oc-accent);
+  --cyan: var(--oc-cyan);
+  --radius: var(--oc-radius-lg);
+  --shadow-sm: var(--oc-shadow-sm);
+  --shadow-md: var(--oc-shadow-md);
+  --shadow-glow: 0 0 0 4px var(--oc-accent-ring);
+  --overlay-bg: var(--oc-bg-overlay);
+  --code-bg: var(--oc-bg-muted);
+  --invert: 0;
+}
+
+/* Smooth theme transition */
+*,*::before,*::after{transition:background-color .3s ease,border-color .3s ease,color .2s ease,box-shadow .3s ease}
+
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);padding:var(--oc-page-pad-y) var(--oc-page-pad-x);overflow-x:hidden;min-height:100vh}
+body.embed-mode{padding:16px}
+
+
+.tab-panel{display:none;animation:fadeIn .3s ease}
+.tab-panel.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* Docs panel */
+.docs-panel{font-size:var(--oc-text-md);line-height:1.8}
+.docs-panel h3{font-size:var(--oc-text-xl);margin:16px 0 8px;color:var(--accent);display:flex;align-items:center;gap:8px}
+.docs-panel p{margin-bottom:8px;color:var(--text2)}
+.docs-panel code{background:var(--bg3);padding:2px 6px;border-radius:4px;font-size:var(--oc-text-sm);color:var(--cyan);border:1px solid var(--border)}
+.docs-panel .doc-section{background:linear-gradient(145deg,var(--bg-card),var(--bg2));border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:14px;transition:all .2s;box-shadow:var(--shadow-sm)}
+.docs-panel .doc-section:hover{border-color:var(--border-glow);box-shadow:var(--shadow-md)}
+::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:var(--bg3)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--muted)}
+.page-header{margin-bottom:36px;position:relative;padding-bottom:20px;border-bottom:1px solid var(--border)}
+.page-header::after{content:'';position:absolute;bottom:-1px;left:0;width:100px;height:2px;background:linear-gradient(90deg,var(--accent),var(--purple),transparent);border-radius:2px}
+.page-title{font-size:var(--oc-text-5xl);font-weight:800;letter-spacing:-.03em;margin-bottom:10px;background:linear-gradient(135deg,var(--text) 0%,var(--accent) 50%,var(--purple) 100%);background-clip:text;-webkit-background-clip:text;-webkit-text-fill-color:transparent;text-shadow:0 0 60px var(--oc-accent-ring)}
+body.embed-mode .page-title{font-size:var(--oc-text-3xl);margin-bottom:8px}
+.page-subtitle{color:var(--text2);font-size:var(--oc-text-lg);font-weight:400;letter-spacing:.02em}
+
+/* Top stats */
+.stats-bar{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:24px}
+.stat-val{font-size:var(--oc-text-4xl);font-weight:800;letter-spacing:-.02em}
+
+/* Toolbar */
+/* .toolbar migrated to .oc-toolbar */
+/* .toolbar input/select migrated to .oc-input/.oc-select */
+/* Source filters use shared .oc-tabs/.oc-tab/.oc-badge. */
+
+/* Skill grid */
+.skill-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;margin-bottom:24px}
+.sm-skill-tile{background:linear-gradient(145deg,var(--bg-card),var(--bg2));border:1px solid var(--border);border-radius:var(--radius);padding:20px;cursor:pointer;transition:all .25s ease;position:relative;overflow:hidden;box-shadow:var(--shadow-sm)}
+.sm-skill-tile::before{content:'';position:absolute;top:0;left:0;right:0;height:0;background:linear-gradient(90deg,var(--accent),var(--purple));transition:height .25s ease;border-radius:var(--radius) var(--radius) 0 0}
+.sm-skill-tile::after{content:'';position:absolute;bottom:0;left:0;right:0;height:0;background:linear-gradient(0deg,var(--oc-accent-ring),transparent);transition:height .3s ease;pointer-events:none}
+.sm-skill-tile:hover{border-color:var(--oc-accent-ring);box-shadow:var(--shadow-glow);transform:translateY(-4px)}
+.sm-skill-tile:hover::before{height:3px}
+.sm-skill-tile:hover::after{height:60px}
+.sm-skill-tile .emoji{font-size:var(--oc-text-4xl);margin-bottom:10px;display:block;transition:transform .25s ease}
+.sm-skill-tile:hover .emoji{transform:scale(1.1)}
+.sm-skill-tile .name{font-size:var(--oc-text-xl);font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:8px;letter-spacing:-.01em}
+.sm-skill-tile .desc{font-size:var(--oc-text-md);color:var(--text2);margin-bottom:10px;line-height:1.5;max-height:40px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.sm-skill-tile .sm-badge-row{display:flex;gap:6px;flex-wrap:wrap}
+.sm-skill-tile .path{font-size:var(--oc-text-xs);color:var(--muted);margin-top:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;padding-top:10px;border-top:1px solid var(--border)}
+.health-dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.health-dot.h90{background:var(--green)}.health-dot.h60{background:var(--yellow)}.health-dot.h0{background:var(--red)}
+
+/* Modal */
+.modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:var(--overlay-bg);backdrop-filter:blur(4px);z-index:1000;align-items:center;justify-content:center;opacity:0;transition:opacity .3s ease}
+.modal-overlay.show{display:flex;opacity:1}
+.modal{background:linear-gradient(145deg,var(--bg-card),var(--bg2));border:1px solid var(--border);border-radius:16px;width:90%;max-width:720px;max-height:85vh;overflow-y:auto;padding:28px;position:relative;box-shadow:0 24px 48px var(--oc-bg-overlay),0 0 0 1px var(--oc-border);transform:scale(.95);transition:transform .3s ease}
+.modal-overlay.show .modal{transform:scale(1)}
+.modal-close{position:absolute;top:16px;right:20px;font-size:var(--oc-text-3xl);cursor:pointer;color:var(--muted);background:none;border:none;width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:8px;transition:all .2s}
+.modal-close:hover{color:var(--text);background:var(--bg-hover)}
+.modal h2{font-size:var(--oc-text-3xl);margin-bottom:16px;font-weight:700;letter-spacing:-.01em}
+.modal .meta-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
+.modal .meta-item{font-size:var(--oc-text-sm);padding:8px 12px;background:var(--bg3);border-radius:8px;border:1px solid var(--border)}.meta-key{color:var(--muted);font-size:var(--oc-text-xs);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px}.meta-val{color:var(--text);font-weight:500}
+.modal .md-content{background:var(--code-bg);border-radius:10px;padding:18px;font-size:var(--oc-text-md);line-height:1.7;white-space:pre-wrap;max-height:320px;overflow-y:auto;font-family:'JetBrains Mono','Fira Code',monospace;border:1px solid var(--border)}
+.modal .actions{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}
+
+/* Theme toggle */
+.theme-toggle{position:fixed;top:20px;right:20px;z-index:100;width:40px;height:40px;border-radius:50%;border:1px solid var(--border);background:var(--bg2);color:var(--text2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:var(--oc-text-2xl);transition:all .3s ease;box-shadow:var(--shadow-sm)}
+.theme-toggle:hover{background:var(--bg-hover);color:var(--accent);transform:scale(1.1);box-shadow:var(--shadow-md)}
+.theme-toggle:active{transform:scale(.95)}
+:root .theme-toggle .sun{display:none}
+:root .theme-toggle .moon{display:inline}
+
+/* Toast */
+.toast{position:fixed;top:24px;right:24px;padding:14px 22px;border-radius:10px;font-size:var(--oc-text-md);z-index:2000;animation:slideIn .4s cubic-bezier(.16,1,.3,1);max-width:420px;font-weight:500;box-shadow:var(--shadow-md);backdrop-filter:blur(8px)}
+.toast.success{background:var(--oc-success-soft);border:1px solid var(--oc-success-soft);color:var(--green);box-shadow:0 8px 24px var(--oc-success-soft)}
+.toast.error{background:var(--oc-danger-soft);border:1px solid var(--oc-danger-soft);color:var(--red);box-shadow:0 8px 24px var(--oc-danger-soft)}
+.toast.info{background:var(--oc-accent-soft);border:1px solid var(--oc-accent-soft);color:var(--blue);box-shadow:0 8px 24px var(--oc-accent-soft)}
+@keyframes slideIn{from{transform:translateX(120px);opacity:0}to{transform:translateX(0);opacity:1}}
+
+/* Size bar */
+.size-bar{height:8px;border-radius:4px;background:var(--bg3);margin-top:8px;overflow:hidden;box-shadow:inset 0 1px 2px var(--oc-bg-overlay)}
+.size-bar-fill{height:100%;border-radius:4px;transition:width .6s cubic-bezier(.16,1,.3,1)}
+.size-bar .core{background:linear-gradient(90deg,var(--accent),var(--accent2));float:left}.size-bar .nm{background:linear-gradient(90deg,var(--red),var(--oc-danger));float:left}
+
+/* Deps view */
+.dep-tree{font-size:var(--oc-text-md);line-height:1.8;padding:16px;background:var(--bg3);border-radius:10px;border:1px solid var(--border)}
+.dep-tree .dep-item{padding:4px 0;border-bottom:1px solid var(--oc-border)}.dep-tree .dep-item:last-child{border-bottom:none}
+.dep-tree .dep-arrow{color:var(--accent);margin:0 8px;font-weight:700}
+.dep-tree .missing{color:var(--red);font-weight:500}
+
+/* Loading & Empty states */
+.loading-state{text-align:center;padding:60px 20px;color:var(--muted)}
+.loading-state::after{content:'';display:inline-block;width:24px;height:24px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;margin-left:10px;vertical-align:middle}
+@keyframes spin{to{transform:rotate(360deg)}}
+/* Skill Manager: filter controls in one row, action chips/buttons on next row */
+.skill-manager .oc-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.skill-manager .sm-filter-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: nowrap;
+}
+.skill-manager .sm-filter-group #searchInput {
+  flex: 1 1 180px;
+  min-width: 160px;
+  max-width: 320px;
+  width: auto;
+}
+.skill-manager .sm-filter-group #catFilter,
+.skill-manager .sm-filter-group #statusFilter {
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 120px;
+  max-width: 160px;
+}
+.skill-manager .toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-left: 0;
+  flex: 1 1 100%;
+}
+
+/* Skill Manager: calmer card hover, match standard oc-card */
+.skill-manager .sm-skill-tile {
+  transition: border-color .2s ease, box-shadow .2s ease, transform .2s ease;
+}
+.skill-manager .sm-skill-tile:hover {
+  border-color: var(--oc-border-hover);
+  box-shadow: var(--oc-shadow-md);
+  transform: translateY(-2px);
+}
+.skill-manager .sm-skill-tile:hover::before,
+.skill-manager .sm-skill-tile:hover::after {
+  height: 0;
+}
+.skill-manager .sm-skill-tile:hover .emoji {
+  transform: none;
+}
+
+.skill-manager .sm-loading { text-align:center; padding:20px; color:var(--muted); }
+.skill-manager .sm-disk-desc { font-size:var(--oc-text-sm); margin:4px 0; color:var(--text2); }
+.skill-manager .sm-modal-desc { font-size:var(--oc-text-md); color:var(--text2); margin-bottom:12px; }
+.skill-manager .sm-meta-val { font-size:var(--oc-text-2xs); word-break:break-all; }
+.skill-manager .sm-details { margin-top:8px; width:100%; }
+.skill-manager .sm-details summary { font-size:var(--oc-text-xs); color:var(--muted); cursor:pointer; }
+.skill-manager .sm-flex-gap { display:flex; gap:6px; margin-top:6px; flex-wrap:wrap; }
+.skill-manager .sm-text-green { color:var(--green); }
+.skill-manager .sm-text-red { color:var(--red); }
+.skill-manager .sm-text-blue { color:var(--blue); }
+.skill-manager .sm-text-yellow { color:var(--yellow); }
+.skill-manager .sm-text-muted { color:var(--muted); }
+.skill-manager .sm-tags { margin-bottom:8px; }
+.skill-manager .sm-empty-error { color:var(--red); }
+.skill-manager .sm-stat-blue { --oc-stat-color:var(--blue); }
+.skill-manager .sm-stat-green { --oc-stat-color:var(--green); }
+.skill-manager .sm-stat-purple { --oc-stat-color:var(--purple); }
+.skill-manager .sm-stat-yellow { --oc-stat-color:var(--yellow); }
+.skill-manager .sm-stat-cyan { --oc-stat-color:var(--cyan); }
+.skill-manager .sm-stat-red { --oc-stat-color:var(--red); }
+.skill-manager .sm-update-section { margin:12px 0; }
+.skill-manager .sm-update-section-lg { margin:16px 0 8px; }
+.skill-manager .sm-update-text { font-size:var(--oc-text-sm); line-height:1.8; }
+.skill-manager .sm-update-row { padding:6px 0; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
+.skill-manager .sm-update-code { color:var(--accent); }
+.skill-manager .sm-mt-16 { margin-top:16px; }
+
+@media (max-width: 720px) {
+  .skill-manager .sm-filter-group {
+    flex-wrap: wrap;
+  }
+  .skill-manager .sm-filter-group #searchInput,
+  .skill-manager .sm-filter-group #catFilter,
+  .skill-manager .sm-filter-group #statusFilter {
+    flex: 1 1 100%;
+    max-width: none;
+  }
+}
+</style>
+  <link rel="stylesheet" href="/unified-theme.css?v=20261010-fm-docs-real-pct">
+  <link rel="stylesheet" href="/unified-components.css?v=20261010-fm-docs-real-pct">
+
+
+<link rel="stylesheet" href="/cockpit-ui-polish.css?v=20261010-fm-docs-real-pct">
+</head>
+<body class="skill-manager">
+<div id="app">
+  <div class="page-header">
+    <h1 class="page-title" data-i18n="page.title">🛠️ Skill Manager</h1>
+    <p class="page-subtitle" data-i18n="page.subtitle">OpenClaw 技能管理面板</p>
+  </div>
+
+  <div class="oc-tabs oc-tabs-underline">
+    <button class="oc-tab active" data-tab="list" data-i18n="tab.list">📋 列表</button>
+    <button class="oc-tab" data-tab="docs" data-i18n="tab.docs">📖 模块说明</button>
+  </div>
+
+  <div class="tab-panel active" id="tabList">
+    <div class="oc-stat-grid" id="statsBar"></div>
+
+    <div class="oc-toolbar">
+      <div class="sm-filter-group">
+        <input type="text" id="searchInput" class="oc-input" data-i18n="search.placeholder" placeholder="搜索技能...">
+        <select id="catFilter" class="oc-select"><option value="all">全部分类</option></select>
+        <select id="statusFilter" class="oc-select"><option value="all">全部状态</option></select>
+      </div>
+      <div class="toolbar-actions">
+        <div class="oc-tabs" id="viewChips">
+          <button class="oc-tab active" data-view="grid" data-i18n="view.grid">卡片</button>
+          <button class="oc-tab" data-view="size" data-i18n="view.size">磁盘</button>
+          <button class="oc-tab" data-view="deps" data-i18n="view.deps">依赖</button>
+        </div>
+        <button class="oc-btn oc-btn-secondary" id="btnVerify" data-i18n="btn.verify">✓ 验证</button>
+        <button class="oc-btn oc-btn-secondary" id="btnFix" data-i18n="btn.fix">🔧 修复</button>
+        <button class="oc-btn oc-btn-secondary" id="btnOutdated" data-i18n="btn.outdated">⬆ 更新检查</button>
+        <button class="oc-btn oc-btn-secondary" id="btnRegistry" data-i18n="btn.registry">📋 刷新注册表</button>
+        <button class="oc-btn oc-btn-secondary" id="btnEnrich" data-i18n="btn.enrich">✨ 补全元数据</button>
+      </div>
+    </div>
+
+    <div class="oc-tabs" id="srcChips"></div>
+
+    <div id="skillView"></div>
+  </div>
+
+  <div class="tab-panel" id="tabDocs">
+    <div class="docs-panel">
+      <div class="doc-section">
+        <h3 data-i18n="docs.overview">🔍 功能概览</h3>
+        <p data-i18n="docs.overview.desc">Skill Manager 是 OpenClaw 的技能管理面板，用于查看、筛选、验证和维护所有技能。</p>
+        <p data-i18n="docs.overview.total"><code>总技能</code> — 扫描到的所有技能总数（含系统内置、扩展插件、工作空间、本地等来源）</p>
+        <p data-i18n="docs.overview.withMeta"><code>有元数据</code> — 拥有 <code>_meta.json</code> 或 SKILL.md 前区信息的技能数</p>
+        <p data-i18n="docs.overview.withDeps"><code>有依赖</code> — 声明了外部依赖（dependencies）的技能数</p>
+        <p data-i18n="docs.overview.disk"><code>磁盘占用</code> — 所有技能目录的总大小</p>
+      </div>
+      <div class="doc-section">
+        <h3 data-i18n="docs.filter">🎛️ 筛选与视图</h3>
+        <p data-i18n="docs.filter.search"><strong>搜索框</strong> — 按技能名称、ID 或描述模糊搜索</p>
+        <p data-i18n="docs.filter.category"><strong>分类下拉</strong> — 按技能分类（AI 学习、监控、搜索等）筛选</p>
+        <p data-i18n="docs.filter.status"><strong>状态下拉</strong> — 按服务状态筛选（运行中 / 已停止 / 就绪）</p>
+        <p data-i18n="docs.filter.source"><strong>来源 Chips</strong> — 按技能来源（系统内置、扩展插件、ClawdHub 等）筛选</p>
+        <p data-i18n="docs.filter.grid"><strong>卡片视图</strong> — 网格卡片展示技能信息（名称、描述、版本、状态、来源）</p>
+        <p data-i18n="docs.filter.size"><strong>磁盘视图</strong> — 展示各技能的磁盘占用，含核心文件与 node_modules 占比</p>
+        <p data-i18n="docs.filter.deps"><strong>依赖视图</strong> — 展示技能之间的依赖关系图</p>
+      </div>
+      <div class="doc-section">
+        <h3 data-i18n="docs.actions">🛠️ 操作按钮</h3>
+        <p data-i18n="docs.actions.verify"><strong>✓ 验证</strong> — 运行 <code>skill-manager.py verify</code> 检查所有技能完整性</p>
+        <p data-i18n="docs.actions.fix"><strong>🔧 修复</strong> — 运行 <code>skill-manager.py verify --fix</code> 自动修复可修复问题</p>
+        <p data-i18n="docs.actions.outdated"><strong>⬆ 更新检查</strong> — 检查所有技能是否有上游更新，支持 ClawdHub / GitHub / PyPI 来源</p>
+        <p data-i18n="docs.actions.registry"><strong>📋 刷新注册表</strong> — 运行 <code>skill-manager.py registry</code> 重新生成注册表</p>
+        <p data-i18n="docs.actions.enrich"><strong>✨ 补全元数据</strong> — 运行 <code>skill-manager.py enrich</code> 补全缺失的元数据</p>
+      </div>
+      <div class="doc-section">
+        <h3 data-i18n="docs.detail">📦 技能详情弹窗</h3>
+        <p data-i18n="docs.detail.desc">点击任意技能卡片可打开详情弹窗，包含：</p>
+        <p data-i18n="docs.detail.basic">• 技能基本信息（ID、名称、描述、版本、分类、来源）</p>
+        <p data-i18n="docs.detail.status">• 服务状态（运行中 / 已停止 / 就绪，带颜色圆点标识）</p>
+        <p data-i18n="docs.detail.disk">• 磁盘大小与路径</p>
+        <p data-i18n="docs.detail.usedBy">• 使用者（哪些 Agent 配置了此技能）</p>
+        <p data-i18n="docs.detail.deps">• 依赖列表</p>
+        <p data-i18n="docs.detail.ops">• 操作：<code>检查更新</code>、<code>同步最新</code>、<code>验证此技能</code>、<code>版本号管理</code></p>
+      </div>
+      <div class="doc-section">
+        <h3 data-i18n="docs.statusColor">🎨 状态颜色说明</h3>
+        <p data-i18n="docs.statusColor.running"><span class="oc-status-dot running"></span> <strong>运行中</strong> — MCP 服务正在运行，技能可用</p>
+        <p data-i18n="docs.statusColor.stopped"><span class="oc-status-dot stopped"></span> <strong>已停止</strong> — MCP 服务已停止</p>
+        <p data-i18n="docs.statusColor.available"><span class="oc-status-dot available"></span> <strong>就绪</strong> — 不需要服务的普通技能，随时可用</p>
+      </div>
+      <div class="doc-section">
+        <h3 data-i18n="docs.dataSource">📡 数据来源说明</h3>
+        <p data-i18n="docs.dataSource.builtin"><strong>系统内置</strong> — OpenClaw npm 包自带的技能（<code>~/.npm-global/lib/node_modules/openclaw/skills</code>）</p>
+        <p data-i18n="docs.dataSource.extension"><strong>扩展插件</strong> — OpenClaw 扩展包中的技能（<code>dist/extensions</code> 与用户扩展目录）</p>
+        <p data-i18n="docs.dataSource.workspace"><strong>工作空间</strong> — Agent 工作空间目录下的技能（<code>workspace-*/skills</code>）</p>
+        <p data-i18n="docs.dataSource.local"><strong>本地</strong> — 用户本地创建的技能（<code>~/.openclaw/custom-skills</code>）</p>
+        <p data-i18n="docs.dataSource.shared"><strong>共享技能</strong> — 共享目录下的技能（<code>~/.openclaw/shared-skills</code>）</p>
+        <p data-i18n="docs.dataSource.clawhub"><strong>ClawdHub</strong> — 从 ClawdHub 安装的技能</p>
+        <p data-i18n="docs.dataSource.github"><strong>GitHub</strong> — 从 GitHub 拉取的技能</p>
+        <p data-i18n="docs.dataSource.pypi"><strong>PyPI</strong> — 从 PyPI 安装的 Python 包技能</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Detail modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <button class="modal-close" id="modalClose">&times;</button>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+const translations = {
+  zh: {
+    'page.title': '🛠️ Skill Manager',
+    'page.subtitle': 'OpenClaw 技能管理面板',
+    'tab.list': '📋 列表',
+    'tab.docs': '📖 模块说明',
+    'search.placeholder': '搜索技能...',
+    'filter.allCategories': '全部分类',
+    'filter.allStatus': '全部状态',
+    'view.grid': '卡片',
+    'view.size': '磁盘',
+    'view.deps': '依赖',
+    'btn.verify': '✓ 验证',
+    'btn.fix': '🔧 修复',
+    'btn.outdated': '⬆ 更新检查',
+    'btn.registry': '📋 刷新注册表',
+    'btn.enrich': '✨ 补全元数据',
+    'stat.total': '总技能',
+    'stat.withMeta': '有元数据',
+    'stat.withDependencies': '有依赖',
+    'stat.diskUsage': '磁盘占用',
+    'stat.categories': '分类数',
+    'stat.sourceTypes': '来源类型',
+    'cat.ai-learning': 'AI 学习',
+    'cat.monitoring': '监控',
+    'cat.search': '搜索',
+    'cat.design': '设计',
+    'cat.content': '内容',
+    'cat.media-gen': '媒体生成',
+    'cat.social': '社交',
+    'cat.browser': '浏览器',
+    'cat.devtools': '开发工具',
+    'cat.task': '任务',
+    'cat.system': '系统',
+    'cat.security': '安全',
+    'cat.other': '其他',
+    'cat.integration': '集成',
+    'cat.communication': '通信',
+    'cat.productivity': '生产力',
+    'cat.entertainment': '娱乐',
+    'cat.utility': '工具',
+    'src.builtin': '系统内置',
+    'src.extension': '扩展插件',
+    'src.custom': '用户自定义',
+    'src.workspace': '工作空间',
+    'src.shared': '共享技能',
+    'src.local': '本地',
+    'src.clawhub': 'ClawdHub',
+    'src.github': 'GitHub',
+    'src.pypi': 'PyPI',
+    'src.all': '全部',
+    'status.running': '运行中',
+    'status.stopped': '已停止',
+    'status.available': '就绪',
+    'loading': '加载中...',
+    'loadFailed': '加载失败',
+    'loadFailedMsg': '加载失败：{0}',
+    'noMatch': '无匹配技能',
+    'noDesc': '无描述',
+    'hasUpdate': '🆕 有更新',
+    'loadingDisk': '加载磁盘数据...',
+    'core': '核心',
+    'loadingDeps': '加载依赖数据...',
+    'noDeps': '暂无技能依赖关系',
+    'noDepsHint': '所有技能均未声明外部依赖',
+    'modal.source': '来源',
+    'modal.status': '状态',
+    'modal.version': '版本',
+    'modal.category': '分类',
+    'modal.path': '路径',
+    'modal.usedBy': '使用者',
+    'modal.dependencies': '依赖',
+    'modal.diskSize': '磁盘大小',
+    'modal.metadata': '元数据',
+    'modal.installed': '🏪 已安装',
+    'modal.none': '无',
+    'modal.hasYes': '✓ 有',
+    'modal.hasNo': '✗ 无',
+    'modal.checkUpdate': '🔍 检查更新',
+    'modal.syncLatest': '🔄 同步最新',
+    'modal.verifySkill': '✓ 验证此技能',
+    'modal.devVersion': '⚙️ 开发者：版本号管理',
+    'modal.patch': '补丁 (1.0.x)',
+    'modal.minor': '功能 (1.x.0)',
+    'modal.major': '主版 (x.0.0)',
+    'toast.checkingUpdate': '正在检查 {0} 的上游更新...',
+    'toast.hasUpdate': '{0} 有可用更新：{1}',
+    'toast.isLatest': '{0} 已是最新版本',
+    'toast.checkFailed': '检查失败',
+    'toast.verifying': '正在验证 {0}...',
+    'toast.verifyPass': '{0} 验证通过',
+    'toast.verifyFailed': '验证失败',
+    'toast.bumping': 'Bumping {0} {1}...',
+    'toast.bumped': '{0} bumped {1}',
+    'toast.bumpFailed': 'Bump 失败',
+    'toast.syncing': 'Syncing {0}...',
+    'toast.synced': '{0} synced',
+    'toast.syncFailed': 'Sync 失败',
+    'toast.verifyingAll': '验证中...',
+    'toast.verifyAllPass': '验证通过',
+    'toast.fixing': '修复中...',
+    'toast.fixDone': '修复完成',
+    'toast.fixFailed': '修复失败',
+    'toast.checkingUpdates': '检查更新中...',
+    'toast.allLatest': '所有技能已是最新版本',
+    'toast.refreshingRegistry': '刷新注册表...',
+    'toast.registryRefreshed': '注册表已刷新',
+    'toast.registryFailed': '刷新失败',
+    'toast.enriching': '补全元数据...',
+    'toast.enrichDone': '元数据已补全',
+    'toast.enrichFailed': '补全失败',
+    'toast.loadFailed': '加载失败',
+    'update.title': '⬆ 技能更新检查',
+    'update.found': '发现 {0} 个可更新',
+    'update.needCheck': '{0} 个需手动检查',
+    'update.noVersion': '{0} 个无版本号',
+    'update.sync': '同步',
+    'update.check': '检查',
+    'update.goClawhub': '去 ClawdHub',
+    'update.close': '关闭',
+    'docs.overview': '🔍 功能概览',
+    'docs.overview.desc': 'Skill Manager 是 OpenClaw 的技能管理面板，用于查看、筛选、验证和维护所有技能。',
+    'docs.overview.total': '<code>总技能</code> — 扫描到的所有技能总数（含系统内置、扩展插件、工作空间、本地等来源）',
+    'docs.overview.withMeta': '<code>有元数据</code> — 拥有 <code>_meta.json</code> 或 SKILL.md 前区信息的技能数',
+    'docs.overview.withDeps': '<code>有依赖</code> — 声明了外部依赖（dependencies）的技能数',
+    'docs.overview.disk': '<code>磁盘占用</code> — 所有技能目录的总大小',
+    'docs.filter': '🎛️ 筛选与视图',
+    'docs.filter.search': '<strong>搜索框</strong> — 按技能名称、ID 或描述模糊搜索',
+    'docs.filter.category': '<strong>分类下拉</strong> — 按技能分类（AI 学习、监控、搜索等）筛选',
+    'docs.filter.status': '<strong>状态下拉</strong> — 按服务状态筛选（运行中 / 已停止 / 就绪）',
+    'docs.filter.source': '<strong>来源 Chips</strong> — 按技能来源（系统内置、扩展插件、ClawdHub 等）筛选',
+    'docs.filter.grid': '<strong>卡片视图</strong> — 网格卡片展示技能信息（名称、描述、版本、状态、来源）',
+    'docs.filter.size': '<strong>磁盘视图</strong> — 展示各技能的磁盘占用，含核心文件与 node_modules 占比',
+    'docs.filter.deps': '<strong>依赖视图</strong> — 展示技能之间的依赖关系图',
+    'docs.actions': '🛠️ 操作按钮',
+    'docs.actions.verify': '<strong>✓ 验证</strong> — 运行 <code>skill-manager.py verify</code> 检查所有技能完整性',
+    'docs.actions.fix': '<strong>🔧 修复</strong> — 运行 <code>skill-manager.py verify --fix</code> 自动修复可修复问题',
+    'docs.actions.outdated': '<strong>⬆ 更新检查</strong> — 检查所有技能是否有上游更新，支持 ClawdHub / GitHub / PyPI 来源',
+    'docs.actions.registry': '<strong>📋 刷新注册表</strong> — 运行 <code>skill-manager.py registry</code> 重新生成注册表',
+    'docs.actions.enrich': '<strong>✨ 补全元数据</strong> — 运行 <code>skill-manager.py enrich</code> 补全缺失的元数据',
+    'docs.detail': '📦 技能详情弹窗',
+    'docs.detail.desc': '点击任意技能卡片可打开详情弹窗，包含：',
+    'docs.detail.basic': '• 技能基本信息（ID、名称、描述、版本、分类、来源）',
+    'docs.detail.status': '• 服务状态（运行中 / 已停止 / 就绪，带颜色圆点标识）',
+    'docs.detail.disk': '• 磁盘大小与路径',
+    'docs.detail.usedBy': '• 使用者（哪些 Agent 配置了此技能）',
+    'docs.detail.deps': '• 依赖列表',
+    'docs.detail.ops': '• 操作：<code>检查更新</code>、<code>同步最新</code>、<code>验证此技能</code>、<code>版本号管理</code>',
+    'docs.statusColor': '🎨 状态颜色说明',
+    'docs.statusColor.running': '<span class="oc-status-dot running"></span> <strong>运行中</strong> — MCP 服务正在运行，技能可用',
+    'docs.statusColor.stopped': '<span class="oc-status-dot stopped"></span> <strong>已停止</strong> — MCP 服务已停止',
+    'docs.statusColor.available': '<span class="oc-status-dot available"></span> <strong>就绪</strong> — 不需要服务的普通技能，随时可用',
+    'docs.dataSource': '📡 数据来源说明',
+    'docs.dataSource.builtin': '<strong>系统内置</strong> — OpenClaw npm 包自带的技能（<code>~/.npm-global/lib/node_modules/openclaw/skills</code>）',
+    'docs.dataSource.extension': '<strong>扩展插件</strong> — OpenClaw 扩展包中的技能（<code>dist/extensions</code> 与用户扩展目录）',
+    'docs.dataSource.workspace': '<strong>工作空间</strong> — Agent 工作空间目录下的技能（<code>workspace-*/skills</code>）',
+    'docs.dataSource.local': '<strong>本地</strong> — 用户本地创建的技能（<code>~/.openclaw/custom-skills</code>）',
+    'docs.dataSource.shared': '<strong>共享技能</strong> — 共享目录下的技能（<code>~/.openclaw/shared-skills</code>）',
+    'docs.dataSource.clawhub': '<strong>ClawdHub</strong> — 从 ClawdHub 安装的技能',
+    'docs.dataSource.github': '<strong>GitHub</strong> — 从 GitHub 拉取的技能',
+    'docs.dataSource.pypi': '<strong>PyPI</strong> — 从 PyPI 安装的 Python 包技能',
+    'theme.toggle': '切换主题'
+  },
+  en: {
+    'page.title': '🛠️ Skill Manager',
+    'page.subtitle': 'OpenClaw Skill Management Panel',
+    'tab.list': '📋 List',
+    'tab.docs': '📖 Module Docs',
+    'search.placeholder': 'Search skills...',
+    'filter.allCategories': 'All Categories',
+    'filter.allStatus': 'All Status',
+    'view.grid': 'Cards',
+    'view.size': 'Disk',
+    'view.deps': 'Dependencies',
+    'btn.verify': '✓ Verify',
+    'btn.fix': '🔧 Fix',
+    'btn.outdated': '⬆ Check Updates',
+    'btn.registry': '📋 Refresh Registry',
+    'btn.enrich': '✨ Enrich Metadata',
+    'stat.total': 'Total Skills',
+    'stat.withMeta': 'With Metadata',
+    'stat.withDependencies': 'With Dependencies',
+    'stat.diskUsage': 'Disk Usage',
+    'stat.categories': 'Categories',
+    'stat.sourceTypes': 'Source Types',
+    'cat.ai-learning': 'AI Learning',
+    'cat.monitoring': 'Monitoring',
+    'cat.search': 'Search',
+    'cat.design': 'Design',
+    'cat.content': 'Content',
+    'cat.media-gen': 'Media Gen',
+    'cat.social': 'Social',
+    'cat.browser': 'Browser',
+    'cat.devtools': 'Dev Tools',
+    'cat.task': 'Task',
+    'cat.system': 'System',
+    'cat.security': 'Security',
+    'cat.other': 'Other',
+    'cat.integration': 'Integration',
+    'cat.communication': 'Communication',
+    'cat.productivity': 'Productivity',
+    'cat.entertainment': 'Entertainment',
+    'cat.utility': 'Utility',
+    'src.builtin': 'Built-in',
+    'src.extension': 'Extension',
+    'src.custom': 'Custom',
+    'src.workspace': 'Workspace',
+    'src.shared': 'Shared',
+    'src.local': 'Local',
+    'src.clawhub': 'ClawdHub',
+    'src.github': 'GitHub',
+    'src.pypi': 'PyPI',
+    'src.all': 'All',
+    'status.running': 'Running',
+    'status.stopped': 'Stopped',
+    'status.available': 'Ready',
+    'loading': 'Loading...',
+    'loadFailed': 'Load failed',
+    'loadFailedMsg': 'Load failed: {0}',
+    'noMatch': 'No matching skills',
+    'noDesc': 'No description',
+    'hasUpdate': '🆕 Update',
+    'loadingDisk': 'Loading disk data...',
+    'core': 'Core',
+    'loadingDeps': 'Loading dependency data...',
+    'noDeps': 'No skill dependencies',
+    'noDepsHint': 'No skills have declared external dependencies',
+    'modal.source': 'Source',
+    'modal.status': 'Status',
+    'modal.version': 'Version',
+    'modal.category': 'Category',
+    'modal.path': 'Path',
+    'modal.usedBy': 'Used By',
+    'modal.dependencies': 'Dependencies',
+    'modal.diskSize': 'Disk Size',
+    'modal.metadata': 'Metadata',
+    'modal.installed': '🏪 Installed',
+    'modal.none': 'None',
+    'modal.hasYes': '✓ Yes',
+    'modal.hasNo': '✗ No',
+    'modal.checkUpdate': '🔍 Check Update',
+    'modal.syncLatest': '🔄 Sync Latest',
+    'modal.verifySkill': '✓ Verify Skill',
+    'modal.devVersion': '⚙️ Developer: Version Management',
+    'modal.patch': 'Patch (1.0.x)',
+    'modal.minor': 'Minor (1.x.0)',
+    'modal.major': 'Major (x.0.0)',
+    'toast.checkingUpdate': 'Checking updates for {0}...',
+    'toast.hasUpdate': '{0} has update: {1}',
+    'toast.isLatest': '{0} is up to date',
+    'toast.checkFailed': 'Check failed',
+    'toast.verifying': 'Verifying {0}...',
+    'toast.verifyPass': '{0} verified',
+    'toast.verifyFailed': 'Verification failed',
+    'toast.bumping': 'Bumping {0} {1}...',
+    'toast.bumped': '{0} bumped {1}',
+    'toast.bumpFailed': 'Bump failed',
+    'toast.syncing': 'Syncing {0}...',
+    'toast.synced': '{0} synced',
+    'toast.syncFailed': 'Sync failed',
+    'toast.verifyingAll': 'Verifying...',
+    'toast.verifyAllPass': 'Verification passed',
+    'toast.fixing': 'Fixing...',
+    'toast.fixDone': 'Fix completed',
+    'toast.fixFailed': 'Fix failed',
+    'toast.checkingUpdates': 'Checking for updates...',
+    'toast.allLatest': 'All skills are up to date',
+    'toast.refreshingRegistry': 'Refreshing registry...',
+    'toast.registryRefreshed': 'Registry refreshed',
+    'toast.registryFailed': 'Refresh failed',
+    'toast.enriching': 'Enriching metadata...',
+    'toast.enrichDone': 'Metadata enriched',
+    'toast.enrichFailed': 'Enrich failed',
+    'toast.loadFailed': 'Load failed',
+    'update.title': '⬆ Skill Update Check',
+    'update.found': '{0} updates available',
+    'update.needCheck': '{0} need manual check',
+    'update.noVersion': '{0} have no version',
+    'update.sync': 'Sync',
+    'update.check': 'Check',
+    'update.goClawhub': 'Go to ClawdHub',
+    'update.close': 'Close',
+    'docs.overview': '🔍 Overview',
+    'docs.overview.desc': 'Skill Manager is the OpenClaw skill management panel for viewing, filtering, verifying and maintaining all skills.',
+    'docs.overview.total': '<code>Total Skills</code> — Total number of all scanned skills (including built-in, extension, workspace, local, etc.)',
+    'docs.overview.withMeta': '<code>With Metadata</code> — Number of skills with <code>_meta.json</code> or SKILL.md frontmatter',
+    'docs.overview.withDeps': '<code>With Dependencies</code> — Number of skills that declare external dependencies',
+    'docs.overview.disk': '<code>Disk Usage</code> — Total size of all skill directories',
+    'docs.filter': '🎛️ Filters & Views',
+    'docs.filter.search': '<strong>Search</strong> — Fuzzy search by skill name, ID or description',
+    'docs.filter.category': '<strong>Category Dropdown</strong> — Filter by skill category (AI Learning, Monitoring, Search, etc.)',
+    'docs.filter.status': '<strong>Status Dropdown</strong> — Filter by service status (Running / Stopped / Ready)',
+    'docs.filter.source': '<strong>Source Chips</strong> — Filter by skill source (Built-in, Extension, ClawdHub, etc.)',
+    'docs.filter.grid': '<strong>Card View</strong> — Grid card display of skill info (name, description, version, status, source)',
+    'docs.filter.size': '<strong>Disk View</strong> — Show disk usage of each skill, including core files and node_modules ratio',
+    'docs.filter.deps': '<strong>Dependency View</strong> — Show dependency graph between skills',
+    'docs.actions': '🛠️ Action Buttons',
+    'docs.actions.verify': '<strong>✓ Verify</strong> — Run <code>skill-manager.py verify</code> to check all skill integrity',
+    'docs.actions.fix': '<strong>🔧 Fix</strong> — Run <code>skill-manager.py verify --fix</code> to auto-fix fixable issues',
+    'docs.actions.outdated': '<strong>⬆ Check Updates</strong> — Check if skills have upstream updates, supports ClawdHub / GitHub / PyPI sources',
+    'docs.actions.registry': '<strong>📋 Refresh Registry</strong> — Run <code>skill-manager.py registry</code> to regenerate the registry',
+    'docs.actions.enrich': '<strong>✨ Enrich Metadata</strong> — Run <code>skill-manager.py enrich</code> to fill in missing metadata',
+    'docs.detail': '📦 Skill Detail Modal',
+    'docs.detail.desc': 'Click any skill card to open the detail modal, including:',
+    'docs.detail.basic': '• Basic info (ID, name, description, version, category, source)',
+    'docs.detail.status': '• Service status (Running / Stopped / Ready, with color dot indicator)',
+    'docs.detail.disk': '• Disk size and path',
+    'docs.detail.usedBy': '• Used by (which agents have this skill configured)',
+    'docs.detail.deps': '• Dependency list',
+    'docs.detail.ops': '• Actions: <code>Check Update</code>, <code>Sync Latest</code>, <code>Verify Skill</code>, <code>Version Management</code>',
+    'docs.statusColor': '🎨 Status Color Legend',
+    'docs.statusColor.running': '<span class="oc-status-dot running"></span> <strong>Running</strong> — MCP service is running, skill is available',
+    'docs.statusColor.stopped': '<span class="oc-status-dot stopped"></span> <strong>Stopped</strong> — MCP service has stopped',
+    'docs.statusColor.available': '<span class="oc-status-dot available"></span> <strong>Ready</strong> — Normal skill without service, always available',
+    'docs.dataSource': '📡 Data Source Description',
+    'docs.dataSource.builtin': '<strong>Built-in</strong> — Skills bundled with OpenClaw npm package (<code>~/.npm-global/lib/node_modules/openclaw/skills</code>)',
+    'docs.dataSource.extension': '<strong>Extension</strong> — Skills from OpenClaw extension packages (<code>dist/extensions</code> and user extension directory)',
+    'docs.dataSource.workspace': '<strong>Workspace</strong> — Skills in agent workspace directories (<code>workspace-*/skills</code>)',
+    'docs.dataSource.local': '<strong>Local</strong> — User-created local skills (<code>~/.openclaw/custom-skills</code>)',
+    'docs.dataSource.shared': '<strong>Shared</strong> — Skills in shared directory (<code>~/.openclaw/shared-skills</code>)',
+    'docs.dataSource.clawhub': '<strong>ClawdHub</strong> — Skills installed from ClawdHub',
+    'docs.dataSource.github': '<strong>GitHub</strong> — Skills pulled from GitHub',
+    'docs.dataSource.pypi': '<strong>PyPI</strong> — Python package skills installed from PyPI',
+    'theme.toggle': 'Toggle theme'
+  }
+};
+
+var currentLang = localStorage.getItem('openclaw-lang') || 'zh';
+
+function t(key) {
+  var val = (translations[currentLang] && translations[currentLang][key]) || (translations['zh'] && translations['zh'][key]) || key;
+  for (var i = 1; i < arguments.length; i++) {
+    val = val.replace(new RegExp('\\{' + (i - 1) + '\\}', 'g'), arguments[i]);
+  }
+  return val;
+}
+
+function smEmpty(title, opts) {
+  opts = opts || {};
+  var cls = opts.error ? ' oc-empty sm-empty-error' : ' oc-empty';
+  var hint = opts.hint ? '<p>' + opts.hint + '</p>' : '';
+  return '<div class="' + cls + '"><h4>' + title + '</h4>' + hint + '</div>';
+}
+
+function catLbl(k) { var v = t('cat.' + k); return v === 'cat.' + k ? k : v; }
+function srcLbl(k) { var v = t('src.' + k); return v === 'src.' + k ? k : v; }
+function statusLbl(k) { var v = t('status.' + k); return v === 'status.' + k ? k : v; }
+function srcBadgeClass(src) {
+  return ({
+    builtin: 'oc-badge-primary',
+    extension: 'oc-badge-purple',
+    custom: 'oc-badge-success',
+    workspace: 'oc-badge-warning',
+    shared: 'oc-badge-cyan',
+    local: 'oc-badge-success',
+    clawhub: 'oc-badge-primary',
+    github: 'oc-badge-purple',
+    pypi: 'oc-badge-warning',
+    npm: 'oc-badge-danger'
+  })[src] || 'oc-badge-default';
+}
+function statusBadgeClass(status) {
+  return ({ running: 'oc-badge-success', stopped: 'oc-badge-danger', available: 'oc-badge-primary' })[status] || 'oc-badge-default';
+}
+
+function setLang(lang) {
+  currentLang = lang;
+  localStorage.setItem('openclaw-lang', lang);
+  document.documentElement.lang = lang === 'zh' ? 'zh-CN' : 'en';
+  document.querySelectorAll('[data-i18n]').forEach(function(el) {
+    var key = el.getAttribute('data-i18n');
+    var val = t(key);
+    if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+      el.placeholder = val;
+    } else {
+      el.innerHTML = val;
+    }
+  });
+  document.querySelectorAll('[data-i18n-title]').forEach(function(el) {
+    el.title = t(el.getAttribute('data-i18n-title'));
+  });
+}
+
+window.onShellLangChange = function(lang) { setLang(lang); };
+
+const API = '';
+let skillsData = [], overviewData = null, currentView = 'grid';
+let outdatedSkills = new Set();
+
+function notifyParent(event, detail) {
+  if (window.parent && window.parent !== window) {
+    window.parent.postMessage({ source: 'skill-manager', event, detail }, '*');
+  }
+}
+window.addEventListener('message', function(e) {
+  if (!e.data || e.data.target !== 'skill-manager') return;
+  if (e.data.action === 'refresh') loadAll();
+  if (e.data && e.data.type === 'openclaw-lang') {
+    setLang(e.data.lang);
+  }
+});
+
+async function api(path, opts = {}) {
+  try {
+    const r = await fetch(API + path, opts);
+    return await r.json();
+  } catch (e) { return { ok: false, error: e.message }; }
+}
+
+function toast(msg, type = 'info') {
+  const el = document.createElement('div');
+  el.className = 'toast ' + type;
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 4000);
+}
+
+function fmtBytes(b) {
+  if (!b) return '0 B';
+  const u = ['B','KB','MB','GB'];
+  let i = 0;
+  while (b >= 1024 && i < 3) { b /= 1024; i++; }
+  return b.toFixed(i ? 1 : 0) + ' ' + u[i];
+}
+
+const catEmoji = {
+  'ai-learning':'🧠','monitoring':'📊','search':'🔍','design':'🎨','content':'✍️',
+  'media-gen':'🖼️','social':'📱','browser':'🌐','devtools':'🛠️','task':'📋',
+  'system':'📁','security':'🔒','other':'📦','integration':'🔗','communication':'💬',
+  'productivity':'⚡','entertainment':'🎮','utility':'🔧'
+};
+
+let activeSrcFilter = 'all';
+
+async function loadAll() {
+  document.getElementById('skillView').innerHTML = smEmpty(t('loading'));
+  try {
+    const [skillsRes, overviewRes] = await Promise.all([api('/api/skills'), api('/api/skills/overview')]);
+    if (skillsRes.error || overviewRes.error) {
+      throw new Error(skillsRes.error || overviewRes.error || t('loadFailed'));
+    }
+    skillsData = skillsRes.skills || [];
+    overviewData = overviewRes;
+    sizeCache = null;
+    depsCache = null;
+    depsPromise = null;
+    renderStats();
+    populateFilters();
+    renderView();
+    notifyParent('loaded', { total: skillsData.length });
+  } catch (e) {
+    document.getElementById('skillView').innerHTML = smEmpty(t('loadFailedMsg', e.message), { error: true });
+    toast(t('loadFailedMsg', e.message), 'error');
+  }
+}
+
+function renderStats() {
+  const d = overviewData;
+  if (!d) return;
+  const items = [
+    { label: t('stat.total'), val: d.total, cls: 'blue' },
+    { label: t('stat.withMeta'), val: d.withMeta, cls: 'green' },
+    { label: t('stat.withDependencies'), val: d.withDependencies, cls: 'purple' },
+    { label: t('stat.diskUsage'), val: fmtBytes(d.totalDiskBytes), cls: 'yellow' },
+    { label: t('stat.categories'), val: Object.keys(d.categories || {}).length, cls: 'cyan' },
+    { label: t('stat.sourceTypes'), val: Object.keys(d.sources || {}).length, cls: 'red' },
+  ];
+  document.getElementById('statsBar').innerHTML = items.map(i =>
+    `<div class="oc-stat sm-stat-${i.cls}"><div class="oc-stat-body"><div class="oc-stat-row"><span class="stat-val">${i.val}</span></div><div class="oc-stat-label">${i.label}</div></div></div>`
+  ).join('');
+}
+
+function populateFilters() {
+  const cats = overviewData?.categories || {};
+  const srcs = overviewData?.sources || {};
+  const catSel = document.getElementById('catFilter');
+  const statusSel = document.getElementById('statusFilter');
+
+  const savedCat = catSel.value;
+  const savedStatus = statusSel.value;
+
+  catSel.innerHTML = '<option value="all">' + t('filter.allCategories') + '</option>' + Object.keys(cats).sort().map(c => `<option value="${c}">${catEmoji[c]||'📦'} ${catLbl(c)} (${cats[c]})</option>`).join('');
+  if (savedCat && savedCat !== 'all' && cats[savedCat]) catSel.value = savedCat;
+
+  const statusCounts = {};
+  for (const s of skillsData) { statusCounts[s.status||'available'] = (statusCounts[s.status||'available']||0)+1; }
+  statusSel.innerHTML = '<option value="all">' + t('filter.allStatus') + '</option>' +
+    Object.entries(statusCounts).map(([k,v]) => `<option value="${k}">${statusLbl(k)} (${v})</option>`).join('');
+  if (savedStatus && savedStatus !== 'all' && statusCounts[savedStatus]) statusSel.value = savedStatus;
+
+  const srcChipsEl = document.getElementById('srcChips');
+  const srcOrder = ['builtin','extension','custom','workspace','shared','local','clawhub','github','pypi'];
+  let html = `<button type="button" class="oc-tab ${activeSrcFilter==='all'?'active':''}" data-src="all">${t('src.all')} <span class="oc-badge oc-badge-default">${skillsData.length}</span></button>`;
+  for (const src of srcOrder) {
+    if (!srcs[src]) continue;
+    const lbl = srcLbl(src);
+    html += `<button type="button" class="oc-tab ${activeSrcFilter===src?'active':''}" data-src="${src}">${lbl} <span class="oc-badge oc-badge-default">${srcs[src]}</span></button>`;
+  }
+  srcChipsEl.innerHTML = html;
+  srcChipsEl.querySelectorAll('.oc-tab').forEach(c => {
+    c.onclick = () => {
+      activeSrcFilter = c.dataset.src;
+      populateFilters();
+      renderView();
+    };
+  });
+}
+
+function getFiltered() {
+  let list = skillsData;
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const cat = document.getElementById('catFilter').value;
+  const status = document.getElementById('statusFilter').value;
+  if (q) list = list.filter(s => (s.id||'').toLowerCase().includes(q) || (s.name||'').toLowerCase().includes(q) || (s.description||'').toLowerCase().includes(q));
+  if (cat !== 'all') list = list.filter(s => (s.category||'other') === cat);
+  if (activeSrcFilter !== 'all') list = list.filter(s => s.source === activeSrcFilter);
+  if (status !== 'all') list = list.filter(s => (s.status||'available') === status);
+  return list;
+}
+
+function renderView() {
+  const list = getFiltered();
+  if (currentView === 'grid') renderGrid(list);
+  else if (currentView === 'size') renderSizeView(list);
+  else if (currentView === 'deps') renderDepsView();
+}
+
+function renderGrid(list) {
+  const el = document.getElementById('skillView');
+  if (!list.length) { el.innerHTML = smEmpty(t('noMatch')); return; }
+  el.innerHTML = '<div class="skill-grid">' + list.map(s => {
+    const srcType = s.source || 'local';
+    const emoji = s.emoji || catEmoji[s.category] || '📦';
+    const sLbl = srcLbl(srcType);
+    const shortPath = (s.location || s.sharedPath || '').replace(/\/home\/[^/]+/,'~').replace(/\/SKILL\.md$/,'');
+    const st = s.status || 'available';
+    const stLbl = statusLbl(st);
+    return `<div class="oc-card sm-skill-tile" onclick="showDetail('${s.id}')">
+      <div class="emoji">${emoji}</div>
+      <div class="name">${s.name || s.id}</div>
+      <div class="desc">${s.description || t('noDesc')}</div>
+      <div class="sm-badge-row">
+        <span class="oc-badge ${srcBadgeClass(srcType)}">${sLbl}</span>
+        <span class="oc-badge oc-badge-cyan">${s.version || '-'}</span>
+        ${s.category?'<span class="oc-badge oc-badge-default">'+catLbl(s.category)+'</span>':''}
+        <span class="oc-badge ${statusBadgeClass(st)}"><span class="oc-status-dot ${st}"></span>${stLbl}</span>
+        ${outdatedSkills.has(s.id)?'<span class="oc-badge oc-badge-warning">' + t('hasUpdate') + '</span>':''}
+        ${s.clawhubInstalled?'<span class="oc-badge oc-badge-primary">🏪</span>':''}
+        ${s.usedBy&&s.usedBy.length?'<span class="oc-badge oc-badge-warning">👤'+s.usedBy.length+'</span>':''}
+      </div>
+      ${shortPath?'<div class="path">'+shortPath+'</div>':''}
+    </div>`;
+  }).join('') + '</div>';
+}
+
+let sizeCache = null;
+let depsCache = null;
+let depsPromise = null;
+
+async function renderSizeView(list) {
+  const el = document.getElementById('skillView');
+  el.innerHTML = '<div class="sm-loading">' + t('loadingDisk') + '</div>';
+  if (!sizeCache) {
+    const res = await api('/api/skills/size');
+    if (!res.skills) { el.innerHTML = smEmpty(t('loadFailed'), { error: true }); return; }
+    sizeCache = res.skills;
+  }
+  const ids = new Set(list.map(s => s.id));
+  const filtered = sizeCache.filter(s => ids.has(s.slug));
+  if (!filtered.length) { el.innerHTML = smEmpty(t('noMatch')); return; }
+  const maxTotal = filtered[0]?.total || 1;
+  el.innerHTML = '<div class="skill-grid">' + filtered.map(s => {
+    const corePct = maxTotal ? (s.core / maxTotal * 100).toFixed(1) : 0;
+    const nmPct = maxTotal ? (s.nodeModules / maxTotal * 100).toFixed(1) : 0;
+    const sLbl = srcLbl(s.source);
+    return `<div class="oc-card sm-skill-tile" onclick="showDetail('${s.slug}')">
+      <div class="name">${s.name || s.slug}</div>
+      <div class="sm-badge-row sm-tags"><span class="oc-badge ${srcBadgeClass(s.source)}">${sLbl}</span><span class="oc-badge oc-badge-cyan">${fmtBytes(s.total)}</span></div>
+      <div class="sm-disk-desc">${t('core')} ${fmtBytes(s.core)} · node_modules ${fmtBytes(s.nodeModules)}</div>
+      <div class="size-bar"><div class="size-bar-fill core" data-width="${corePct}"></div><div class="size-bar-fill nm" data-width="${nmPct}"></div></div>
+    </div>`;
+  }).join('') + '</div>';
+  el.querySelectorAll('.size-bar-fill[data-width]').forEach(bar => {
+    bar.style.width = bar.dataset.width + '%';
+  });
+}
+
+async function renderDepsView() {
+  const el = document.getElementById('skillView');
+  el.innerHTML = '<div class="sm-loading">' + t('loadingDeps') + '</div>';
+  if (!depsPromise && !depsCache) {
+    depsPromise = api('/api/skills/deps', { method: 'POST' })
+      .then(res => { depsCache = res; return res; })
+      .finally(() => { depsPromise = null; });
+  }
+  const res = depsCache || await depsPromise;
+  if (!res.ok) { el.innerHTML = smEmpty(res.error || res.raw || t('loadFailed'), { error: true }); return; }
+  const known = new Set(skillsData.map(s => s.id));
+  let html = '<div class="dep-tree">';
+  let hasDeps = false;
+  if (res.raw) {
+    const lines = res.raw.split('\n');
+    for (const line of lines) {
+      if (line.includes('→')) {
+        const [from, to] = line.split('→').map(x => x.trim());
+        html += `<div class="dep-item">${from} <span class="dep-arrow">→</span> ${to}</div>`;
+        hasDeps = true;
+      } else if (line.includes('←')) {
+        const [dep, users] = line.split('←').map(x => x.trim());
+        const cls = known.has(dep.replace('⚠ ','')) ? '' : ' missing';
+        html += `<div class="dep-item${cls}">${dep} <span class="dep-arrow">←</span> ${users}</div>`;
+        hasDeps = true;
+      } else if (line.trim() && !line.includes('依赖关系图')) {
+        html += `<div class="dep-item">${line}</div>`;
+      }
+    }
+  }
+  if (!hasDeps) {
+    html += smEmpty(t('noDeps'), { hint: t('noDepsHint') });
+  }
+  html += '</div>';
+  el.innerHTML = html;
+}
+
+async function showDetail(slug) {
+  const res = await api('/api/skills/' + slug);
+  if (!res.id && !res.slug) { toast(t('toast.loadFailed'), 'error'); return; }
+  const id = res.id || res.slug;
+  const srcType = res.source || 'local';
+  const sLbl = srcLbl(srcType);
+  const size = res.size || {};
+
+  let mdHtml = '';
+  if (res.skillMd) {
+    mdHtml = `<div class="md-content">${escHtml(res.skillMd)}</div>`;
+  }
+
+  const displayPath = (res.sharedPath || res.location || '').replace(/\/home\/[^/]+/,'~');
+
+  document.getElementById('modalBody').innerHTML = `
+    <h2>${res.emoji || catEmoji[res.category] || '📦'} ${res.name || id}</h2>
+    <div class="sm-modal-desc">${res.description||''}</div>
+    <div class="meta-grid">
+      <div class="meta-item"><span class="meta-key">ID</span><br><span class="meta-val">${id}</span></div>
+      <div class="meta-item"><span class="meta-key">${t('modal.source')}</span><br><span class="meta-val"><span class="oc-badge ${srcBadgeClass(srcType)}">${sLbl}</span>${res.clawhubInstalled?' ' + t('modal.installed'):''}</span></div>
+      <div class="meta-item"><span class="meta-key">${t('modal.status')}</span><br><span class="meta-val ${res.status==='running'?'sm-text-green':res.status==='stopped'?'sm-text-red':'sm-text-blue'}"><span class="oc-status-dot ${res.status||'available'}"></span>${statusLbl(res.status||'available')}</span></div>
+      <div class="meta-item"><span class="meta-key">${t('modal.version')}</span><br><span class="meta-val">${res.version || '-'}</span></div>
+      <div class="meta-item"><span class="meta-key">${t('modal.category')}</span><br><span class="meta-val">${catLbl(res.category) || res.category || '-'}</span></div>
+      <div class="meta-item"><span class="meta-key">${t('modal.path')}</span><br><span class="meta-val sm-meta-val">${displayPath || '-'}</span></div>
+      <div class="meta-item"><span class="meta-key">${t('modal.usedBy')}</span><br><span class="meta-val">${(res.usedBy||[]).join(', ')||t('modal.none')}</span></div>
+      <div class="meta-item"><span class="meta-key">${t('modal.dependencies')}</span><br><span class="meta-val">${(res.dependencies||[]).join(', ')||t('modal.none')}</span></div>
+      <div class="meta-item"><span class="meta-key">${t('modal.diskSize')}</span><br><span class="meta-val">${size.total?fmtBytes(size.total)+' (core: '+fmtBytes(size.core)+', nm: '+fmtBytes(size.nodeModules)+')':'-'}</span></div>
+      <div class="meta-item"><span class="meta-key">${t('modal.metadata')}</span><br><span class="meta-val">${res.hasMeta?t('modal.hasYes'):t('modal.hasNo')}</span></div>
+      <div class="meta-item"><span class="meta-key">Origin</span><br><span class="meta-val">${res.hasOrigin?'✓':'✗'}</span></div>
+    </div>
+    ${mdHtml}
+    <div class="actions">
+      <button class="oc-btn oc-btn-primary" onclick="doCheckUpdate('${id}')">${t('modal.checkUpdate')}</button>
+      <button class="oc-btn oc-btn-success" onclick="doSync('${id}')">${t('modal.syncLatest')}</button>
+      <button class="oc-btn" onclick="doVerifySkill('${id}')">${t('modal.verifySkill')}</button>
+      <details class="sm-details"><summary>${t('modal.devVersion')}</summary>
+      <div class="sm-flex-gap">
+        <button class="oc-btn" onclick="doBump('${id}','patch')">${t('modal.patch')}</button>
+        <button class="oc-btn" onclick="doBump('${id}','minor')">${t('modal.minor')}</button>
+        <button class="oc-btn oc-btn-danger" onclick="doBump('${id}','major')">${t('modal.major')}</button>
+      </div>
+      </details>
+    </div>
+  `;
+  document.getElementById('modal').classList.add('show');
+  notifyParent('skill-viewed', { slug: id });
+}
+
+function escHtml(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+document.getElementById('modalClose').onclick = () => document.getElementById('modal').classList.remove('show');
+document.getElementById('modal').onclick = (e) => { if (e.target.id === 'modal') document.getElementById('modal').classList.remove('show'); };
+
+async function doCheckUpdate(slug) {
+  toast(t('toast.checkingUpdate', slug), 'info');
+  const res = await api(`/api/skills/check/${slug}`, { method: 'POST' });
+  if (res.ok) {
+    const output = res.raw || JSON.stringify(res.data || '') || '';
+    if (output.includes('需要手动确认') || output.includes('update') || output.includes('newer')) {
+      toast(t('toast.hasUpdate', slug, output.trim()), 'info');
+    } else {
+      toast(t('toast.isLatest', slug), 'success');
+    }
+  } else {
+    toast(res.error || t('toast.checkFailed'), 'error');
+  }
+}
+
+async function doVerifySkill(slug) {
+  toast(t('toast.verifying', slug), 'info');
+  const res = await api(`/api/skills/verify/${slug}`, { method: 'POST' });
+  if (res.ok) { toast(t('toast.verifyPass', slug), 'success'); }
+  else toast(res.error || t('toast.verifyFailed'), 'error');
+}
+
+async function doBump(slug, comp) {
+  toast(t('toast.bumping', slug, comp), 'info');
+  const res = await api(`/api/skills/bump/${slug}/${comp}`, { method: 'POST' });
+  if (res.ok) { toast(t('toast.bumped', slug, comp), 'success'); notifyParent('skill-bumped', { slug, component: comp }); loadAll(); }
+  else toast(res.error || t('toast.bumpFailed'), 'error');
+}
+
+async function doSync(slug) {
+  toast(t('toast.syncing', slug), 'info');
+  const res = await api(`/api/skills/sync/${slug}`, { method: 'POST' });
+  if (res.ok) { toast(t('toast.synced', slug), 'success'); notifyParent('skill-synced', { slug }); }
+  else toast(res.error || t('toast.syncFailed'), 'error');
+}
+
+async function doVerify() {
+  toast(t('toast.verifyingAll'), 'info');
+  const res = await api('/api/skills/verify', { method: 'POST' });
+  if (res.ok) toast(res.raw || t('toast.verifyAllPass'), 'success');
+  else toast(res.error || res.raw || t('toast.verifyFailed'), 'error');
+}
+
+async function doFix() {
+  toast(t('toast.fixing'), 'info');
+  const res = await api('/api/skills/verify-fix', { method: 'POST' });
+  if (res.ok) { toast(res.raw || t('toast.fixDone'), 'success'); notifyParent('skills-fixed', {}); loadAll(); }
+  else toast(res.error || t('toast.fixFailed'), 'error');
+}
+
+function compareVer(a, b) {
+  const pa = a.split('.').map(Number);
+  const pb = b.split('.').map(Number);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const na = pa[i] || 0, nb = pb[i] || 0;
+    if (na > nb) return 1;
+    if (na < nb) return -1;
+  }
+  return 0;
+}
+
+async function doOutdated() {
+  toast(t('toast.checkingUpdates'), 'info');
+  const res = await api('/api/skills/outdated', { method: 'POST' });
+  if (!res.ok) { toast(res.error || t('toast.checkFailed'), 'error'); return; }
+
+  const raw = res.raw || '';
+  outdatedSkills.clear();
+  const updates = [];
+  const needCheck = [];
+  const noVersion = [];
+
+  for (const line of raw.split('\n')) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    if (trimmed.startsWith('Slug') || trimmed.startsWith('─') || trimmed.startsWith('—')) continue;
+    if (trimmed.includes('共') && trimmed.includes('个技能')) continue;
+
+    const m = trimmed.match(/^(\[\w-\]+)\s+([\d.]+)\s+(clawhub|github|pypi|local)\s+(.+)$/);
+    if (!m) continue;
+    const name = m[1];
+    const localVer = m[2];
+    const src = m[3];
+    const status = m[4];
+
+    if (status.includes('本地维护') || status.includes('未追踪上游版本')) continue;
+
+    if (status.includes('无版本号')) {
+      noVersion.push({ name, localVer, src, status });
+      continue;
+    }
+
+    if (status.includes('需手动检查')) {
+      outdatedSkills.add(name);
+      needCheck.push({ name, localVer, src, status, type: 'github' });
+    } else if (status.includes('需 pip check')) {
+      outdatedSkills.add(name);
+      needCheck.push({ name, localVer, src, status, type: 'pypi' });
+    } else if (status.startsWith('installed:')) {
+      const installedVer = status.replace('installed:', '');
+      if (compareVer(installedVer, localVer) > 0) {
+        outdatedSkills.add(name);
+        updates.push({ name, localVer, installedVersion: installedVer, src, status });
+      }
+    }
+  }
+
+  renderView();
+
+  if (!updates.length && !needCheck.length && !noVersion.length) {
+    toast(t('toast.allLatest'), 'success');
+    return;
+  }
+
+  showUpdateModal(updates, needCheck, noVersion);
+}
+
+function showUpdateModal(updates, needCheck, noVersion) {
+  let html = '<h2>' + t('update.title') + '</h2>';
+
+  if (updates.length) {
+    html += `<div class="sm-update-section"><b class="sm-text-green">${t('update.found', updates.length)}</b></div>`;
+    html += '<div class="sm-update-text">' + updates.map(u =>
+      `<div class="sm-update-row">
+        <div><code class="sm-update-code">${u.name}</code> — <span class="sm-text-red">${u.localVer}</span> → <span class="sm-text-green">${u.installedVersion}</span> (${u.src})</div>
+        <button class="oc-btn oc-btn-primary oc-btn-sm" onclick="doSync('${u.name}');document.getElementById('modal').classList.remove('show')">${t('update.sync')}</button>
+      </div>`
+    ).join('') + '</div>';
+  }
+
+  if (needCheck.length) {
+    html += `<div class="sm-update-section-lg"><b class="sm-text-yellow">${t('update.needCheck', needCheck.length)}</b></div>`;
+    html += '<div class="sm-update-text">' + needCheck.map(u =>
+      `<div class="sm-update-row">
+        <div><code class="sm-update-code">${u.name}</code> — ${u.localVer} (${u.src}) — ${u.status}</div>
+        <button class="oc-btn oc-btn-sm" onclick="doCheckUpdate('${u.name}');document.getElementById('modal').classList.remove('show')">${t('update.check')}</button>
+      </div>`
+    ).join('') + '</div>';
+  }
+
+  if (noVersion.length) {
+    html += `<div class="sm-update-section-lg"><b class="sm-text-muted">${t('update.noVersion', noVersion.length)}</b></div>`;
+    html += '<div class="sm-update-text">' + noVersion.map(u =>
+      `<div class="sm-update-row">
+        <div><code class="sm-update-code">${u.name}</code> — ${u.src} — ${u.status}</div>
+        <button class="oc-btn oc-btn-sm" onclick="window.open('https://clawhub.com/skills?q=${encodeURIComponent(u.name)}','_blank')">${t('update.goClawhub')}</button>
+      </div>`
+    ).join('') + '</div>';
+  }
+
+  html += '<div class="sm-mt-16"><button class="oc-btn oc-btn-primary" onclick="document.getElementById(\'modal\').classList.remove(\'show\')">' + t('update.close') + '</button></div>';
+  document.getElementById('modalBody').innerHTML = html;
+  document.getElementById('modal').classList.add('show');
+}
+
+async function doRegistry() {
+  toast(t('toast.refreshingRegistry'), 'info');
+  const res = await api('/api/skills/registry', { method: 'POST' });
+  if (res.ok) { toast(t('toast.registryRefreshed'), 'success'); notifyParent('registry-refreshed', {}); loadAll(); }
+  else toast(res.error || t('toast.registryFailed'), 'error');
+}
+
+async function doEnrich() {
+  toast(t('toast.enriching'), 'info');
+  const res = await api('/api/skills/enrich', { method: 'POST' });
+  if (res.ok) { toast(t('toast.enrichDone'), 'success'); loadAll(); }
+  else toast(res.error || t('toast.enrichFailed'), 'error');
+}
+
+document.getElementById('btnVerify').onclick = doVerify;
+document.getElementById('btnFix').onclick = doFix;
+document.getElementById('btnOutdated').onclick = doOutdated;
+document.getElementById('btnRegistry').onclick = doRegistry;
+document.getElementById('btnEnrich').onclick = doEnrich;
+document.getElementById('searchInput').oninput = renderView;
+document.getElementById('catFilter').onchange = renderView;
+document.getElementById('statusFilter').onchange = renderView;
+document.querySelectorAll('#viewChips .oc-tab').forEach(c => c.onclick = () => {
+  document.querySelectorAll('#viewChips .oc-tab').forEach(x => x.classList.remove('active'));
+  c.classList.add('active');
+  currentView = c.dataset.view;
+  renderView();
+});
+
+document.querySelectorAll('.oc-tabs .oc-tab[data-tab]').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('.oc-tabs .oc-tab[data-tab]').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab' + btn.dataset.tab.charAt(0).toUpperCase() + btn.dataset.tab.slice(1)).classList.add('active');
+  };
+});
+
+
+setLang(currentLang);
+loadAll();
+</script>
+</body>
+</html>

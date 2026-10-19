@@ -1,0 +1,8 @@
+{
+  "port": 7001,
+  "host": "0.0.0.0",
+  "title": "OpenClaw Cockpit",
+  "proxyTimeout": 30000,
+  "healthTimeout": 5000,
+  "modulesDir": "./modules"
+}

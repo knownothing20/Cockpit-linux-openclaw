@@ -1,0 +1,21 @@
+{
+  "id": "workspace-rule-panel",
+  "displayName": "Rule Panel",
+  "description": "Workspace rule health check and compliance panel",
+  "type": "openclaw-app",
+  "navSection": "system",
+  "integration": "native",
+  "mountPath": "/apps/workspace-rule-panel",
+  "embedPath": "/",
+  "healthPath": "/health",
+  "apiPrefix": "/api/rule-panel",
+  "capabilities": [
+    "rules",
+    "compliance",
+    "bootstrap"
+  ],
+  "showInNav": true,
+  "nativeReady": false,
+  "standalone": true,
+  "order": 40
+}

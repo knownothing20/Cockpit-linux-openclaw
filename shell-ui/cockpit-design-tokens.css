@@ -1,0 +1,354 @@
+/* ================================================================
+   OpenClaw Cockpit Design Tokens
+   Single token source for switchable cockpit skins, density, and motion.
+   ================================================================ */
+
+:root,
+html[data-oc-skin="ops"] {
+  --oc-font-sans: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+  --oc-font-mono: "SF Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --oc-blue: #1677ff;
+  --oc-blue-2: #4f8cff;
+  --oc-green: #1fbf75;
+  --oc-amber: #d98b05;
+  --oc-violet: #7c5cff;
+  --oc-red: #ef4444;
+  --oc-cyan: #16b8d9;
+
+  /* 图表/分类色（跨主题一致，用于 SVG fill / legend / stat） */
+  --oc-chart-core: #6366f1;
+  --oc-chart-project: #10b981;
+  --oc-chart-memory: #f59e0b;
+  --oc-chart-rule: #ec4899;
+  --oc-amber-strong: #d97706;
+
+  --oc-radius-xs: 4px;
+  --oc-radius-sm: 6px;
+  --oc-radius-md: 8px;
+  --oc-radius-lg: 8px;
+  --oc-radius-xl: 8px;
+  --oc-radius-full: 9999px;
+
+  --oc-space-1: 4px;
+  --oc-space-2: 8px;
+  --oc-space-3: 12px;
+  --oc-space-4: 16px;
+  --oc-space-5: 20px;
+  --oc-space-6: 24px;
+  --oc-space-8: 32px;
+
+  --oc-text-2xs: 10px;
+  --oc-text-xs: 11px;
+  --oc-text-sm: 12px;
+  --oc-text-md: 13px;
+  --oc-text-base: 14px;
+  --oc-text-lg: 15px;
+  --oc-text-xl: 16px;
+  --oc-text-2xl: 18px;
+  --oc-text-3xl: 22px;
+  --oc-text-4xl: 32px;
+  --oc-text-5xl: 40px;
+  --oc-text-6xl: 48px;
+  --oc-text-display: 36px;
+
+  /* 图标尺寸（font-size 用于图标大小时使用） */
+  --oc-icon-sm: 20px;
+  --oc-icon-md: 24px;
+  --oc-icon-lg: 26px;
+  --oc-icon-xl: 28px;
+  --oc-icon-2xl: 42px;
+
+
+  --oc-page-pad-x: 24px;
+  --oc-page-pad-y: 22px;
+  --oc-control-h: 32px;
+  --oc-card-pad: 16px;
+  --oc-grid-gap: 12px;
+  --oc-sidebar-w: 230px;
+  --oc-topbar-h: 52px;
+
+  --oc-motion-fast: 120ms;
+  --oc-motion-normal: 180ms;
+  --oc-motion-slow: 260ms;
+  --oc-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --oc-ease-emphasis: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+html[data-theme="light"],
+html[data-theme="light"][data-oc-skin="ops"] {
+  color-scheme: light;
+  --oc-bg-canvas: #f4f6fa;
+  --oc-bg-shell: #ffffff;
+  --oc-bg-surface: #ffffff;
+  --oc-bg-elevated: #f8fafc;
+  --oc-bg-input: #f5f7fb;
+  --oc-bg-muted: #eef3f9;
+  --oc-bg-sidebar: #ffffff;
+  --oc-bg-overlay: rgba(15, 23, 42, 0.32);
+
+  --oc-text-primary: #0f172a;
+  --oc-text-secondary: #394153;
+  --oc-text-tertiary: #64748b;
+  --oc-text-muted: #8390a4;
+  --oc-text-disabled: #aeb8c7;
+
+  --oc-border: #e5eaf2;
+  --oc-border-strong: #d7e0ec;
+  --oc-border-hover: #c5d3e3;
+
+  --oc-accent: var(--oc-blue);
+  --oc-accent-hover: #0f67df;
+  --oc-accent-soft: rgba(22, 119, 255, 0.10);
+  --oc-accent-ring: rgba(22, 119, 255, 0.22);
+  --oc-accent-glow: rgba(22, 119, 255, 0.28);
+
+  --oc-success: var(--oc-green);
+  --oc-success-soft: rgba(31, 191, 117, 0.12);
+  --oc-warning: var(--oc-amber);
+  --oc-warning-soft: rgba(217, 139, 5, 0.13);
+  --oc-danger: var(--oc-red);
+  --oc-danger-soft: rgba(239, 68, 68, 0.12);
+  --oc-purple: var(--oc-violet);
+  --oc-purple-soft: rgba(124, 92, 255, 0.12);
+  --oc-cyan-soft: rgba(22, 184, 217, 0.12);
+
+  --oc-shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
+  --oc-shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06), 0 8px 24px rgba(15, 23, 42, 0.04);
+  --oc-shadow-md: 0 8px 24px rgba(15, 23, 42, 0.09);
+  --oc-shadow-lg: 0 18px 42px rgba(15, 23, 42, 0.13);
+}
+
+html[data-theme="dark"],
+html[data-theme="dark"][data-oc-skin="ops"] {
+  color-scheme: dark;
+  --oc-bg-canvas: #071423;
+  --oc-bg-shell: #0b1726;
+  --oc-bg-surface: #111f2f;
+  --oc-bg-elevated: #17283a;
+  --oc-bg-input: #0d1b2b;
+  --oc-bg-muted: #0e2033;
+  --oc-bg-sidebar: #081523;
+  --oc-bg-overlay: rgba(0, 0, 0, 0.56);
+
+  --oc-text-primary: #f3f5f8;
+  --oc-text-secondary: #c7d0dd;
+  --oc-text-tertiary: #8ea0b5;
+  --oc-text-muted: #6f8197;
+  --oc-text-disabled: #536276;
+
+  --oc-border: rgba(148, 163, 184, 0.18);
+  --oc-border-strong: rgba(148, 163, 184, 0.28);
+  --oc-border-hover: rgba(148, 163, 184, 0.42);
+
+  --oc-accent: #4f8cff;
+  --oc-accent-hover: #6ea0ff;
+  --oc-accent-soft: rgba(79, 140, 255, 0.15);
+  --oc-accent-ring: rgba(79, 140, 255, 0.28);
+  --oc-accent-glow: rgba(79, 140, 255, 0.32);
+
+  --oc-success: #35d18b;
+  --oc-success-soft: rgba(53, 209, 139, 0.14);
+  --oc-warning: #f4ad34;
+  --oc-warning-soft: rgba(244, 173, 52, 0.15);
+  --oc-danger: #ff6b6b;
+  --oc-danger-soft: rgba(255, 107, 107, 0.14);
+  --oc-purple: #9a7cff;
+  --oc-purple-soft: rgba(154, 124, 255, 0.16);
+  --oc-cyan-soft: rgba(28, 198, 224, 0.15);
+
+  --oc-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.24);
+  --oc-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.28), 0 8px 24px rgba(0, 0, 0, 0.12);
+  --oc-shadow-md: 0 10px 30px rgba(0, 0, 0, 0.28);
+  --oc-shadow-lg: 0 22px 50px rgba(0, 0, 0, 0.34);
+}
+
+html[data-oc-skin="glass"] {
+  --oc-radius-lg: 10px;
+  --oc-radius-xl: 12px;
+}
+
+html[data-theme="light"][data-oc-skin="glass"] {
+  --oc-bg-canvas: #f3f7fd;
+  --oc-bg-surface: rgba(255, 255, 255, 0.78);
+  --oc-bg-elevated: rgba(255, 255, 255, 0.62);
+  --oc-border: rgba(148, 163, 184, 0.34);
+  --oc-shadow-sm: 0 8px 30px rgba(30, 64, 175, 0.07);
+  --oc-shadow-md: 0 16px 46px rgba(30, 64, 175, 0.12);
+}
+
+html[data-theme="dark"][data-oc-skin="glass"] {
+  --oc-bg-canvas: #06111d;
+  --oc-bg-surface: rgba(17, 31, 47, 0.78);
+  --oc-bg-elevated: rgba(23, 40, 58, 0.72);
+  --oc-border: rgba(148, 163, 184, 0.22);
+}
+
+html[data-oc-density="compact"] {
+  --oc-page-pad-x: 18px;
+  --oc-page-pad-y: 16px;
+  --oc-control-h: 28px;
+  --oc-card-pad: 12px;
+  --oc-grid-gap: 8px;
+  --oc-topbar-h: 48px;
+}
+
+html[data-oc-motion="reduced"] {
+  --oc-motion-fast: 1ms;
+  --oc-motion-normal: 1ms;
+  --oc-motion-slow: 1ms;
+}
+
+:root {
+  --bg-page: var(--oc-bg-canvas);
+  --bg-card: var(--oc-bg-surface);
+  --bg-surface: var(--oc-bg-surface);
+  --bg-sidebar: var(--oc-bg-sidebar);
+  --bg-elevated: var(--oc-bg-elevated);
+  --bg-hover: var(--oc-bg-elevated);
+  --bg-input: var(--oc-bg-input);
+  --bg-overlay: var(--oc-bg-overlay);
+  --bg-body: var(--oc-bg-canvas);
+  --bg-primary: var(--oc-bg-canvas);
+  --bg-secondary: var(--oc-bg-surface);
+  --bg-tertiary: var(--oc-bg-elevated);
+  --bg-section: var(--oc-bg-surface);
+  --bg-column: var(--oc-bg-surface);
+  --bg-code: var(--oc-bg-muted);
+  --bg-card-hover: var(--oc-bg-elevated);
+  --bg: var(--oc-bg-canvas);
+  --bg2: var(--oc-bg-surface);
+  --bg3: var(--oc-bg-elevated);
+
+  --text-primary: var(--oc-text-primary);
+  --text-secondary: var(--oc-text-secondary);
+  --text-muted: var(--oc-text-tertiary);
+  --text: var(--oc-text-primary);
+  --text2: var(--oc-text-secondary);
+  --text-disabled: var(--oc-text-disabled);
+  --text-on-accent: #ffffff;
+  --muted: var(--oc-text-tertiary);
+
+  --border: var(--oc-border);
+  --border-hover: var(--oc-border-hover);
+  --border-active: var(--oc-border-strong);
+  --border-light: var(--oc-border);
+  --border-subtle: var(--oc-border);
+  --line: var(--oc-border);
+
+  --accent: var(--oc-accent);
+  --accent-hover: var(--oc-accent-hover);
+  --accent-soft: var(--oc-accent-soft);
+  --accent-glow: var(--oc-accent-ring);
+  --accent-light: var(--oc-accent-soft);
+  --accent-subtle: var(--oc-accent-soft);
+  --accent-gradient: linear-gradient(135deg, var(--oc-accent), var(--oc-purple));
+  --accent2: var(--oc-purple);
+
+  --accent-success: var(--oc-success);
+  --accent-success-soft: var(--oc-success-soft);
+  --success: var(--oc-success);
+  --ok: var(--oc-success);
+  --green: var(--oc-success);
+  --green-subtle: var(--oc-success-soft);
+  --accent-warning: var(--oc-warning);
+  --accent-warning-soft: var(--oc-warning-soft);
+  --warning: var(--oc-warning);
+  --warn: var(--oc-warning);
+  --orange: var(--oc-warning);
+  --accent-danger: var(--oc-danger);
+  --accent-danger-soft: var(--oc-danger-soft);
+  --danger: var(--oc-danger);
+  --error: var(--oc-danger);
+  --fail: var(--oc-danger);
+  --red: var(--oc-danger);
+  --red-subtle: var(--oc-danger-soft);
+  --red-glow: var(--oc-danger-soft);
+  --yellow-subtle: var(--oc-warning-soft);
+  --yellow-glow: var(--oc-warning-soft);
+  --green-subtle: var(--oc-success-soft);
+  --green-glow: var(--oc-success-soft);
+  --accent-purple: var(--oc-purple);
+  --accent-purple-soft: var(--oc-purple-soft);
+  --purple: var(--oc-purple);
+  --cyan: var(--oc-cyan);
+
+  --shadow: var(--oc-shadow-sm);
+  --shadow-sm: var(--oc-shadow-sm);
+  --shadow-md: var(--oc-shadow-md);
+  --shadow-lg: var(--oc-shadow-lg);
+  --shadow-card: var(--oc-shadow-sm);
+  --shadow-raised: var(--oc-shadow-md);
+  --shadow-glow: 0 0 0 4px var(--oc-accent-ring);
+
+  --radius: var(--oc-radius-md);
+  --radius-sm: var(--oc-radius-sm);
+  --radius-md: var(--oc-radius-md);
+  --radius-btn: var(--oc-radius-md);
+  --radius-lg: var(--oc-radius-lg);
+  --radius-card: var(--oc-radius-lg);
+  --radius-xl: var(--oc-radius-xl);
+  --radius-full: var(--oc-radius-full);
+
+  --space-1: var(--oc-space-1);
+  --space-2: var(--oc-space-2);
+  --space-3: var(--oc-space-3);
+  --space-4: var(--oc-space-4);
+  --space-5: var(--oc-space-5);
+  --space-6: var(--oc-space-6);
+  --space-8: var(--oc-space-8);
+
+  --text-2xs: var(--oc-text-2xs);
+  --text-xs: var(--oc-text-xs);
+  --text-sm: var(--oc-text-sm);
+  --text-md: var(--oc-text-md);
+  --text-base-size: var(--oc-text-base);
+  --text-lg: var(--oc-text-lg);
+  --text-xl: var(--oc-text-xl);
+  --text-2xl: var(--oc-text-2xl);
+  --text-3xl: var(--oc-text-3xl);
+  --text-4xl: var(--oc-text-4xl);
+  --text-5xl: var(--oc-text-5xl);
+  --text-6xl: var(--oc-text-6xl);
+
+  --transition-fast: var(--oc-motion-fast);
+  --transition-normal: var(--oc-motion-normal);
+  --transition-slow: var(--oc-motion-slow);
+  --transition: var(--oc-motion-normal);
+  --transition-bounce: var(--oc-ease-emphasis);
+  --font-sans: var(--oc-font-sans);
+  --font-mono: var(--oc-font-mono);
+}
+
+html {
+  font-family: var(--oc-font-sans);
+  background: var(--oc-bg-canvas);
+  color: var(--oc-text-primary);
+}
+
+body {
+  background: var(--oc-bg-canvas);
+  color: var(--oc-text-primary);
+  letter-spacing: 0;
+}
+
+::selection {
+  background: var(--oc-accent-soft);
+  color: var(--oc-text-primary);
+}
+
+
+html.cockpit-shell[data-theme],
+html.cockpit-embedded-module[data-theme],
+html.cockpit-shell[data-theme] body,
+html.cockpit-embedded-module[data-theme] body {
+  transition: background-color var(--oc-motion-normal) var(--oc-ease-standard), color var(--oc-motion-normal) var(--oc-ease-standard), border-color var(--oc-motion-normal) var(--oc-ease-standard);
+}
+
+html[data-oc-motion=reduced],
+html[data-oc-motion=reduced] body {
+  transition: none !important;
+}
+
+
+/* End of cockpit-design-tokens.css. */
