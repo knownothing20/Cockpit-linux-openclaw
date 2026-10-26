@@ -1,0 +1,50 @@
+services:
+  cockpit:
+    image: sha256:bbc51c187ec813fd7c6a49afd22c15efdfe969b8c3a9a9cd49193c8a03908984
+    pull_policy: never
+    container_name: cockpit
+    user: "1000:1000"
+    init: true
+    read_only: true
+    restart: "no"
+    cpus: 0.5
+    mem_limit: 512m
+    memswap_limit: 512m
+    pids_limit: 128
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    working_dir: ${COCKPIT_CONTAINER_ROOT:?set private container project root}
+    environment:
+      HOME: /tmp/cockpit-home
+      COCKPIT_FNOS_READ_ONLY: "1"
+      PORT: "7001"
+      NODE_OPTIONS: --max-old-space-size=320
+      RSS_WARN_MB: "350"
+      RSS_DUMP_MB: "450"
+      RSS_EXIT_MB: "480"
+    entrypoint: ["/bin/sh", "-ec"]
+    command: ["mkdir -p /tmp/cockpit-home; exec node server.js"]
+    ports: ["${COCKPIT_BIND_ADDR:?set private bind address}:7001:7001"]
+    volumes:
+      - type: bind
+        source: ${COCKPIT_SOURCE:?run deploy/fnos.sh prepare first}
+        target: ${COCKPIT_CONTAINER_ROOT:?set private container project root}
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${COCKPIT_DEPENDENCIES:?set existing locked dependencies}
+        target: ${COCKPIT_CONTAINER_ROOT:?set private container project root}/node_modules
+        read_only: true
+        bind:
+          create_host_path: false
+    tmpfs: ["/tmp:rw,noexec,nosuid,size=64m,mode=1777"]
+    logging:
+      driver: json-file
+      options: {max-size: "10m", max-file: "3"}
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://127.0.0.1:7001/health',r=>{r.resume();process.exit(r.statusCode===200?0:1)}).on('error',()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
